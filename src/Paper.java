@@ -1,25 +1,57 @@
 // This class acts like a paper that allows you to draw anything into it
-// See the example to learn how to draw
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import javax.swing.*;
 
-public abstract class Paper extends JPanel implements KeyListener {	
-	public void paintComponent(Graphics g) {
-		draw(g);
+public class Paper extends JPanel implements KeyListener, MouseListener {
+	ArrayList<DrawObject> objects;
+	
+	public Paper() {
+		objects = new ArrayList<DrawObject>();
+		super.addMouseListener(this);
 	}
 	
-	public void redraw() {
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;
+		
+		Image image = new ImageIcon("assets/borealis.jpg").getImage();
+		g.drawImage(image, 0, 0, this);
+		
+		for (int i = 0; i < objects.size(); i++) {
+			DrawObject o = objects.get(i);
+			if (!o.getVisible()) continue;
+			o.draw(g2d);
+		}
+		
+		customDraw(g2d);
+	}
+	
+	public void forceRedraw() {
 		repaint();
 	}
 	
+	///////////////////////////////////
+	
+	public void addObject(DrawObject d) {
+		objects.add(d);
+		d.setParent(this);
+	}
+	public void removeObject(DrawObject d) {
+		objects.remove(d);
+		d.setParent(null);
+	}
+	
+	///////////////////////////////////
+	
+	public void drawTexture(Graphics g, Image image, int x, int y) {
+		g.drawImage(image, x, y, this);
+	}
 	public void drawTexture(Graphics g, String path, int x, int y) {
 		Image image = new ImageIcon(path).getImage();
 		drawTexture(g, image, x, y);
-	}
-	public void drawTexture(Graphics g, Image image, int x, int y) {
-		g.drawImage(image, x, y, null);
 	}
 	
 	public void drawText(Graphics g, String text, int x, int y) {
@@ -32,8 +64,39 @@ public abstract class Paper extends JPanel implements KeyListener {
     public void keyPressed(KeyEvent e) {}
     public void keyReleased(KeyEvent e) {}
 	
-	///////////////////////////////////
-	// inherit me plz
+	public void mousePressed(MouseEvent e) {
+		for (int i = objects.size() - 1; i >= 0 ; i--) {
+			DrawObject o = objects.get(i);
+			if (!o.getVisible()) continue;
+			Rectangle r = o.getActualArea();
+			if (isMouseInArea(e, r.x, r.y, r.width, r.height)) {
+				o.onPressed();
+				return;
+			}
+		}
+	}
+	public void mouseReleased(MouseEvent e) {}
+	public void mouseMoved(MouseEvent e) {}
+	public void mouseEntered(MouseEvent e) {}
+	public void mouseExited(MouseEvent e) {}
+	public void mouseClicked(MouseEvent e) {}
 	
-	public abstract void draw(Graphics g);
+	public void customDraw(Graphics2D g) {}
+	
+	///////////////////////////////////
+	
+	public boolean isMouseInArea(MouseEvent e, int x1, int y1, int x2, int y2) {
+		Point position = e.getPoint();
+		return position.x >= x1 && position.x <= x2 && position.y >= y1 && position.y <= y2;
+	}
+	public boolean isMouseInAreaRelative(MouseEvent e, int x, int y, int width, int height) {
+		return isMouseInArea(e, x, y, x + width, y + height);
+	}
+	public boolean isMouseInImageArea(MouseEvent e, int x, int y, Image image) {
+		return isMouseInAreaRelative(e, x, y, image.getWidth(this), image.getHeight(this));
+	}
+	public boolean isMouseInImageArea(MouseEvent e, int x, int y, String path) {
+		Image image = new ImageIcon(path).getImage();
+		return isMouseInImageArea(e, x, y, image);
+	}
 }
