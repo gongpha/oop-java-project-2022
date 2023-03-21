@@ -25,7 +25,6 @@ public class Sprite extends DrawObject {
 	
 	public void setImage(String path) {
 		image = new ImageIcon(path).getImage();
-		//parent.forceRedraw();
 	}
 	
 	public Image getImage() {

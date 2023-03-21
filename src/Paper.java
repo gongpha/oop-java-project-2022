@@ -11,14 +11,13 @@ public class Paper extends JPanel implements KeyListener, MouseListener {
 	public Paper() {
 		objects = new ArrayList<DrawObject>();
 		super.addMouseListener(this);
+		super.addKeyListener(this);
+		setFocusable(true);
 	}
 	
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2d = (Graphics2D) g;
-		
-		Image image = new ImageIcon("assets/borealis.jpg").getImage();
-		g.drawImage(image, 0, 0, this);
 		
 		for (int i = 0; i < objects.size(); i++) {
 			DrawObject o = objects.get(i);
@@ -43,6 +42,14 @@ public class Paper extends JPanel implements KeyListener, MouseListener {
 		objects.remove(d);
 		d.setParent(null);
 	}
+	public void moveToBack(DrawObject d) {
+		objects.remove(d);
+		objects.add(0, d);
+	}
+	public void addObjectAndMoveToBack(DrawObject d) {
+		objects.add(0, d);
+		d.setParent(this);
+	}
 	
 	///////////////////////////////////
 	
@@ -60,8 +67,18 @@ public class Paper extends JPanel implements KeyListener, MouseListener {
 	
 	///////////////////////////////////
 	
-	public void keyTyped(KeyEvent e) {}
-    public void keyPressed(KeyEvent e) {}
+	public void keyTyped(KeyEvent e) {
+		for (int i = 0; i < objects.size(); i++) {
+			DrawObject o = objects.get(i);
+			o.keyTyped(e);
+		}
+	}
+    public void keyPressed(KeyEvent e) {
+		for (int i = 0; i < objects.size(); i++) {
+			DrawObject o = objects.get(i);
+			o.keyPressed(e);
+		}
+	}
     public void keyReleased(KeyEvent e) {}
 	
 	public void mousePressed(MouseEvent e) {

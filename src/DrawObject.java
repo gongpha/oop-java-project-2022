@@ -2,6 +2,7 @@
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
 
 // DRAW THINGS
 
@@ -113,4 +114,7 @@ public abstract class DrawObject {
 	////////////////////////
 	
 	public void onPressed() {}
+	
+	public void keyPressed(KeyEvent e) {}
+	public void keyTyped(KeyEvent e) {}
 }
