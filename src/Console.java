@@ -25,6 +25,7 @@ public class Console extends Sprite {
 			}
 		}
 	}
+	private Caret caret = null;
 	
 	// THREAD THINGS
 	private boolean caretShowing = false;
@@ -35,9 +36,6 @@ public class Console extends Sprite {
 		font = new Font("Courier New", Font.PLAIN, 16);
 		
 		history = new ArrayList<String>();
-		
-		Caret c = new Caret();
-		c.start();
 	}
 	
 	public void draw(Graphics2D g) {
@@ -77,6 +75,12 @@ public class Console extends Sprite {
 	
 	public void keyPressed(KeyEvent k) {
 		if (k.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			if (getVisible() && caret != null) {
+				caret.interrupt();
+			} else {
+				caret = new Caret();
+				caret.start();
+			}
 			setVisible(!getVisible());
 			parent.forceRedraw();
 		}

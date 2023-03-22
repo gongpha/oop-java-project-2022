@@ -42,13 +42,17 @@ public class Paper extends JPanel implements KeyListener, MouseListener {
 		objects.remove(d);
 		d.setParent(null);
 	}
-	public void moveToBack(DrawObject d) {
-		objects.remove(d);
-		objects.add(0, d);
-	}
 	public void addObjectAndMoveToBack(DrawObject d) {
 		objects.add(0, d);
 		d.setParent(this);
+	}
+	
+	public void moveToFront(DrawObject d) {
+		int i = objects.indexOf(d);
+		if (i == -1) return;
+		if (i == objects.size() - 1) return; // do nothing becuz it was already on the front
+		objects.remove(i);
+		objects.add(d);
 	}
 	
 	///////////////////////////////////

@@ -2,6 +2,7 @@
 // ( ... SOVIET ANTHEM INTENSIFIES ... )
 
 import java.awt.Dimension;
+import java.util.ArrayList;
 import javax.swing.*;
 
 public class Game {
@@ -88,6 +89,10 @@ public class Game {
 			itemsButton.setImage("assets/items_down.png");
 			for (int i = 0; i < 4; i++) {
 				items[i].setVisible(true);
+				Item j = items[i].getItem();
+				if (j != null) {
+					j.setVisible(true);
+				}
 			}
 			bBack.setPosition(200, 600 - 128);
 		} else {
@@ -96,19 +101,52 @@ public class Game {
 			itemsButton.setImage("assets/items_up.png");
 			for (int i = 0; i < 4; i++) {
 				items[i].setVisible(false);
+				Item j = items[i].getItem();
+				if (j != null) {
+					j.setVisible(false);
+				}
 			}
 			bBack.setPosition(200, 600);
 		}
 		gameRoom.forceRedraw();
 	}
 	
+	public void goToRoom(Room room, Item required) {
+		if (required != null) {
+			// looking for an item
+			for (int i = 0; i < 4; i++) {
+				ItemSlot s = items[i];
+				if (required == s.getItem()) {
+					// YES
+					//s.removeItem();
+					goToRoom(room);
+				}
+			}
+		}
+	}
+		
 	public void goToRoom(Room room) {
 		if (currentRoom != null) {
+			// remove the old room
+			ArrayList<Action> acts = currentRoom.getActions();
+			for (int i = 0; i < acts.size(); i++) {
+				gameRoom.removeObject(acts.get(i));
+			}
 			gameRoom.removeObject(currentRoom);
 		}
 		currentRoom = room;
 		if (currentRoom != null) {
+			// ADD THE NEW ROOM
 			gameRoom.addObjectAndMoveToBack(room);
+			
+			ArrayList<Action> acts = currentRoom.getActions();
+			for (int i = 0; i < acts.size(); i++) {
+				Action a = acts.get(i);
+				a.setGame(this);
+				gameRoom.addObject(a);
+			}
+			
+			gameRoom.moveToFront(console);
 			
 			bLeft.setVisible(currentRoom.getRoom(0) != null);
 			bRight.setVisible(currentRoom.getRoom(1) != null);
@@ -135,8 +173,17 @@ public class Game {
 		goToRoom(going);
 	}
 	
-	public void toggleConsole() {
-		console.setVisible(!console.getVisible());
-		gameRoom.forceRedraw();
+	public boolean addItem(Item item) {
+		for (int i = 0; i < 4; i++) {
+			ItemSlot s = items[i];
+			if (s.setItem(item)) {
+				if (!showingItems) {
+					toggleItems();
+				}
+				gameRoom.forceRedraw();
+				return true;
+			}
+		}
+		return false;
 	}
 }
