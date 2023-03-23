@@ -115,6 +115,10 @@ public abstract class DrawObject {
 	
 	public void onPressed() {}
 	
-	public void keyPressed(KeyEvent e) {}
-	public void keyTyped(KeyEvent e) {}
+	public boolean keyPressed(KeyEvent e) { return false; }
+	public boolean keyTyped(KeyEvent e) { return false; }
+	public boolean ignoreWhenInvisible() { return true; }
+	
+	public boolean focusOnClick() { return false; }
+	public void focusChanged(boolean yes) {}
 }

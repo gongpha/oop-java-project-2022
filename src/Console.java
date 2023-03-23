@@ -70,10 +70,14 @@ public class Console extends Sprite {
 			echo("I was lazied in writing all the names :P");
 		} else if (s.equals("exit") || s.equals("quit")) {
 			System.exit(0);
+		} else if (s.equals("showinfo")) {
+			parent.toggleShowInfo();
 		}
 	}
 	
-	public void keyPressed(KeyEvent k) {
+	public boolean ignoreWhenInvisible() { return false; }
+	
+	public boolean keyPressed(KeyEvent k) {
 		if (k.getKeyCode() == KeyEvent.VK_ESCAPE) {
 			if (getVisible() && caret != null) {
 				caret.interrupt();
@@ -84,9 +88,11 @@ public class Console extends Sprite {
 			setVisible(!getVisible());
 			parent.forceRedraw();
 		}
+		return false;
 	}
 	
-	public void keyTyped(KeyEvent k) {
+	public boolean keyTyped(KeyEvent k) {
+		if (!getVisible()) return false;
 		char c = k.getKeyChar();
 		if (c == '\n') {
 			echo("] " + type);
@@ -95,9 +101,10 @@ public class Console extends Sprite {
 		} else if (c == '\b' && type.length() >= 1) {
 			type = type.substring(0, type.length() - 1);
 		} else {
-			if (!((c >= 'A' && c <= 'z') || (c >= '0' && c <= '9') || c == ' ' || c == '_')) return;
+			if (!((c >= 'A' && c <= 'z') || (c >= '0' && c <= '9') || c == ' ' || c == '_')) return false;
 			type += c;
 		}
 		parent.forceRedraw();
+		return true;
 	}
 }

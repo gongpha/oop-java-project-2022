@@ -81,6 +81,8 @@ public class Game {
 		gameRoom.addObject(console);
 		gameRoom.grabFocus();
 		
+		MainMenu m = new MainMenu(this, gameRoom);
+		
 		showingItems = true;
 		toggleItems();
 	}

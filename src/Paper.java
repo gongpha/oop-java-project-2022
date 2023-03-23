@@ -7,22 +7,35 @@ import javax.swing.*;
 
 public class Paper extends JPanel implements KeyListener, MouseListener {
 	ArrayList<DrawObject> objects;
+	private boolean showInfo;
+	private final Font font;
+	
+	private DrawObject currentFocus = null;
 	
 	public Paper() {
 		objects = new ArrayList<DrawObject>();
 		super.addMouseListener(this);
 		super.addKeyListener(this);
 		setFocusable(true);
+		font = new Font("Courier New", Font.PLAIN, 16);
 	}
 	
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2d = (Graphics2D) g;
 		
+		int visibleCount = 0;
 		for (int i = 0; i < objects.size(); i++) {
 			DrawObject o = objects.get(i);
 			if (!o.getVisible()) continue;
 			o.draw(g2d);
+			visibleCount++;
+		}
+		
+		if (showInfo) {
+			g2d.drawString((
+				"Objects : " + objects.size() + " | Visible Objects : " + visibleCount + " | Focus : " + currentFocus
+			), 8, 600 - 16);
 		}
 		
 		customDraw(g2d);
@@ -30,6 +43,11 @@ public class Paper extends JPanel implements KeyListener, MouseListener {
 	
 	public void forceRedraw() {
 		repaint();
+	}
+	
+	public void toggleShowInfo() {
+		showInfo = !showInfo;
+		forceRedraw();
 	}
 	
 	///////////////////////////////////
@@ -72,28 +90,51 @@ public class Paper extends JPanel implements KeyListener, MouseListener {
 	///////////////////////////////////
 	
 	public void keyTyped(KeyEvent e) {
-		for (int i = 0; i < objects.size(); i++) {
+		for (int i = objects.size() - 1; i >= 0 ; i--) {
 			DrawObject o = objects.get(i);
-			o.keyTyped(e);
+			if (!o.getVisible() && o.ignoreWhenInvisible()) continue;
+			if (o.keyTyped(e))
+				break;
 		}
 	}
     public void keyPressed(KeyEvent e) {
-		for (int i = 0; i < objects.size(); i++) {
+		for (int i = objects.size() - 1; i >= 0 ; i--) {
 			DrawObject o = objects.get(i);
-			o.keyPressed(e);
+			if (!o.getVisible() && o.ignoreWhenInvisible()) continue;
+			if (o.keyPressed(e)) break;
 		}
 	}
     public void keyReleased(KeyEvent e) {}
 	
-	public void mousePressed(MouseEvent e) {
+	public DrawObject findClick(MouseEvent e) {
 		for (int i = objects.size() - 1; i >= 0 ; i--) {
 			DrawObject o = objects.get(i);
-			if (!o.getVisible()) continue;
+			if (!o.getVisible() && o.ignoreWhenInvisible()) continue;
 			Rectangle r = o.getActualArea();
 			if (isMouseInArea(e, r.x, r.y, r.width, r.height)) {
+				if (o.focusOnClick()) {
+					if (currentFocus != null) {
+						// haha you lost the focus
+						currentFocus.focusChanged(false);
+						
+					}
+					currentFocus = o;
+					o.focusChanged(true);
+				}
 				o.onPressed();
-				return;
+				return o;
 			}
+		}
+		return null;
+	}
+	
+	public void mousePressed(MouseEvent e) {
+		DrawObject found = findClick(e);
+		
+		if (currentFocus != null && found != currentFocus) {
+			// haha you lost the focus bro
+			currentFocus.focusChanged(false);
+			currentFocus = null;
 		}
 	}
 	public void mouseReleased(MouseEvent e) {}
