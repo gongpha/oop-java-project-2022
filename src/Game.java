@@ -21,6 +21,8 @@ public class Game {
 	
 	private ItemSlot[] items;
 	
+	private ArrayList<SoundPlayer> roomPlayers;
+	
 	public enum NavigateDirection {
 		GO_LEFT,
 		GO_RIGHT,
@@ -72,6 +74,8 @@ public class Game {
 			s.setImage("assets/items_slot.png");
 			s.setVisible(false);
 		}
+		
+		roomPlayers = new ArrayList<SoundPlayer>();
 		
 		console = new Console();
 		gameRoom.addObject(console);
@@ -126,6 +130,12 @@ public class Game {
 	}
 		
 	public void goToRoom(Room room) {
+		// stop all sounds
+		for (int i = 0; i < roomPlayers.size(); i++) {
+			roomPlayers.get(i).stopPlaying();
+		}
+		roomPlayers.clear();
+		
 		if (currentRoom != null) {
 			// remove the old room
 			ArrayList<Action> acts = currentRoom.getActions();
@@ -144,6 +154,22 @@ public class Game {
 				Action a = acts.get(i);
 				a.setGame(this);
 				gameRoom.addObject(a);
+			}
+			
+			// play snds
+			ArrayList<String> paths = currentRoom.getMusicPaths();
+			for (int i = 0; i < paths.size(); i++) {
+				SoundPlayer p = new SoundPlayer(paths.get(i));
+				roomPlayers.add(p);
+				try {
+					p.start();
+					console.echo("Playing \"" + p.getPath() + "\" . . ."
+						+ (p.isLooping() ? " (loop)" : "")
+					);
+				} catch (IllegalStateException e) {
+					console.echo(e.getMessage());
+				}
+				
 			}
 			
 			gameRoom.moveToFront(console);

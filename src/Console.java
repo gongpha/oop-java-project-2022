@@ -68,7 +68,7 @@ public class Console extends Sprite {
 		} else if (s.equals("developers")) {
 			echo("65070013, 65070024, 65070110, 65070231, 65070245");
 			echo("I was lazied in writing all the names :P");
-		} else if (s.equals("exit")) {
+		} else if (s.equals("exit") || s.equals("quit")) {
 			System.exit(0);
 		}
 	}

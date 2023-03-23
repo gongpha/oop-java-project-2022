@@ -6,6 +6,7 @@ public class Room extends Sprite {
 	private Room[] rooms;
 	private ArrayList<Action> actions;
 	private ArrayList<String> paths;
+	private ArrayList<String> musics;
 	
 	public Room(String path) {
 		setImage(path);
@@ -15,6 +16,7 @@ public class Room extends Sprite {
 		// left, right, back
 		rooms = new Room[3];
 		actions = new ArrayList<Action>();
+		musics = new ArrayList<String>();
 	}
 	public Room(ArrayList<String> paths) {
 		this(paths.get(0));
@@ -59,6 +61,10 @@ public class Room extends Sprite {
 		actions.add(new ActionItem(x1, y1, x2 - x1, y2 - y1, item, this, afterObtained));
 		return this;
 	}
+	public Room putMusic(String path) {
+		musics.add(path);
+		return this;
+	}
 	
 	////////////////////////////////////////////////////////
 	
@@ -71,6 +77,10 @@ public class Room extends Sprite {
 	
 	public ArrayList<Action> getActions() {
 		return actions;
+	}
+	
+	public ArrayList<String> getMusicPaths() {
+		return musics;
 	}
 	
 	public void changeToIndex(int idx) {
