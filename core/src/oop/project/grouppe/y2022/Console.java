@@ -17,24 +17,26 @@ import java.util.regex.Pattern;
 // for hackers
 
 public class Console {
-	CoreGame game;
-	SpriteBatch batch;
-	Pattern execPattern;
+	private CoreGame game;
+	private SpriteBatch batch;
+	private Pattern execPattern;
 	
-	BitmapFont font;
-	Texture bg;
+	private BitmapFont font;
+	private Texture bg;
 	
-	double location = 1.0; // [0, 1]. 0 = fully hidden, 1 = fully showed
-	int aniMoving = 0; // 1 = moving up, 2 = moving down. otherwise, do nothing
-	double limit = 1.0; // 1.0 = full, 0.5 = half
+	private double location = 1.0; // [0, 1]. 0 = fully hidden, 1 = fully showed
+	private int aniMoving = 0; // 1 = moving up, 2 = moving down. otherwise, do nothing
+	private double limit = 1.0; // 1.0 = full, 0.5 = half
 	
-	HashMap<String, ConsoleCommand> commands;
-	ArrayList<String> history;
-	int historylook = -3;
+	private HashMap<String, ConsoleCommand> commands;
+	private ArrayList<String> history;
+	private int historylook = -3;
 	
-	boolean activating = true;
+	private boolean activating = true;
 	
-	String lineEnter = "";
+	private float drawCaret = 0.0f; // [0, 2] (>= 1 : draw, < 1 : hide)
+	
+	private String lineEnter = "";
 	
 	class Line {
 		String content = "";
@@ -86,8 +88,8 @@ public class Console {
 		float delta = Gdx.graphics.getDeltaTime();
 		switch (aniMoving) {
 			// move the console until reached the top/bottom
-			case 1 : location -= delta * 1.5; break;
-			case 2 : location += delta * 1.5; break;
+			case 1 : location -= delta * 1.75; break;
+			case 2 : location += delta * 1.75; break;
 		}
 		location = Math.max(0.0, Math.min(limit, location)); // clamp [0, 1]
 		
@@ -107,15 +109,22 @@ public class Console {
 			Gdx.graphics.getWidth(), Gdx.graphics.getHeight()
 		);
 		
+		// caret
+		drawCaret += delta;
+		if (drawCaret >= 2.0f) drawCaret = 0.0f;
 		
 		for (int i = 0; i < lines.size(); i++) {
+			float drawY = ((lines.size() - i - 1) * 24) + relativeY;
+			if (drawY > Gdx.graphics.getHeight()) continue; // off screen
+			
 			Line l = lines.get(i);
 			if (l.content.isEmpty()) continue; // TODO : sep
 			font.setColor(l.color);
-			font.draw(batch, l.content, 12, 64 + ((lines.size() - i - 1) * 24) + relativeY);
+			font.draw(batch, l.content, 12, 64 + drawY);
 		}
 		
-		font.draw(batch, "] " + lineEnter, 12, 32 + relativeY);
+		font.setColor(Color.WHITE);
+		font.draw(batch, "] " + lineEnter + (drawCaret > 1.0f ? "_" : ""), 12, 32 + relativeY);
 	}
 	
 	public boolean isActivating() {
@@ -175,6 +184,9 @@ public class Console {
 	}
 	public void printSep() {
 		lines.add(new Line());
+	}
+	public void printerr(String s) {
+		print(s, Color.RED);
 	}
 	
 	public void exec(String l, boolean silent) {

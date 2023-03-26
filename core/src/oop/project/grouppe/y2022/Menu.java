@@ -15,22 +15,23 @@ public class Menu {
 	private SpriteBatch batch;
 	private ShapeRenderer shapeRenderer;
 	
-	private final static String[] mainMenuStructure = {
-		"Host Game",
-		"Join Game",
-		"Settings",
-		"Credits",
-		"Quit",
+	// { label, command }
+	private final static String[][] mainMenuStructure = {
+		{"Host Game",	"host"},
+		{"Join Game",	"mmnu_join"},
+		{"Settings",	"menu_settings"},
+		{"Credits",		"mmnu_credits"},
+		{"Quit",		"quit"},
 	};
-	private final static String[] pauseMenuStructure = {
-		"Resume",
-		"Leave Game",
-		"Settings",
-		"Quit",
+	private final static String[][] pauseMenuStructure = {
+		{"Resume",		"menu_toggle"},
+		{"Leave Game",	"disconnect"},
+		{"Settings",	"menu_settings"},
+		{"Quit",		"quit"},
 	};
 	private boolean isPauseMenu = false;
 	private int cursor = 0;
-	private String[] getCurrentStructure() {
+	private String[][] getCurrentStructure() {
 		return isPauseMenu ? pauseMenuStructure : mainMenuStructure;
 	}
 	
@@ -66,7 +67,7 @@ public class Menu {
 			if (alpha >= 0.25f) {
 				for (int i = 0; i < mainMenuStructure.length; i++) {
 					font.draw(batch, (
-						(i == cursor ? ">> " : "") + mainMenuStructure[i]
+						(i == cursor ? ">> " : "") + mainMenuStructure[i][0]
 					), 200, 400 + (-48 * i));
 				}
 			}
@@ -81,20 +82,22 @@ public class Menu {
 	}
 	
 	public boolean keyDown(int i) {
+		String[][] structure = getCurrentStructure();
 		if (i == Input.Keys.DOWN) {
-			String[] structure = getCurrentStructure();
 			if (cursor == structure.length - 1)
 				cursor = 0;
 			else
 				cursor += 1;
 			return true;
 		} else if (i == Input.Keys.UP) {
-			String[] structure = getCurrentStructure();
 			if (cursor == 0)
 				cursor = structure.length - 1;
 			else
 				cursor -= 1;
 			return true;
+		} else if (i == Input.Keys.ENTER) {
+			String cmd = structure[cursor][1];
+			CoreGame.instance().getConsole().exec(cmd);
 		}
 		return false;
 	}

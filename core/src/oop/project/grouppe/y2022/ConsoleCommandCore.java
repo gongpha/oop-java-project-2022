@@ -43,12 +43,13 @@ public class ConsoleCommandCore {
 					console.printSep();
 				}
 			},
-			new ConsoleCommand("map") {
+			new ConsoleCommand("host") {
 				public void exec(String[] args) {
-					System.out.println("!!! TODO !!!");
+					CoreGame.instance().hostGame();
 				}
 			}
 			///////////////////////////////////////
+			// ADD YOUR COMMANDS HERE
 		};
 	}
 }

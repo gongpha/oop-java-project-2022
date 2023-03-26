@@ -7,6 +7,7 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
@@ -20,6 +21,8 @@ public class ResourceManager {
 		preloadFont("default_font", "font/JLX_Pixel.ttf", 32);
 		preloadFont("title_font", "font/JLX_Pixel.ttf", 64);
 		preloadFont("menu_font", "font/JLX_Pixel.ttf", 48);
+		
+		preloadTexture("defcharacter", "character/_def.png");
 	}
 	
 	//////////////////////////////////////////////////////////////////
@@ -62,6 +65,11 @@ public class ResourceManager {
 	}
 	
 	/////////////////////////////////
+	
+	public void preloadTexture(String name, String path) {
+		map.put(name, path);
+		manager.load(path, Texture.class);
+	}
 	
 	public void preloadFont(String name, String path, int size) {
 		map.put(name, path);

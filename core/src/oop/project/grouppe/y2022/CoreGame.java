@@ -7,10 +7,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.Net.Protocol;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.net.ServerSocket;
-import com.badlogic.gdx.net.ServerSocketHints;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 public class CoreGame extends ApplicationAdapter implements InputProcessor {
@@ -19,15 +16,21 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	public static synchronized CoreGame instance() { return singleton; }
 	
 	/////////////////////////////////////
-	ResourceManager rman;
-	SpriteBatch batch;
+	private ResourceManager rman;
+	private SpriteBatch batch;
 	public SpriteBatch getBatch() { return batch; }
 	public final static int PORT = 13131;
 	
-	private ServerSocket server;
+	private Client client = null;
+	private Server server = null;
 	
-	Console console;
-	Menu menu;
+	private World world;
+	public World getWorld() { return world; }
+	
+	private Console console;
+	public Console getConsole() { return console; }
+	
+	private Menu menu;
 	
 	private enum Status {
 		PRELOADING,
@@ -49,6 +52,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		Gdx.input.setInputProcessor(this);
 		////////////////////////////////
 		
+		Packet.regPackets();
 		console.print("Initialized !");
 		
 		console.exec("developers");
@@ -67,6 +71,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	// WONT CALL IF NOT PLAYING (status)
 	private void renderBatch() {
+		if (world != null) {
+			float delta = Gdx.graphics.getDeltaTime();
+			world.render(delta);
+		}
 		menu.renderMenu();
 	}
 	
@@ -74,7 +82,31 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	public void hostGame() {
 		// UDP is unreliable, u kno ?
-		server = Gdx.net.newServerSocket(Protocol.TCP, PORT, new ServerSocketHints());
+		world = new World();
+		server = new Server(PORT);
+		server.start();
+		joinGame();
+	}
+	
+	public void joinGame() {
+		client = new Client("localhost",
+			"gongpha",
+			new int[]{0, 0, 0, 0}
+		);
+		client.start();
+		status = Status.PLAYING;
+	}
+	
+	public void forceDisconnect(String reason) {
+		// OOF
+		
+		if (client != null) {
+			client.kill();
+			client = null;
+		}
+		
+		console.print("disconnected : " + reason);
+		console.showFull();
 	}
 	
 	////////////////////////////////////////////
@@ -116,6 +148,16 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		console.dispose();
 		rman.dispose();
 		batch.dispose();
+		if (world != null) {
+			world.dispose();
+			world = null;
+		}
+	}
+	
+	////////////////////////////////////////////
+	
+	public void tellServerKilled() {
+		server = null;
 	}
 	
 	////////////////////////////////////////////
@@ -158,12 +200,28 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 				menu.toggle();
 				return true;
 			}
+		} else if (status == Status.PLAYING) {
+			if (world != null) {
+				if (world.keyDown(i)) return true;
+			}
 		}
 		return false;
 	}
+	
+	@Override
+	public void resize(int w, int h) {
+		if (world != null) {
+			world.resize(w, h);
+		}
+	}
 
 	@Override
-	public boolean keyUp(int i) { return false; }
+	public boolean keyUp(int i) {
+		if (world != null) {
+			if (world.keyUp(i)) return true;
+		}
+		return false;
+	}
 
 	@Override
 	public boolean touchDown(int i, int i1, int i2, int i3) { return false; }
