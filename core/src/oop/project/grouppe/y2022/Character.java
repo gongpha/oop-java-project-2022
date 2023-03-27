@@ -31,11 +31,6 @@ public class Character extends Entity {
 		world = game.getWorld();
 		
 		region = new TextureRegion();
-		region.setTexture((Texture) ResourceManager.instance().get("defcharacter"));
-		region.setRegionX(0);
-		region.setRegionY(32);
-		region.setRegionWidth(32);
-		region.setRegionHeight(32);
 		
 		velocity = new Vector2();
 	}
@@ -48,6 +43,10 @@ public class Character extends Entity {
 		region.setTexture(
 			(Texture) ResourceManager.instance().get("character__" + characters[player.getIdent(0)])
 		);
+		region.setRegionX(0);
+		region.setRegionY(32);
+		region.setRegionWidth(32);
+		region.setRegionHeight(32);
 	}
 	
 	public void setInput(int input) {
@@ -61,16 +60,13 @@ public class Character extends Entity {
 		velocity.y = world.isPressedInt(World.InputMap.UP) - world.isPressedInt(World.InputMap.DOWN);
 		
 		
-		move(velocity);
+		move(velocity.scl(50.0f));
 	}
 	
 	@Override
 	public void draw(Batch batch, float alpha){
+		if (region.getTexture() == null) return; // no
 		batch.draw(region, getX(), getY());
-	}
-	
-	public void setCharacterSheet(Texture texture) {
-		region.setTexture(texture);
 	}
 	
 	public void serializeConstructor(DataOutputStream d) throws IOException {

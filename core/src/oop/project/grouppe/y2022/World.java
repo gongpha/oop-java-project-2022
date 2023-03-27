@@ -3,6 +3,9 @@ package oop.project.grouppe.y2022;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import java.util.HashMap;
@@ -19,6 +22,11 @@ public class World { // implements Screen
 	private Client myClient;
 	private HashMap<Integer, Entity> entities;
 	private HashMap<Integer, Character> clientCharacters;
+	
+	private BSPDungeonGenerator bsp = null;
+	private TiledMap worldMap = null;
+	private OrthogonalTiledMapRenderer worldRenderer = null;
+	private String currentLevelName = "The Nameless City";
 	
 	public class InputMap {
 		public final static int UP =		1;
@@ -40,15 +48,23 @@ public class World { // implements Screen
 		
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, w, h);
-		camera.update();
-		stage = new Stage(new FitViewport(w / 2, h / 2));
+		
+		stage = new Stage(new FitViewport(w, h));
 		stage.getViewport().setCamera(camera);
+		camera.zoom = 2.0f;
 		
 		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();
 		
+		camera.update();
+		
 		/////////////////////
 		
+		generateMap(13, 0);
+	}
+	
+	public void setLevelName(String name) {
+		currentLevelName = name;
 	}
 	
 	public void addEntity(Entity ent, int ID) {
@@ -109,8 +125,12 @@ public class World { // implements Screen
 		return myClient;
 	}
 	
-	public void changeMap() {
-		
+	public void generateMap(int seed, int tilesetIndex) {
+		bsp = new BSPDungeonGenerator(seed, 64, 64,
+			(Texture)
+			ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex])
+		);
+		bsp.startGenerate();
 	}
 	
 	/////////////////////
@@ -163,6 +183,23 @@ public class World { // implements Screen
 	}
 	
 	public void render(float delta) {
+		if (bsp != null) {
+			TiledMap map = bsp.getMap();
+			if (map != null) {
+				worldMap = map;
+				bsp = null;
+				
+				worldRenderer = new OrthogonalTiledMapRenderer(map);
+				
+			}
+			return;
+		}
+		
+		if (worldRenderer != null) {
+			worldRenderer.setView(camera);
+			worldRenderer.render();
+		}	
+		
 		Character m = myClient.getCharacter();
 		if (m != null) {
 			m.process(delta);

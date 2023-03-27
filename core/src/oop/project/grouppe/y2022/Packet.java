@@ -38,6 +38,8 @@ public abstract class Packet {
 		regPacket(SKick.class);
 		regPacket(SEntCreate.class);
 		regPacket(SEntPos.class);
+		regPacket(SNewLevel.class);
+		regPacket(CGenerateDone.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -205,6 +207,41 @@ public abstract class Packet {
 			ent = world.getCharacterByNetID(s.readInt());
 			ent.setX(s.readFloat());
 			ent.setY(s.readFloat());
+		}
+	}
+	
+	public static class SNewLevel extends Packet {
+		public int header() { return 0x08; }
+		
+		String mapName;
+		int seed;
+		int tilesetIndex;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeUTF(mapName);
+			s.writeInt(seed);
+			s.writeInt(tilesetIndex);
+		}
+		public void read(DataInputStream s) throws IOException {
+			// OOF
+			world.setLevelName(s.readUTF());
+			world.generateMap(s.readInt(), s.readInt());
+		}
+	}
+	
+	public static class CGenerateDone extends Packet {
+		public int header() { return 0x09; }
+		
+		public int input;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(input);
+		}
+		public void read(DataInputStream s) throws IOException {
+			int input = s.readInt();
+			Client sender = getCSenderOrSMySelf();
+			if (sender.getMyPlayer().getNetID() != 1)
+				getCSenderOrSMySelf().applyInput(input);
 		}
 	}
 }

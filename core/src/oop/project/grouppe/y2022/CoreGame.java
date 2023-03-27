@@ -48,6 +48,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	@Override
 	public void create () {
+		
 		singleton = this;
 		rman = ResourceManager.instance();
 		rman.preloads();

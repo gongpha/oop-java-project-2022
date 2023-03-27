@@ -23,11 +23,13 @@ public class ResourceManager {
 		preloadFont("title_font", "font/JLX_Pixel.ttf", 80);
 		preloadFont("menu_font", "font/JLX_Pixel.ttf", 48);
 		
-		preloadTexture("defcharacter", "character/_def.png");
 		preloadTexture("oop", "core/oop.png");
 		
 		for (String s : Character.characters) {
 			preloadTexture("character__" + s, "character/" + s + ".png");
+		}
+		for (String s : BSPDungeonGenerator.tilesets) {
+			preloadTexture("tileset__" + s, "tileset/" + s + ".png");
 		}
 	}
 	
