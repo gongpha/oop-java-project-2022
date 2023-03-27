@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+
 // packets for communication
 
 public abstract class Packet {
@@ -32,8 +33,10 @@ public abstract class Packet {
 	
 	public static void regPackets() {
 		regPacket(CMyInfo.class);
+		regPacket(CInput.class);
 		regPacket(SNewPlayer.class);
 		regPacket(SKick.class);
+		regPacket(SEntCreate.class);
 		regPacket(SEntPos.class);
 	}
 	
@@ -72,9 +75,6 @@ public abstract class Packet {
 			int netID = s.readInt();
 			getCServer().newPlayerReceived(
 				getCSenderOrSMySelf(),
-				netID
-			);
-			getCSenderOrSMySelf().getMyPlayer().putData(
 				netID,
 				s.readUTF(),
 				s.readInt(), s.readInt(), s.readInt(), s.readInt()
@@ -82,13 +82,31 @@ public abstract class Packet {
 		}
 	}
 	
-	public static class SNewPlayer extends Packet {
+	public static class CInput extends Packet {
 		public int header() { return 0x02; }
 		
+		public int input;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(input);
+		}
+		public void read(DataInputStream s) throws IOException {
+			int input = s.readInt();
+			Client sender = getCSenderOrSMySelf();
+			if (sender.getMyPlayer().getNetID() != 1)
+				getCSenderOrSMySelf().applyInput(input);
+		}
+	}
+	
+	public static class SNewPlayer extends Packet {
+		public int header() { return 0x03; }
+		
+		int entID;
 		int netID;
 		Player p;
 		
 		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(entID);
 			s.writeInt(netID);
 			s.writeUTF(p.getUsername());
 			s.writeInt(p.getIdent(0));
@@ -97,14 +115,23 @@ public abstract class Packet {
 			s.writeInt(p.getIdent(3));
 		}
 		public void read(DataInputStream s) throws IOException {
+			int entID = s.readInt();
 			int netID = s.readInt();
-			Player p = getCSenderOrSMySelf().newPlayer(netID);
+			Client myClient = getCSenderOrSMySelf();
+			Player p = myClient.newPlayer(netID);
 			p.putData(netID, s.readUTF(), s.readInt(), s.readInt(), s.readInt(), s.readInt());
+			
+			Character ent = (Character) world.createEntityAuthorized(entID,
+				Character.class.getName()
+			);
+			ent.setupPlayer(p);
+			if (netID == myClient.getMyPlayer().getNetID())
+				myClient.setCharacter(ent);
 		}
 	}
 	
 	public static class SKick extends Packet {
-		public int header() { return 0x03; }
+		public int header() { return 0x04; }
 		
 		String reason;
 		
@@ -117,16 +144,64 @@ public abstract class Packet {
 		}
 	}
 	
-	public static class SEntPos extends Packet {
-		public int header() { return 0x04; }
+	public static class SEntCreate extends Packet {
+		public int header() { return 0x05; }
+		
+		int ID;
+		String name;
+		
+		byte[] forwardedBytes;
+		
+		// when using an object
 		Entity ent;
 		
 		public void write(DataOutputStream s) throws IOException {
-			s.writeInt(ent.getPlayer().getNetID());
+			if (ent != null) {
+				ID = ent.getID();
+				name = ent.getClass().getName();
+			}
+			s.writeInt(ID);
+			s.writeUTF(name);
+			
+			//ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			//DataOutputStream dos = new DataOutputStream(baos);
+			if (ent != null)
+				ent.serializeConstructor(s);
+			else
+				s.write(forwardedBytes);
+			//baos.flush();
+			//byte[] bytes = baos.toByteArray();
+			
+			//s.writeInt(bytes.length);
+			//s.write(bytes);
+		}
+		public void read(DataInputStream s) throws IOException {
+			ent = world.createEntityAuthorized(s.readInt(), s.readUTF());
+			//int size = s.readInt();
+			ent.deserializeConstructor(s);
+		}
+	}
+	
+	public static class SEntPos extends Packet {
+		public int header() { return 0x07; }
+		Entity ent;
+		boolean predictable = false;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(ent.getID());
+			s.writeBoolean(predictable);
 			s.writeFloat(ent.getX());
 			s.writeFloat(ent.getY());
 		}
 		public void read(DataInputStream s) throws IOException {
+			int netID = s.readInt();
+			predictable = s.readBoolean();
+			float X = s.readFloat();
+			float Y = s.readFloat();
+			
+			if (predictable && world.getMyClient().getMyPlayer().getNetID() == netID)
+				return; // this packet allows me to predict and also this is also myself. so don't care
+			
 			ent = world.getCharacterByNetID(s.readInt());
 			ent.setX(s.readFloat());
 			ent.setY(s.readFloat());

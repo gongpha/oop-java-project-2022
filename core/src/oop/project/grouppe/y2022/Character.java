@@ -6,7 +6,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class Character extends Entity {
 	private CoreGame game;
@@ -14,6 +16,15 @@ public class Character extends Entity {
 	private final TextureRegion region;
 	private Vector2 velocity;
 	private int input = 0;
+	private Player player = null;
+	
+	public final static String[] characters = {
+		"character1",
+		"character2",
+	};
+	
+	// for servers
+	//private Client client;
 	
 	public Character() {
 		game = CoreGame.instance();
@@ -27,6 +38,16 @@ public class Character extends Entity {
 		region.setRegionHeight(32);
 		
 		velocity = new Vector2();
+	}
+	
+	public Player getPlayer() {
+		return player;
+	}
+	public void setupPlayer(Player player) {
+		this.player = player;
+		region.setTexture(
+			(Texture) ResourceManager.instance().get("character__" + characters[player.getIdent(0)])
+		);
 	}
 	
 	public void setInput(int input) {
@@ -50,5 +71,12 @@ public class Character extends Entity {
 	
 	public void setCharacterSheet(Texture texture) {
 		region.setTexture(texture);
+	}
+	
+	public void serializeConstructor(DataOutputStream d) throws IOException {
+		d.writeInt(player.getNetID());
+	}
+	public void deserializeConstructor(DataInputStream d) throws IOException {
+		setupPlayer(world.getMyClient().getPlayer(d.readInt()));
 	}
 }

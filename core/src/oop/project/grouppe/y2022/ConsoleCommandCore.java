@@ -1,5 +1,7 @@
 package oop.project.grouppe.y2022;
 
+import com.badlogic.gdx.Gdx;
+
 public class ConsoleCommandCore {
 	public static ConsoleCommand[] regCommands() {
 		return new ConsoleCommand[]{
@@ -16,12 +18,12 @@ public class ConsoleCommandCore {
 			},
 			new ConsoleCommand("exit") {
 				public void exec(String[] args) {
-					System.exit(-1);
+					Gdx.app.exit();
 				}
 			},
 			new ConsoleCommand("quit") { // ^^^
 				public void exec(String[] args) {
-					System.exit(-1);
+					Gdx.app.exit();
 				}
 			},
 			new ConsoleCommand("help") {
@@ -35,17 +37,41 @@ public class ConsoleCommandCore {
 					console.printSep();
 					console.print("OOP Project Grouppe (OOP Java Project 2022)");
 					console.print("--- brought to you by . . . ---");
-					console.print("    65070013    Kongfa Waroros");
-					console.print("    65070024    Kullapat Kematorn");
-					console.print("    65070110    Nakarin Tiprat");
-					console.print("    65070231    Soraphon Natnan");
-					console.print("    65070245    Harrit Ide");
+					for (String[] s : Developers.names) {
+						console.print("    " + s[0] + "    " + s[1]);
+					}
 					console.printSep();
 				}
 			},
 			new ConsoleCommand("host") {
 				public void exec(String[] args) {
 					CoreGame.instance().hostGame();
+				}
+			},
+			new ConsoleCommand("join") {
+				public void exec(String[] args) {
+					CoreGame g = CoreGame.instance();
+					g.joinGame(g.getMenu().getIP(), false);
+				}
+			},
+			new ConsoleCommand("mmnu_customize_host") {
+				public void exec(String[] args) {
+					CoreGame.instance().getMenu().showCustomize(true);
+				}
+			},
+			new ConsoleCommand("mmnu_customize_join") {
+				public void exec(String[] args) {
+					CoreGame.instance().getMenu().showCustomize(false);
+				}
+			},
+			new ConsoleCommand("menu_settings") {
+				public void exec(String[] args) {
+					CoreGame.instance().getMenu().showSettings();
+				}
+			},
+			new ConsoleCommand("mmnu_credits") {
+				public void exec(String[] args) {
+					CoreGame.instance().getMenu().showCredits();
 				}
 			}
 			///////////////////////////////////////

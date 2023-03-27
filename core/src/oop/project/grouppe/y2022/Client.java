@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Random;
 
+// yo client
+
 public class Client extends Thread {
 	private Socket socket;
 	private String address;
@@ -22,7 +24,6 @@ public class Client extends Thread {
 	private Player player;
 	private Character character;
 	private Server server;
-	private Client client;
 	
 	// Client representation in the server
 	public Client(Server server, Socket socket) {
@@ -35,13 +36,13 @@ public class Client extends Thread {
 	}
 	
 	// REAL CLIENT FOR CLIENTS
-	public Client(String address, String username, int[] idents) {
+	public Client(String address, String username, int[] idents, boolean server) {
 		this.address = address;
 		puppet = false;
 		status = ConnectionStatus.OFFLINE;
 		player = new Player();
 		player.putData(
-			new Random().nextInt(),
+			server ? 1 : new Random().nextInt(),
 			username,
 			idents[0],
 			idents[1],
@@ -52,8 +53,15 @@ public class Client extends Thread {
 		players = new HashMap<>();
 	}
 	
+	public boolean isPuppet() {
+		return puppet;
+	}
+	
 	public Player getMyPlayer() {
 		return player;
+	}
+	public Player getPlayer(int netID) {
+		return players.get(netID);
 	}
 	
 	public Player newPlayer(int netID) {
@@ -62,7 +70,9 @@ public class Client extends Thread {
 		return player;
 	}
 	
-	public void setCharacter(Character character) { this.character = character; }
+	public void setCharacter(Character character) {
+		this.character = character;
+	}
 	public Character getCharacter() { return character; }
 	
 	public void send(Packet packet) {
@@ -136,7 +146,9 @@ public class Client extends Thread {
 				
 			} catch (Exception e) {
 				// OOF
+				StackTraceElement[] s = e.getStackTrace();
 				console.printerr("buffer reading failed (" + res + ") : " + e.getMessage());
+				console.showFull();
 				running = false;
 			}
 		}
@@ -147,5 +159,30 @@ public class Client extends Thread {
 	public void kill() {
 		if (socket != null) socket.dispose();
 		running = false;
+	}
+	
+	////////////////////////////////////
+	
+	// used by clients
+	public void updateInput(int newInput) {
+		Packet.CInput p = new Packet.CInput();
+		p.input = newInput;
+		send(p);
+		
+		// also predict my pos
+		applyInput(newInput);
+	}
+	
+	// used by servers (or predicting)
+	public void applyInput(int newInput) {
+		character.setInput(newInput);
+	}
+	
+	// used by servers ONLY
+	public void updateEntPos(Entity ent, boolean predictable) {
+		Packet.SEntPos p = new Packet.SEntPos();
+		p.ent = ent;
+		p.predictable = predictable;
+		server.broadcast(p);
 	}
 }

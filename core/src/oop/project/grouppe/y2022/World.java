@@ -14,8 +14,10 @@ public class World { // implements Screen
 	private Stage stage;
 	
 	private int input = 0;
+	private int lastID = 0;
 	
-	private Character myCharacter;
+	private Client myClient;
+	private HashMap<Integer, Entity> entities;
 	private HashMap<Integer, Character> clientCharacters;
 	
 	public class InputMap {
@@ -25,40 +27,86 @@ public class World { // implements Screen
 		public final static int RIGHT =		1 << 3;
 		public final static int DASH =		1 << 4;
 		
-		public final static int ATTACK1 =	1 << 4;
-		public final static int ATTACK2 =	1 << 5;
-		public final static int ATTACK3 =	1 << 6;
+		public final static int ATTACK1 =	1 << 5;
+		public final static int ATTACK2 =	1 << 6;
+		public final static int ATTACK3 =	1 << 7;
 	}
 	
 	public World() {
 		//this.server = server;
-		
+		Packet.world = this;
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
 		
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, w, h);
 		camera.update();
-		stage = new Stage(new FitViewport(w, h));
+		stage = new Stage(new FitViewport(w / 2, h / 2));
+		stage.getViewport().setCamera(camera);
 		
+		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();
 		
 		/////////////////////
 		
 	}
 	
-	public Character newCharacter(Player player) {
-		Character character = new Character();
-		character.setWorld(this);
-		character.setupPlayer(player);
-		clientCharacters.put(player.getNetID(), character);
-		stage.addActor(character);
-		
-		return character;
+	public void addEntity(Entity ent, int ID) {
+		ent.setWorld(this);
+		stage.addActor(ent);
+		entities.put(ID, ent);
+		ent.setID(ID);
 	}
+	
+	// FOR SERVER
+	//public void addEntity(Entity ent) {
+	//	addEntity(ent, entities.size() - 1);
+	//}
+	
+	public int allocateID() {
+		lastID += 1;
+		return lastID - 1;
+	}
+	
+	public void reportNewEntity(Entity ent) {
+		Packet.SEntCreate p = new Packet.SEntCreate();
+		p.ent = ent;
+		myClient.send(p);
+	}
+	
+	public Entity createEntityAuthorized(int ID, String className) {
+		try {
+			Entity ent = (Entity) Class.forName(className).getDeclaredConstructor().newInstance();
+			addEntity(ent, ID);
+			return ent;
+		} catch (Exception e) {
+			CoreGame.instance().getConsole().printerr("cannot create an entity : " + e.getMessage());
+		}
+		return null;
+	}
+	
+	// FOR SERVERS
+	//public Character newCharacter(Player player) {
+	//	Character character = new Character();
+	//	
+	//	addEntity(character);
+	//	character.setupPlayer(player);
+	//	reportNewEntity(character);
+	//	
+	//	clientCharacters.put(player.getNetID(), character);
+	//	
+	//	return character;
+	//}
 	
 	public Character getCharacterByNetID(int netID) {
 		return clientCharacters.get(netID);
+	}
+	
+	public void setMyClient(Client myClient) {
+		this.myClient = myClient;
+	}
+	public Client getMyClient() {
+		return myClient;
 	}
 	
 	public void changeMap() {
@@ -75,43 +123,53 @@ public class World { // implements Screen
 	}
 	
 	public boolean keyDown(int i) {
+		int old = input;
 		switch (i) {
 			case Input.Keys.A :
-				input |= InputMap.LEFT;
-				return true;
+				input |= InputMap.LEFT; break;
 			case Input.Keys.S :
-				input |= InputMap.DOWN;
-				return true;
+				input |= InputMap.DOWN; break;
 			case Input.Keys.D :
-				input |= InputMap.RIGHT;
-				return true;
+				input |= InputMap.RIGHT; break;
 			case Input.Keys.W :
-				input |= InputMap.UP;
-				return true;
+				input |= InputMap.UP; break;
+		}
+		if (old != input) {
+			// UPDATE THE INPUT
+			myClient.updateInput(input);
+			return true;
 		}
 		return false;
 	}
 	
 	public boolean keyUp(int i) {
+		int old = input;
 		switch (i) {
 			case Input.Keys.A :
-				input &= ~InputMap.LEFT;
-				return true;
+				input &= ~InputMap.LEFT; break;
 			case Input.Keys.S :
-				input &= ~InputMap.DOWN;
-				return true;
+				input &= ~InputMap.DOWN; break;
 			case Input.Keys.D :
-				input &= ~InputMap.RIGHT;
-				return true;
+				input &= ~InputMap.RIGHT; break;
 			case Input.Keys.W :
-				input &= ~InputMap.UP;
-				return true;
+				input &= ~InputMap.UP; break;
+		}
+		if (old != input) {
+			// UPDATE THE INPUT
+			myClient.updateInput(input);
+			return true;
 		}
 		return false;
 	}
 	
 	public void render(float delta) {
-		//myCharacter.process(delta);
+		Character m = myClient.getCharacter();
+		if (m != null) {
+			m.process(delta);
+			camera.position.set(m.getX(), m.getY(), 0.0f);
+			camera.update();
+		}
+		
 		
 		stage.act(delta);
 		stage.draw();

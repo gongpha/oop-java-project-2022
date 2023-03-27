@@ -7,6 +7,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 
@@ -20,6 +21,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private SpriteBatch batch;
 	public SpriteBatch getBatch() { return batch; }
 	public final static int PORT = 13131;
+	public final static int NAMELENGTH = 12;
+	
+	private Preferences pref;
+	public Preferences getPref() { return pref; }
 	
 	private Client client = null;
 	private Server server = null;
@@ -31,6 +36,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	public Console getConsole() { return console; }
 	
 	private Menu menu;
+	public Menu getMenu() { return menu; }
 	
 	private enum Status {
 		PRELOADING,
@@ -48,6 +54,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		batch = new SpriteBatch();
 		
 		console = new Console();
+		
+		pref = Gdx.app.getPreferences("oop.proj.2022.settings");
 		
 		Gdx.input.setInputProcessor(this);
 		////////////////////////////////
@@ -82,19 +90,22 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	public void hostGame() {
 		// UDP is unreliable, u kno ?
-		world = new World();
 		server = new Server(PORT);
 		server.start();
-		joinGame();
+		joinGame("localhost", true);
 	}
 	
-	public void joinGame() {
-		client = new Client("localhost",
-			"gongpha",
-			new int[]{0, 0, 0, 0}
+	public void joinGame(String ip, boolean server) {
+		client = new Client(ip,
+			menu.getUsername(),
+			new int[]{menu.getIdent1(), 0, 0, 0},
+			server
 		);
+		world = new World();
+		world.setMyClient(client);
 		client.start();
 		status = Status.PLAYING;
+		if (menu.isShowing()) menu.toggle();
 	}
 	
 	public void forceDisconnect(String reason) {
@@ -166,6 +177,14 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		if (console.isActivating()) {
 			if (console.keyTyped(c)) return true;
 		}
+		
+		
+		if (status == Status.PLAYING_DEMO) {
+			if (menu.isShowing()) {
+				return menu.keyTyped(c);
+			}
+		}
+		
 		return false;
 	}
 
@@ -191,7 +210,12 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		if (status == Status.PLAYING_DEMO) {
 			if (menu.isShowing()) {
 				if (i == Input.Keys.ESCAPE) {
-					menu.toggle();
+					if (menu.isOnRoot()) {
+						menu.toggle();
+					} else {
+						menu.showMain();
+					}
+					
 					return true;
 				} else {
 					return menu.keyDown(i);

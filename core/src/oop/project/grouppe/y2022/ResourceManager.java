@@ -3,6 +3,7 @@ package oop.project.grouppe.y2022;
 
 // a singleton class that provides you with resources
 
+import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
@@ -19,10 +20,15 @@ public class ResourceManager {
 	public void preloads() {
 		// FONTS
 		preloadFont("default_font", "font/JLX_Pixel.ttf", 32);
-		preloadFont("title_font", "font/JLX_Pixel.ttf", 64);
+		preloadFont("title_font", "font/JLX_Pixel.ttf", 80);
 		preloadFont("menu_font", "font/JLX_Pixel.ttf", 48);
 		
 		preloadTexture("defcharacter", "character/_def.png");
+		preloadTexture("oop", "core/oop.png");
+		
+		for (String s : Character.characters) {
+			preloadTexture("character__" + s, "character/" + s + ".png");
+		}
 	}
 	
 	//////////////////////////////////////////////////////////////////
@@ -72,11 +78,12 @@ public class ResourceManager {
 	}
 	
 	public void preloadFont(String name, String path, int size) {
-		map.put(name, path);
+		map.put(name, name + ".ttf");
 		FreeTypeFontLoaderParameter param = new FreeTypeFontLoaderParameter();
 		param.fontFileName = path;
 		param.fontParameters.size = size;
-		manager.load(path, BitmapFont.class, param);
+		manager.load(new AssetDescriptor<BitmapFont>(name + ".ttf", BitmapFont.class, param));
+		//manager.load(path, BitmapFont.class, param);
 	}
 	
 	public Object get(String name) {

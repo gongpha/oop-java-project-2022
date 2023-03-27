@@ -23,6 +23,7 @@ public class Console {
 	
 	private BitmapFont font;
 	private Texture bg;
+	private Texture sep;
 	
 	private double location = 1.0; // [0, 1]. 0 = fully hidden, 1 = fully showed
 	private int aniMoving = 0; // 1 = moving up, 2 = moving down. otherwise, do nothing
@@ -34,9 +35,8 @@ public class Console {
 	
 	private boolean activating = true;
 	
+	private TextInput textInput;
 	private float drawCaret = 0.0f; // [0, 2] (>= 1 : draw, < 1 : hide)
-	
-	private String lineEnter = "";
 	
 	class Line {
 		String content = "";
@@ -56,6 +56,8 @@ public class Console {
 		game = CoreGame.instance();
 		lines = new ArrayList<>();
 		history = new ArrayList<>();
+		textInput = new TextInput();
+		sep = new Texture("core/sep.png");
 		
 		execPattern = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'", Pattern.CASE_INSENSITIVE);
 		
@@ -67,7 +69,6 @@ public class Console {
 		font = generator.generateFont(param);
 		generator.dispose();
 		
-		//bgRegion.
 		bg = new Texture("core/console.jpg");
 		
 		batch = game.getBatch();
@@ -118,13 +119,16 @@ public class Console {
 			if (drawY > Gdx.graphics.getHeight()) continue; // off screen
 			
 			Line l = lines.get(i);
-			if (l.content.isEmpty()) continue; // TODO : sep
+			if (l.content.isEmpty()) {
+				batch.draw(sep, 25, 48 + drawY);
+				continue;
+			}
 			font.setColor(l.color);
 			font.draw(batch, l.content, 12, 64 + drawY);
 		}
 		
 		font.setColor(Color.WHITE);
-		font.draw(batch, "] " + lineEnter + (drawCaret > 1.0f ? "_" : ""), 12, 32 + relativeY);
+		font.draw(batch, "] " + textInput.getString() + (drawCaret > 1.0f ? "_" : ""), 12, 32 + relativeY);
 	}
 	
 	public boolean isActivating() {
@@ -134,22 +138,13 @@ public class Console {
 	// from game
 	public boolean keyTyped (char c) {
 		if (!activating) return false;
-		if (c == '\b' && !lineEnter.isEmpty()) {
-			// backspace
-			lineEnter = lineEnter.substring(0, lineEnter.length() - 1);
-			return true;
-		}
-		if (c >= 0x20) {
-			lineEnter += c;
-			return true;
-		}
-		return false;
+		return textInput.keyTyped(c);
 	}
 	
 	public boolean keyDown(int i) {
 		if (i == Input.Keys.ENTER) {
-			exec(lineEnter, false);
-			lineEnter = "";
+			exec(textInput.getString(), false);
+			textInput.setString("");
 		}
 		return false;
 	}
@@ -177,9 +172,14 @@ public class Console {
 	////////////////////////////
 	
 	public void print(String s) {
-		lines.add(new Line(s));
+		print(s, Color.WHITE);
 	}
 	public void print(String s, Color color) {
+		while (s.length() > 64) {
+			String l = s.substring(0, 70);
+			s = s.substring(64);
+			lines.add(new Line(l, color));
+		}
 		lines.add(new Line(s, color));
 	}
 	public void printSep() {
