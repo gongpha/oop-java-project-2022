@@ -157,8 +157,8 @@ public class Client extends Thread {
 	}
 	
 	public void kill() {
-		if (socket != null) socket.dispose();
 		running = false;
+		if (socket != null) socket.dispose();
 	}
 	
 	////////////////////////////////////

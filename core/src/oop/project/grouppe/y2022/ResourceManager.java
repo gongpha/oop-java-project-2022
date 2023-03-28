@@ -22,6 +22,7 @@ public class ResourceManager {
 		preloadFont("default_font", "font/JLX_Pixel.ttf", 32);
 		preloadFont("title_font", "font/JLX_Pixel.ttf", 80);
 		preloadFont("menu_font", "font/JLX_Pixel.ttf", 48);
+		preloadFont("hud_font", "font/JLX_Pixel.ttf", 60);
 		
 		preloadTexture("oop", "core/oop.png");
 		

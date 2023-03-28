@@ -4,11 +4,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import java.util.HashMap;
@@ -30,6 +33,10 @@ public class World { // implements Screen
 	private TiledMap worldMap = null;
 	private WorldRenderer worldRenderer = null;
 	private String currentLevelName = "The Nameless City";
+	
+	// HUD
+	
+	private BitmapFont hudFont1;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
 		public WorldRenderer(TiledMap map) { super(map); }
@@ -67,6 +74,12 @@ public class World { // implements Screen
 		
 		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();
+		
+		
+		hudFont1 = (BitmapFont) ResourceManager.instance().get("hud_font");
+		
+		
+		
 		
 		camera.update();
 		
@@ -205,7 +218,8 @@ public class World { // implements Screen
 				worldMap = map;
 				
 				worldRenderer = new WorldRenderer(map);
-				myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
+				if (myClient.getCharacter() != null)
+					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
 				
 				bsp = null;
 			}
@@ -219,14 +233,29 @@ public class World { // implements Screen
 		
 		Character m = myClient.getCharacter();
 		if (m != null) {
-			m.process(delta);
-			camera.position.set(m.getX() + 16.0f, m.getY() + 16.0f, 0.0f);
+			if (true || myClient.isPuppet()) // is server OR my character (todo)
+				m.process(delta);
+			
+			camera.position.set(
+				new Vector3(camera.position.x, camera.position.y, 0.0f).lerp(
+					new Vector3(m.getX() + 16.0f, m.getY() + 16.0f, 0.0f)
+				, delta * 15.0f)
+			);
 			camera.update();
 		}
 		
 		
 		stage.act(delta);
 		stage.draw();
+		
+		/////////////////////
+		if (m != null) {
+			SpriteBatch batch = CoreGame.instance().getBatch();
+			batch.begin();
+			batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f);
+			hudFont1.draw(batch, "" + m.getHealth(), 225.0f, 70.0f);
+			batch.end();
+		}
 	}
 	
 	public void resize(int w, int h) {

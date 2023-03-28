@@ -68,6 +68,19 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		
 	}
 	
+	public void killNet() {
+		if (client != null) {
+			client.kill();
+		}
+		if (server != null) {
+			server.kill();
+		}
+	}
+	
+	public void quit() {
+		Gdx.app.exit();
+	}
+	
 	////////////////////////////////////////////
 	
 	private void startGame() {
@@ -108,6 +121,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		world.setMyClient(client);
 		client.start();
 		status = Status.PLAYING;
+		menu.showAsPauseMenu();
 		if (menu.isShowing()) menu.toggle();
 	}
 	
@@ -140,7 +154,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			
 			if (done) {
 				// PRELOADING DONE !!!1!1
-				status = Status.PLAYING;
+				status = Status.PLAYING_DEMO;
 				startGame();
 				console.hide();
 			}
@@ -159,6 +173,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	@Override
 	public void dispose () {
+		killNet();
 		console.dispose();
 		rman.dispose();
 		batch.dispose();
@@ -210,26 +225,31 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			console.showHalf();
 			return true;
 		}
-		if (status == Status.PLAYING_DEMO) {
-			if (menu.isShowing()) {
-				if (i == Input.Keys.ESCAPE) {
+		if (status == Status.PLAYING_DEMO || status == Status.PLAYING) {
+			
+			if (i == Input.Keys.ESCAPE) {
+				if (menu.isShowing()) {
 					if (menu.isOnRoot()) {
 						menu.toggle();
 					} else {
 						menu.showMain();
 					}
-					
-					return true;
 				} else {
-					return menu.keyDown(i);
+					menu.toggle();
+					return true;
 				}
 			} else {
-				menu.toggle();
-				return true;
-			}
-		} else if (status == Status.PLAYING) {
-			if (world != null) {
-				if (world.keyDown(i)) return true;
+				if (menu.isShowing()) {
+					return menu.keyDown(i);
+				} else {
+					if (status == Status.PLAYING_DEMO) {
+						menu.toggle();
+						return true;
+					}
+					if (world != null) {
+						if (world.keyDown(i)) return true;
+					}
+				}
 			}
 		}
 		return false;

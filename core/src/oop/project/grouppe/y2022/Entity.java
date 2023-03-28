@@ -13,13 +13,22 @@ import java.io.IOException;
 public abstract class Entity extends Actor {
 	private World world = null;
 	private int ID;
-	private Server server = null;
+	//private Server server = null;
+	
+	private int health = 100;
 	
 	public void setID(int ID) {
 		this.ID = ID;
 	}
 	public int getID() {
 		return ID;
+	}
+	
+	public void setHealth(int health) {
+		this.health = health;
+	}
+	public int getHealth() {
+		return health;
 	}
 	
 	public void setWorld(World w) {
@@ -49,6 +58,16 @@ public abstract class Entity extends Actor {
 			world.getMyClient().updateEntPos(this, false); // no predicting
 	}
 	
+	/*
+		(gongpha)
+		this performs a fast collision check
+		by lookup the tile that was blocking us at our position directly
+		from the 2D array.
+	
+		but also gives us a trash result :/
+	
+		Should I improve it ? ( )
+	*/
 	public void collide(Vector2 rel) {
 		int XX = (int)(getX() + rel.x);
 		int YY = (int)(getY() + rel.y);
@@ -73,7 +92,7 @@ public abstract class Entity extends Actor {
 					//}
 
 					//rel.mul(-1.0f).
-					//rel = rel.sub(n.scl(rel.dot(n)));
+					//rel = rel.sub(n.scl(rel.dot(n))); <- SLIDE FUNCTION. BUT UNUSED
 					rel.x = 0.0f;
 					rel.y = 0.0f;
 					break;

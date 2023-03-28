@@ -139,10 +139,21 @@ public class Menu {
 		}
 	}
 	
+	public void showAsPauseMenu() {
+		isPauseMenu = true;
+		showMain();
+	}
+	
+	public void showAsMainMenu() {
+		isPauseMenu = false;
+		showMain();
+	}
+	
 	public void renderMainmenu() {
-		for (int i = 0; i < mainMenuStructure.length; i++) {
+		String[][] structure = getCurrentStructure();
+		for (int i = 0; i < structure.length; i++) {
 			font.draw(batch, (
-				(i == cursor ? ">> " : "") + mainMenuStructure[i][0]
+				(i == cursor ? ">> " : "") + structure[i][0]
 			), 200, 400 + (-48 * i));
 		}
 	}

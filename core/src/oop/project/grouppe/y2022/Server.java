@@ -111,11 +111,11 @@ public class Server extends Thread {
 	}
 	
 	public void kill() {
+		running = false;
 		for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
 			e.getValue().kill();
 		}
 		clients.clear();
-		running = false;
 		if (server != null) server.dispose();
 	}
 }

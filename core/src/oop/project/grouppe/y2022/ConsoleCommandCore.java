@@ -18,12 +18,12 @@ public class ConsoleCommandCore {
 			},
 			new ConsoleCommand("exit") {
 				public void exec(String[] args) {
-					Gdx.app.exit();
+					CoreGame.instance().quit();
 				}
 			},
 			new ConsoleCommand("quit") { // ^^^
 				public void exec(String[] args) {
-					Gdx.app.exit();
+					CoreGame.instance().quit();
 				}
 			},
 			new ConsoleCommand("help") {
@@ -72,6 +72,11 @@ public class ConsoleCommandCore {
 			new ConsoleCommand("mmnu_credits") {
 				public void exec(String[] args) {
 					CoreGame.instance().getMenu().showCredits();
+				}
+			},
+			new ConsoleCommand("menu_toggle") {
+				public void exec(String[] args) {
+					CoreGame.instance().getMenu().toggle();
 				}
 			}
 			///////////////////////////////////////
