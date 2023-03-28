@@ -2,6 +2,8 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
@@ -12,12 +14,13 @@ import java.util.Random;
 // i feel stupido
 
 public class BSPDungeonGenerator extends Thread {
-	private int seed;
+	private long seed;
 	private int sizeX;
 	private int sizeY;
 	private int scale = 5;
 	private TiledMap map;
 	private TiledMapTileLayer layerRoom;
+	private MapLayer layerObj;
 	
 	private final StaticTiledMapTile wall;
 	private final StaticTiledMapTile wallTop;
@@ -26,21 +29,35 @@ public class BSPDungeonGenerator extends Thread {
 	private final Cell CwallTop;
 	private final Cell Cfloor;
 	
+	private final TextureMapObject entrance;
+	
+	private Room bottomRoom;
+	private int bottomRoomY;
+	
 	private char[][] tiles;
 	private boolean done = false;
+	
+	private float spawnPointX;
+	private float spawnPointY;
 	
 	public final static String[] tilesets = {
 		"dun1",
 	};
 	
-	public BSPDungeonGenerator(int seed, int sizeX, int sizeY, Texture tileset) {
+	public BSPDungeonGenerator(long seed, int sizeX, int sizeY, Texture tileset) {
 		this.seed = seed;
 		this.sizeX = sizeX;
 		this.sizeY = sizeY;
 		
+		bottomRoom = null;
+		bottomRoomY = sizeY;
+		
 		wall = new StaticTiledMapTile(new TextureRegion(tileset, 0, 0, 32, 32));
 		wallTop = new StaticTiledMapTile(new TextureRegion(tileset, 32, 0, 32, 32));
 		floor = new StaticTiledMapTile(new TextureRegion(tileset, 64, 0, 32, 32));
+		
+		wall.getProperties().put("col", true);
+		wallTop.getProperties().put("col", true);
 		
 		Cwall = new Cell();
 		CwallTop = new Cell();
@@ -52,12 +69,19 @@ public class BSPDungeonGenerator extends Thread {
 		tiles = new char[sizeX][sizeY];
 		map = new TiledMap();
 		layerRoom = new TiledMapTileLayer(sizeX * scale, sizeY * scale, 32, 32);
+		layerObj = new MapLayer();
 		
+		entrance = new TextureMapObject();
+		entrance.setTextureRegion(new TextureRegion(tileset, 0, 32, 128, 32));
+		layerObj.getObjects().add(entrance);
+		
+		layerRoom.setName("tiles");
 		map.getLayers().add(layerRoom);
+		layerObj.setName("objs");
+		map.getLayers().add(layerObj);
 	}
 	
 	public void startGenerate() {
-		this.seed = seed;
 		start();
 	}
 	
@@ -66,12 +90,25 @@ public class BSPDungeonGenerator extends Thread {
 		Random r = new Random(seed);
 		root.split(r, 6);
 		printTiles();
+		
+		entrance.setX(bottomRoom.X * layerRoom.getTileWidth() * scale);
+		entrance.setY(bottomRoom.Y * layerRoom.getTileHeight() * (scale - 1));
+		spawnPointX = entrance.getX() + layerRoom.getTileWidth();
+		spawnPointY = entrance.getY() + layerRoom.getTileHeight();
+		
 		done = true;
 	}
 	
 	public TiledMap getMap() {
 		if (done) return map;
 		return null;
+	}
+	
+	public float getSpawnPointX() {
+		return spawnPointX;
+	}
+	public float getSpawnPointY() {
+		return spawnPointY;
 	}
 	
 	public void printTiles() {
@@ -146,6 +183,11 @@ public class BSPDungeonGenerator extends Thread {
 			Y += y;
 			sizeX -= lerp(0, sizeX / 2, rand.nextFloat()) + x;
 			sizeY -= lerp(0, sizeY / 2, rand.nextFloat()) + y;
+			
+			if (Y < bottomRoomY) {
+				bottomRoom = this;
+				bottomRoomY = Y;
+			}
 		}
 		
 		public void split(Random rand, int iteration) {

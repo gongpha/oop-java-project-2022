@@ -14,9 +14,14 @@ public class Character extends Entity {
 	private CoreGame game;
 	private World world;
 	private final TextureRegion region;
+	
+	// SERVER & PREDICTABLE
 	private Vector2 velocity;
+	private Vector2 wishdir;
 	private int input = 0;
+	
 	private Player player = null;
+	private float speed = 400.0f;
 	
 	public final static String[] characters = {
 		"character1",
@@ -33,6 +38,7 @@ public class Character extends Entity {
 		region = new TextureRegion();
 		
 		velocity = new Vector2();
+		wishdir = new Vector2();
 	}
 	
 	public Player getPlayer() {
@@ -56,11 +62,14 @@ public class Character extends Entity {
 	public void process(float delta) {
 		World world = getWorld();
 		
-		velocity.x = world.isPressedInt(World.InputMap.RIGHT) - world.isPressedInt(World.InputMap.LEFT);
-		velocity.y = world.isPressedInt(World.InputMap.UP) - world.isPressedInt(World.InputMap.DOWN);
+		wishdir.x = world.isPressedInt(World.InputMap.RIGHT) - world.isPressedInt(World.InputMap.LEFT);
+		wishdir.y = world.isPressedInt(World.InputMap.UP) - world.isPressedInt(World.InputMap.DOWN);
+		wishdir = wishdir.nor();
 		
+		// accel
+		velocity = velocity.lerp(wishdir.scl(speed * delta), delta * 20.0f);
 		
-		move(velocity.scl(50.0f));
+		move(velocity);
 	}
 	
 	@Override

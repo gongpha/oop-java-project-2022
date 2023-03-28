@@ -81,8 +81,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	// WONT CALL IF NOT PLAYING (status)
 	private void renderBatch() {
 		if (world != null) {
+			batch.end();
 			float delta = Gdx.graphics.getDeltaTime();
 			world.render(delta);
+			batch.begin();
 		}
 		menu.renderMenu();
 	}
@@ -125,7 +127,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public void render () {
-		ScreenUtils.clear(1, 0, 0, 1);
+		ScreenUtils.clear(0, 0, 0, 1);
 		batch.begin();
 		//batch.draw(img, 0, 0);
 		//

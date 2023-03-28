@@ -4,6 +4,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -25,8 +28,17 @@ public class World { // implements Screen
 	
 	private BSPDungeonGenerator bsp = null;
 	private TiledMap worldMap = null;
-	private OrthogonalTiledMapRenderer worldRenderer = null;
+	private WorldRenderer worldRenderer = null;
 	private String currentLevelName = "The Nameless City";
+	
+	public class WorldRenderer extends OrthogonalTiledMapRenderer {
+		public WorldRenderer(TiledMap map) { super(map); }
+
+		public void renderObject (MapObject object) {
+			TextureMapObject t = (TextureMapObject)object;
+			batch.draw(t.getTextureRegion(), t.getX(), t.getY());
+		}
+	}
 	
 	public class InputMap {
 		public final static int UP =		1;
@@ -51,7 +63,7 @@ public class World { // implements Screen
 		
 		stage = new Stage(new FitViewport(w, h));
 		stage.getViewport().setCamera(camera);
-		camera.zoom = 2.0f;
+		camera.zoom = 0.5f;
 		
 		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();
@@ -60,7 +72,7 @@ public class World { // implements Screen
 		
 		/////////////////////
 		
-		generateMap(13, 0);
+		generateMap(System.nanoTime(), 0);
 	}
 	
 	public void setLevelName(String name) {
@@ -101,6 +113,10 @@ public class World { // implements Screen
 		return null;
 	}
 	
+	public TiledMap getWorldMap() {
+		return worldMap;
+	}
+	
 	// FOR SERVERS
 	//public Character newCharacter(Player player) {
 	//	Character character = new Character();
@@ -125,7 +141,7 @@ public class World { // implements Screen
 		return myClient;
 	}
 	
-	public void generateMap(int seed, int tilesetIndex) {
+	public void generateMap(long seed, int tilesetIndex) {
 		bsp = new BSPDungeonGenerator(seed, 64, 64,
 			(Texture)
 			ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex])
@@ -187,10 +203,11 @@ public class World { // implements Screen
 			TiledMap map = bsp.getMap();
 			if (map != null) {
 				worldMap = map;
+				
+				worldRenderer = new WorldRenderer(map);
+				myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
+				
 				bsp = null;
-				
-				worldRenderer = new OrthogonalTiledMapRenderer(map);
-				
 			}
 			return;
 		}
@@ -203,7 +220,7 @@ public class World { // implements Screen
 		Character m = myClient.getCharacter();
 		if (m != null) {
 			m.process(delta);
-			camera.position.set(m.getX(), m.getY(), 0.0f);
+			camera.position.set(m.getX() + 16.0f, m.getY() + 16.0f, 0.0f);
 			camera.update();
 		}
 		
