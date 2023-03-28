@@ -1,7 +1,6 @@
 package oop.project.grouppe.y2022;
 
-import com.badlogic.gdx.maps.MapLayer;
-import com.badlogic.gdx.maps.MapLayers;
+import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.math.Vector2;
@@ -46,7 +45,7 @@ public abstract class Entity extends Actor {
 		setX(getX() + rel.x);
 		setY(getY() + rel.y);
 		
-		if (world.getMyClient().isPuppet()) // if server
+		if (world.getMyClient().isServer()) // if server
 			world.getMyClient().updateEntPos(this, true);
 	}
 	
@@ -54,7 +53,7 @@ public abstract class Entity extends Actor {
 		setX(X);
 		setY(Y);
 		
-		if (world.getMyClient().isPuppet()) // if server
+		if (world.getMyClient().isServer()) // if server
 			world.getMyClient().updateEntPos(this, false); // no predicting
 	}
 	
@@ -71,7 +70,10 @@ public abstract class Entity extends Actor {
 	public void collide(Vector2 rel) {
 		int XX = (int)(getX() + rel.x);
 		int YY = (int)(getY() + rel.y);
-		TiledMapTileLayer l = (TiledMapTileLayer) world.getWorldMap().getLayers().get("tiles");
+		TiledMap worldMap = world.getWorldMap();
+		if (worldMap == null) return; // no map ?
+		TiledMapTileLayer l = (TiledMapTileLayer) worldMap.getLayers().get("tiles");
+		if (l == null) return; // not in the generated tiles
 			
 		int[][] cs = new int[][] {
 			{0, 0},
@@ -110,5 +112,5 @@ public abstract class Entity extends Actor {
 	public abstract void serializeConstructor(DataOutputStream d) throws IOException;
 	public abstract void deserializeConstructor(DataInputStream d) throws IOException;
 	
-	public abstract void process(float delta);
+	public abstract void process(float delta, boolean prediction);
 }

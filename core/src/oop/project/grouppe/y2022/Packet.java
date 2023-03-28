@@ -34,11 +34,13 @@ public abstract class Packet {
 	public static void regPackets() {
 		regPacket(CMyInfo.class);
 		regPacket(CInput.class);
+		regPacket(SSyncState.class);
 		regPacket(SNewPlayer.class);
 		regPacket(SKick.class);
 		regPacket(SEntCreate.class);
 		regPacket(SEntPos.class);
 		regPacket(SNewLevel.class);
+		regPacket(SGenLevel.class);
 		regPacket(CGenerateDone.class);
 	}
 	
@@ -60,7 +62,7 @@ public abstract class Packet {
 	//////////////////////////////////////////////////////
 	
 	public static class CMyInfo extends Packet {
-		public int header() { return 0x01; }
+		public int header() { return 1; }
 		
 		public Client inClient;
 		
@@ -85,7 +87,7 @@ public abstract class Packet {
 	}
 	
 	public static class CInput extends Packet {
-		public int header() { return 0x02; }
+		public int header() { return 2; }
 		
 		public int input;
 		
@@ -100,8 +102,31 @@ public abstract class Packet {
 		}
 	}
 	
+	public static class SSyncState extends Packet {
+		public int header() { return 3; }
+		
+		public void write(DataOutputStream s) throws IOException {
+			HashMap<Integer, Client> clients = getCServer().dumpClients();
+			s.writeInt(clients.size());
+			for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
+				Player p = e.getValue().getMyPlayer();
+				s.writeInt(e.getValue().getCharacter().getID());
+				p.writeStream(s);
+			}
+		}
+		public void read(DataInputStream s) throws IOException {
+			for (int i = 0; i < s.readInt(); i++) {
+				Player p = new Player();
+				int entID = s.readInt();
+				p.readStream(s);
+				getCSenderOrSMySelf().newPlayer(p);
+				world.registerNewPlayer(entID, p);
+			}
+			world.markReady();
+		}
+	}
 	public static class SNewPlayer extends Packet {
-		public int header() { return 0x03; }
+		public int header() { return 4; }
 		
 		int entID;
 		int netID;
@@ -118,22 +143,16 @@ public abstract class Packet {
 		}
 		public void read(DataInputStream s) throws IOException {
 			int entID = s.readInt();
-			int netID = s.readInt();
 			Client myClient = getCSenderOrSMySelf();
-			Player p = myClient.newPlayer(netID);
-			p.putData(netID, s.readUTF(), s.readInt(), s.readInt(), s.readInt(), s.readInt());
-			
-			Character ent = (Character) world.createEntityAuthorized(entID,
-				Character.class.getName()
-			);
-			ent.setupPlayer(p);
-			if (netID == myClient.getMyPlayer().getNetID())
-				myClient.setCharacter(ent);
+			Player p = new Player();
+			p.readStream(s);
+			myClient.newPlayer(p);
+			world.registerNewPlayer(entID, p);
 		}
 	}
 	
 	public static class SKick extends Packet {
-		public int header() { return 0x04; }
+		public int header() { return 5; }
 		
 		String reason;
 		
@@ -147,7 +166,7 @@ public abstract class Packet {
 	}
 	
 	public static class SEntCreate extends Packet {
-		public int header() { return 0x05; }
+		public int header() { return 6; }
 		
 		int ID;
 		String name;
@@ -185,7 +204,7 @@ public abstract class Packet {
 	}
 	
 	public static class SEntPos extends Packet {
-		public int header() { return 0x07; }
+		public int header() { return 7; }
 		Entity ent;
 		boolean predictable = false;
 		
@@ -211,7 +230,21 @@ public abstract class Packet {
 	}
 	
 	public static class SNewLevel extends Packet {
-		public int header() { return 0x08; }
+		public int header() { return 8; }
+		
+		String mapName;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeUTF(mapName);
+		}
+		public void read(DataInputStream s) throws IOException {
+			// OOF
+			world.loadMap(s.readUTF());
+		}
+	}
+	
+	public static class SGenLevel extends Packet {
+		public int header() { return 9; }
 		
 		String mapName;
 		int seed;
@@ -230,7 +263,7 @@ public abstract class Packet {
 	}
 	
 	public static class CGenerateDone extends Packet {
-		public int header() { return 0x09; }
+		public int header() { return 10; }
 		
 		public int input;
 		

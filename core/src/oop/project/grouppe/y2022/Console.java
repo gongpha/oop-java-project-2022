@@ -175,9 +175,9 @@ public class Console {
 		print(s, Color.WHITE);
 	}
 	public void print(String s, Color color) {
-		while (s.length() > 64) {
-			String l = s.substring(0, 70);
-			s = s.substring(64);
+		while (s.length() > 80) {
+			String l = s.substring(0, 80);
+			s = s.substring(80);
 			lines.add(new Line(l, color));
 		}
 		lines.add(new Line(s, color));

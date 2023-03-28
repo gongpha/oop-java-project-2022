@@ -1,6 +1,10 @@
 
 package oop.project.grouppe.y2022;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 public class Player {
 	private int netID;
 	private String username;
@@ -22,6 +26,24 @@ public class Player {
 	
 	public int getNetID() {
 		return netID;
+	}
+	
+	public void writeStream(DataOutputStream s) throws IOException {
+		s.writeInt(netID);
+		s.writeUTF(username);
+		s.writeInt(idents[0]);
+		s.writeInt(idents[1]);
+		s.writeInt(idents[2]);
+		s.writeInt(idents[3]);
+	}
+	
+	public void readStream(DataInputStream s) throws IOException {
+		netID = s.readInt();
+		username = s.readUTF();
+		idents[0] = s.readInt();
+		idents[1] = s.readInt();
+		idents[2] = s.readInt();
+		idents[3] = s.readInt();
 	}
 	
 	public void putData(

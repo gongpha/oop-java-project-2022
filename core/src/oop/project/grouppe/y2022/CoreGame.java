@@ -8,7 +8,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 public class CoreGame extends ApplicationAdapter implements InputProcessor {
@@ -28,6 +31,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	private Client client = null;
 	private Server server = null;
+	public Server getServer() { return server; }
+	private boolean connectOK = false;
 	
 	private World world;
 	public World getWorld() { return world; }
@@ -38,21 +43,27 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private Menu menu;
 	public Menu getMenu() { return menu; }
 	
+	private float flash = 0.0f;
+	private ShapeRenderer shapeRenderer;
+	
 	private enum Status {
 		PRELOADING,
 		
 		PLAYING_DEMO, // in Main menu
-		PLAYING
+		PLAYING,
+		
+		CONNECTING,
 	}
 	private Status status = Status.PRELOADING;
 	
 	@Override
-	public void create () {
+	public void create() {
 		
 		singleton = this;
 		rman = ResourceManager.instance();
 		rman.preloads();
 		batch = new SpriteBatch();
+		shapeRenderer = new ShapeRenderer();
 		
 		console = new Console();
 		
@@ -93,12 +104,26 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	// WONT CALL IF NOT PLAYING (status)
 	private void renderBatch() {
+		float delta = Gdx.graphics.getDeltaTime();
 		if (world != null) {
 			batch.end();
-			float delta = Gdx.graphics.getDeltaTime();
+			
 			world.render(delta);
 			batch.begin();
 		}
+		
+		if (flash > 0.0) {
+			Gdx.gl.glEnable(GL20.GL_BLEND);
+			Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+			shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+			shapeRenderer.setColor(new Color(1.0f, 1.0f, 0.0f, flash));
+			shapeRenderer.rect(0.0f, 0.0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+			shapeRenderer.end();
+			
+			Gdx.gl.glDisable(GL20.GL_BLEND);
+			flash -= delta * 2.0f;
+		}
+		
 		menu.renderMenu();
 	}
 	
@@ -108,18 +133,24 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		// UDP is unreliable, u kno ?
 		server = new Server(PORT);
 		server.start();
-		joinGame("localhost", true);
+		joinGame("localhost");
 	}
 	
-	public void joinGame(String ip, boolean server) {
+	public void joinGame(String ip) {
 		client = new Client(ip,
 			menu.getUsername(),
 			new int[]{menu.getIdent1(), 0, 0, 0},
 			server
 		);
+		client.start();
+		status = Status.CONNECTING;
+	}
+	
+	public void enterWorld() {
 		world = new World();
 		world.setMyClient(client);
-		client.start();
+		client.sendMyInfo();
+		
 		status = Status.PLAYING;
 		menu.showAsPauseMenu();
 		if (menu.isShowing()) menu.toggle();
@@ -137,6 +168,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		console.showFull();
 	}
 	
+	public void flashScreen() {
+		flash = 0.5f;
+	}
+	
 	////////////////////////////////////////////
 
 	@Override
@@ -145,6 +180,9 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		batch.begin();
 		//batch.draw(img, 0, 0);
 		//
+		
+		
+		
 		switch (status) {
 		case PRELOADING:
 			boolean done = rman.poll();
@@ -164,8 +202,14 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		case PLAYING:
 			renderBatch();
 			break;
+		case CONNECTING:
+			if (connectOK) {
+				enterWorld();
+				connectOK = false;
+			}
+			break;
 		}
-		
+
 		console.renderConsole();
 		//
 		batch.end();
@@ -187,6 +231,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	public void tellServerKilled() {
 		server = null;
+	}
+	
+	public void tellConnectSuccess() {
+		connectOK = true;
 	}
 	
 	////////////////////////////////////////////

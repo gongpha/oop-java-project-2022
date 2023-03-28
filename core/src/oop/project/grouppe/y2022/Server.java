@@ -52,18 +52,31 @@ public class Server extends Thread {
 		// wait for the client to send their info (CMyInfo)
 	}
 	
+	public Client getClient(int netID) {
+		return clients.get(netID);
+	}
+	
+	public HashMap<Integer, Client> dumpClients() {
+		return clients;
+	}
+	
 	public void newPlayerReceived(
 		Client client, int netID,
 		String name,
 		int i1, int i2, int i3, int i4
 	) {
+		// send everyone to the new player
+		Packet.SSyncState P = new Packet.SSyncState();
+		client.send(P);
+		
 		clients.put(netID, client);
-		// and . . . send to all players
+		client.getMyPlayer().putData(netID, name, i1, i2, i3, i4);
+		
+		// and . . . send to all players (this client too. becuz it includes an entID)
 		Packet.SNewPlayer p = new Packet.SNewPlayer();
 		p.entID = game.getWorld().allocateID();
 		p.netID = netID;
 		p.p = client.getMyPlayer();
-		p.p.putData(netID, name, i1, i2, i3, i4);
 		broadcast(p);
 		
 		

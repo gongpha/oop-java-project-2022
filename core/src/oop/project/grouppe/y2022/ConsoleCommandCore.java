@@ -51,7 +51,7 @@ public class ConsoleCommandCore {
 			new ConsoleCommand("join") {
 				public void exec(String[] args) {
 					CoreGame g = CoreGame.instance();
-					g.joinGame(g.getMenu().getIP(), false);
+					g.joinGame(g.getMenu().getIP());
 				}
 			},
 			new ConsoleCommand("mmnu_customize_host") {
@@ -77,6 +77,11 @@ public class ConsoleCommandCore {
 			new ConsoleCommand("menu_toggle") {
 				public void exec(String[] args) {
 					CoreGame.instance().getMenu().toggle();
+				}
+			},
+			new ConsoleCommand("flash") {
+				public void exec(String[] args) {
+					CoreGame.instance().flashScreen();
 				}
 			}
 			///////////////////////////////////////

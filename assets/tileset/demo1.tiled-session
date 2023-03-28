@@ -9,11 +9,11 @@
     ],
     "fileStates": {
         "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx": {
-            "scale": 2,
-            "selectedLayer": 0,
+            "scale": 3,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 85,
-                "y": 141
+                "x": 65,
+                "y": 103.66666666666667
             }
         },
         "demo1.tsx": {
@@ -22,18 +22,21 @@
         }
     },
     "last.imagePath": "D:/Repos/oop-java-project-2022/assets/tileset",
-    "map.fixedSize": false,
+    "map.fixedSize": true,
+    "map.height": 100,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
+    "map.width": 100,
     "openFiles": [
         "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx",
         "demo1.tsx"
     ],
     "project": "demo1.tiled-project",
+    "property.type": "object",
     "recentFiles": [
-        "demo1.tsx",
-        "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx"
+        "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx",
+        "demo1.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

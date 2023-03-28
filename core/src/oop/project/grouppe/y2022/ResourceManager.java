@@ -7,13 +7,14 @@ import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader.FreeTypeFontLoaderParameter;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import java.util.HashMap;
 
 public class ResourceManager {
@@ -25,6 +26,8 @@ public class ResourceManager {
 		preloadFont("hud_font", "font/JLX_Pixel.ttf", 60);
 		
 		preloadTexture("oop", "core/oop.png");
+		
+		preloadMap("demo1", "map/demo1.tmx");
 		
 		for (String s : Character.characters) {
 			preloadTexture("character__" + s, "character/" + s + ".png");
@@ -45,7 +48,7 @@ public class ResourceManager {
 		return singleton;
 	}
 	
-	private AssetManager manager; // O_O
+	private AssetManager manager;
 	private HashMap<String, String> map; // < Name : Path >
 	private HashMap<String, Object> loaded; // < Name : Object >
 	
@@ -60,6 +63,9 @@ public class ResourceManager {
 		FileHandleResolver resolver = new InternalFileHandleResolver();
 		manager.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(resolver));
 		manager.setLoader(BitmapFont.class, ".ttf", new FreetypeFontLoader(resolver));
+		
+		// tiled map
+		manager.setLoader(TiledMap.class, new TmxMapLoader(new InternalFileHandleResolver()));
 	}
 	
 	public boolean poll() {
@@ -87,6 +93,11 @@ public class ResourceManager {
 		param.fontParameters.size = size;
 		manager.load(new AssetDescriptor<BitmapFont>(name + ".ttf", BitmapFont.class, param));
 		//manager.load(path, BitmapFont.class, param);
+	}
+	
+	public void preloadMap(String name, String path) {
+		map.put(name, path);
+		manager.load(path, TiledMap.class);
 	}
 	
 	public Object get(String name) {

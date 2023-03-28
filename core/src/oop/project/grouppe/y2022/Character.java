@@ -116,7 +116,7 @@ public class Character extends Entity {
 		return input;
 	}
 	
-	public void process(float delta) {
+	public void process(float delta, boolean prediction) {
 		World world = getWorld();
 		
 		wishdir.x = world.isPressedInt(World.InputMap.RIGHT) - world.isPressedInt(World.InputMap.LEFT);

@@ -36,13 +36,16 @@ public class Client extends Thread {
 	}
 	
 	// REAL CLIENT FOR CLIENTS
-	public Client(String address, String username, int[] idents, boolean server) {
+	public Client(String address, String username, int[] idents, Server server) {
 		this.address = address;
+		if (address.isEmpty())
+			this.address = "localhost";
 		puppet = false;
 		status = ConnectionStatus.OFFLINE;
 		player = new Player();
+		this.server = server;
 		player.putData(
-			server ? 1 : new Random().nextInt(),
+			server != null ? 1 : new Random().nextInt(),
 			username,
 			idents[0],
 			idents[1],
@@ -57,6 +60,10 @@ public class Client extends Thread {
 		return puppet;
 	}
 	
+	public boolean isServer() {
+		return server != null;
+	}
+	
 	public Player getMyPlayer() {
 		return player;
 	}
@@ -64,10 +71,8 @@ public class Client extends Thread {
 		return players.get(netID);
 	}
 	
-	public Player newPlayer(int netID) {
-		Player player = new Player();
-		players.put(netID, player);
-		return player;
+	public void newPlayer(Player player) {
+		players.put(player.getNetID(), player);
 	}
 	
 	public void setCharacter(Character character) {
@@ -82,6 +87,7 @@ public class Client extends Thread {
 			OutputStream o = socket.getOutputStream();
 			DataOutputStream dos = new DataOutputStream(o);
 			dos.writeByte(packet.header());
+			packet.setCServer(server);
 			packet.write(dos);
 			o.flush();
 		} catch (Exception e) {
@@ -89,9 +95,9 @@ public class Client extends Thread {
 			Console console = CoreGame.instance().getConsole();
 			console.printerr(
 				(puppet) ?
-					("Sending packet to client failed : " + e.getMessage())
+					("Sending packet to client failed (" + packet.header() + "): " + e.getMessage())
 					:
-					("Sending packet to client server : " + e.getMessage())
+					("Sending packet to client server (" + packet.header() + "): " + e.getMessage())
 			);
 		}
 	}
@@ -100,7 +106,8 @@ public class Client extends Thread {
 	
 	public void run() {
 		int retries = 0;
-		Console console = CoreGame.instance().getConsole();
+		CoreGame game = CoreGame.instance();
+		Console console = game.getConsole();
 		if (!puppet) {
 			status = ConnectionStatus.CONNECTING;
 			while (true) {
@@ -109,9 +116,8 @@ public class Client extends Thread {
 					socket = Gdx.net.newClientSocket(Net.Protocol.TCP, address, CoreGame.PORT, new GameSocketHint());
 					status = ConnectionStatus.CONNECTED;
 					console.print("Connected to the server " + address + " ! Sending my info . . .");
-					Packet.CMyInfo p = new Packet.CMyInfo();
-					p.inClient = this;
-					send(p);
+					game.tellConnectSuccess();
+					// the world will invoke the sendMyInfo method
 					break;
 				} catch (Exception e) {
 					retries += 1;
@@ -126,6 +132,12 @@ public class Client extends Thread {
 			}
 		}
 		
+	}
+	
+	public void sendMyInfo() {
+		Packet.CMyInfo p = new Packet.CMyInfo();
+		p.inClient = this;
+		send(p);
 	}
 	
 	public void feedPacket() {
