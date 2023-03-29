@@ -4,8 +4,11 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import java.io.DataInputStream;
@@ -34,6 +37,8 @@ public class Character extends Entity {
 	
 	private Player player = null;
 	private float speed = 400.0f;
+	
+	private final BitmapFont labelFont;
 	
 	public class MoveDirection {
 		public final static int UP =		1;
@@ -78,7 +83,7 @@ public class Character extends Entity {
 	
 	// convert wishdir (input) to a direction number
 	// [-1, 0, 1] + 1 = [0, 1, 2] ( [y][x] ) (@^@)> what the hell
-	private final static int[][] directionBywishdir = {
+	private final static byte[][] directionBywishdir = {
 		{2, 1, 5},
 		{3, 0, 6},
 		{4, 0, 7}
@@ -90,10 +95,17 @@ public class Character extends Entity {
 	};
 	
 	private float animationIndex = 0.0f; // [0, 3] index [0, 1, 2] by Math.floor ((int) cast)
+	public void setAnimationIndex(float a) { animationIndex = a; }
+	public float getAnimationIndex() { return animationIndex; }
 	
 	// control by the server & prediction (?)
-	private int direction = 0; // I HATE (java) ENUMS
+	private byte direction = 0; // I HATE (java) ENUMS
+	public void setDirection(byte a) { direction = a; }
+	public byte getDirection() { return direction; }
+	
 	private boolean animating = false;
+	public void setAnimating(boolean a) { animating = a; }
+	public boolean getAnimating() { return animating; }
 	
 	// for servers
 	//private Client client;
@@ -101,6 +113,7 @@ public class Character extends Entity {
 	public Character() {
 		game = CoreGame.instance();
 		world = game.getWorld();
+		labelFont = (BitmapFont) ResourceManager.instance().get("character_name_font");
 		
 		region = new TextureRegion();
 		regionIcon = new TextureRegion();
@@ -149,12 +162,12 @@ public class Character extends Entity {
 	public void process(float delta, boolean prediction) {
 		wishdir.x = isPressedInt(MoveDirection.RIGHT) - isPressedInt(MoveDirection.LEFT);
 		wishdir.y = isPressedInt(MoveDirection.UP) - isPressedInt(MoveDirection.DOWN);
-		direction = directionBywishdir[(int)(wishdir.y * -1.0f) + 1][(int)wishdir.x + 1];
-		
-		wishdir = wishdir.nor();
 		
 		setAnimating(!wishdir.isZero());
-			
+		if (animating)
+			direction = directionBywishdir[(int)(wishdir.y * -1.0f) + 1][(int)wishdir.x + 1];
+		
+		wishdir = wishdir.nor();
 		
 		// accel
 		velocity = velocity.lerp(wishdir.scl(speed * delta), delta * 20.0f);
@@ -166,9 +179,8 @@ public class Character extends Entity {
 		world.getMyClient().updateMyPlayerPos();
 	}
 	
-	public void setAnimating(boolean yes) {
-		animating = yes;
-		// TODO : Send a packet
+	public boolean isMySelf() {
+		return player.getNetID() != world.getMyClient().getMyPlayer().getNetID();
 	}
 	
 	@Override
@@ -176,15 +188,19 @@ public class Character extends Entity {
 		if (region.getTexture() == null) return; // no
 		
 		float delta = Gdx.graphics.getDeltaTime() * 3.0f; // 3x faster
-		
+
 		int[] aniDir = animationsDir[direction];
 		int[][] aniSeq = animations[aniDir[0]];
-		if (animating) {
-			animationIndex += delta;
-			if (animationIndex >= 3) animationIndex = 0.0f; // reset
-		} else {
-			animationIndex = 0.0f;
+		if (isMySelf()) {
+			if (animating) {
+				animationIndex += delta;
+				if (animationIndex >= 3) animationIndex = 0.0f; // reset
+			} else {
+				animationIndex = 0.0f;
+			}
+			
 		}
+		
 		int[] aniCoord = aniSeq[(int)animationIndex];
 		boolean flipH = aniDir[1] == 1;
 		region.setRegion(
@@ -193,9 +209,26 @@ public class Character extends Entity {
 			32, 32
 		);
 		
-		animationIndex += delta;
+		if (isMySelf()) {
+			animationIndex += delta;
+		}
 		
+		
+		
+		batch.setColor(Color.WHITE);
 		batch.draw(region, getX() + (flipH ? 32.0f : 0.0f), getY(), flipH ? -32.0f : 32.0f, 32.0f);
+		
+		if (isMySelf()) {
+			// draw the username if they're others
+			final String username = player.getUsername();
+			GlyphLayout layout = new GlyphLayout(labelFont, username);
+			float fontX = getX() + (32.0f - layout.width) / 2;
+			float fontY = getY() + 48.0f;
+			labelFont.setColor(Color.BLACK);
+			labelFont.draw(batch, username, fontX + 1, fontY - 1);
+			labelFont.setColor(Color.GREEN);
+			labelFont.draw(batch, username, fontX, fontY);
+		}
 	}
 	
 	public boolean keyDown(int i) {

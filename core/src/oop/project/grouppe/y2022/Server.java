@@ -103,7 +103,15 @@ public class Server extends Thread {
 	}
 	public void broadcastExcept(Packet packet, Client client) {
 		for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
-			if (e.getValue() == client) continue;
+			if (e.getValue().getMyPlayer().getNetID() == client.getMyPlayer().getNetID()) continue;
+			e.getValue().send(packet);
+		}
+	}
+	public void broadcastExceptAndServer(Packet packet, Client client) {
+		for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
+			int netID = e.getValue().getMyPlayer().getNetID();
+			if (netID == 1) continue;
+			if (netID == client.getMyPlayer().getNetID()) continue;
 			e.getValue().send(packet);
 		}
 	}

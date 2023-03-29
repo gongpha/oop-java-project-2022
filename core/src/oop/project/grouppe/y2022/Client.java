@@ -88,6 +88,7 @@ public class Client extends Thread {
 			DataOutputStream dos = new DataOutputStream(o);
 			dos.writeByte(packet.header());
 			packet.setCServer(server);
+			packet.setCSenderOrSMySelf(this);
 			packet.write(dos);
 			o.flush();
 		} catch (Exception e) {
@@ -227,9 +228,9 @@ public class Client extends Thread {
 		server.broadcastExcept(p, this);
 	}
 	
-	// used by clients
+	// used by clients (and the server's client)
 	public void updateMyPlayerPos() {
-		Packet.CPlayerPos p = new Packet.CPlayerPos();
+		Packet.FPlayerState p = new Packet.FPlayerState();
 		p.ent = getCharacter();
 		send(p);
 	}

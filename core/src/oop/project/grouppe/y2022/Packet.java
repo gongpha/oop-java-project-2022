@@ -39,7 +39,7 @@ public abstract class Packet {
 		regPacket(SDisconnectPlayer.class);
 		regPacket(SEntCreate.class);
 		regPacket(SEntPos.class);
-		regPacket(CPlayerPos.class);
+		regPacket(FPlayerState.class);
 		regPacket(SGenLevel.class);
 		regPacket(CGenerateDone.class);
 		regPacket(CSendChat.class);
@@ -58,6 +58,30 @@ public abstract class Packet {
 			CoreGame.instance().getConsole().printerr(
 				"Cannot register \"" + c.getName() + "\" : " + e.getMessage()
 			);
+		}
+	}
+	
+	// this packet can be sent by clients or the server.
+	// it also can be sent to other clients without making a new packet.
+	public static abstract class ForwardablePacket extends Packet {
+		public int fromNetID = -1;
+		
+		public void write(DataOutputStream s) throws IOException {
+			if (getCSenderOrSMySelf().isPuppet())
+				s.writeInt(fromNetID);
+		}
+		public void read(DataInputStream s) throws IOException {
+			if (getCSenderOrSMySelf().isPuppet())
+				fromNetID = getCSenderOrSMySelf().getMyPlayer().getNetID();
+			else {
+				fromNetID = s.readInt();
+			}
+		}
+		public void forward() {
+			if (getCSenderOrSMySelf().isPuppet()) {
+				// forward to all clients except the sender
+				getCServer().broadcastExceptAndServer(this, getCSenderOrSMySelf());
+			}
 		}
 	}
 	
@@ -259,20 +283,28 @@ public abstract class Packet {
 		}
 	}
 	
-	public static class CPlayerPos extends Packet {
+	public static class FPlayerState extends ForwardablePacket {
 		public int header() { return 9; }
-		Entity ent;
+		Character ent;
 		
 		public void write(DataOutputStream s) throws IOException {
+			super.write(s);
 			s.writeFloat(ent.getX());
 			s.writeFloat(ent.getY());
+			
+			s.writeFloat(ent.getAnimationIndex());
+			s.writeByte(ent.getDirection());
+			s.writeBoolean(ent.getAnimating());
 		}
 		public void read(DataInputStream s) throws IOException {
-			Client myClient = getCSenderOrSMySelf();
-			myClient.getCharacter().setPosition(s.readFloat(), s.readFloat());
+			super.read(s);
+			ent = world.getCharacterByNetID(fromNetID);
+			ent.setPosition(s.readFloat(), s.readFloat());
+			ent.setAnimationIndex(s.readFloat());
+			ent.setDirection(s.readByte());
+			ent.setAnimating(s.readBoolean());
 			
-			// then broadcast their pos to all clients
-			myClient.updateMyEntPos();
+			forward();
 		}
 	}
 	

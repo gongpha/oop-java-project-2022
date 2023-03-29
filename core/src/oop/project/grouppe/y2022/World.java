@@ -57,7 +57,9 @@ public class World { // implements Screen
 		}
 	}
 	private LinkedList<TextItem> texts;
-	private float textTimer = 4.0f;
+	private float CHAT_DURATION = 8.0f;
+	private int CHAT_MAX = 10;
+	private float textTimer = CHAT_DURATION;
 	private float chatCaret = 0.0f;
 	private boolean chatMode = false;
 	private boolean chatModeReady = false;
@@ -269,9 +271,6 @@ public class World { // implements Screen
 			if (i == Input.Keys.ENTER) {
 				submitChat();
 				return true;
-			} else if (i == Input.Keys.ESCAPE) {
-				chatMode = false;
-				return true;
 			}
 			return false;
 		}
@@ -293,9 +292,25 @@ public class World { // implements Screen
 		return false;
 	}
 	
+	public boolean handleEscapeKey() {
+		if (chatMode) {
+			chatMode = false;
+			chatModeReady = false;
+			return true; // editing the chat text. then close
+		}
+		return false;
+	}
+	
 	public void drawChatText(SpriteBatch batch, String t, String nmt, int X, int Y) {
 		hudFont2.draw(batch, "[BLACK]" + nmt, X + 2, Y - 2);
 		hudFont2.draw(batch, t, X, Y);
+	}
+	
+	public void textsPop() {
+		if (!texts.isEmpty())
+			texts.remove(0);
+		if (!texts.isEmpty())
+			textTimer = texts.get(0).time;
 	}
 	
 	public void render(float delta) {
@@ -328,10 +343,7 @@ public class World { // implements Screen
 		if (textTimer > 0.0) {
 			textTimer -= delta;
 		} else {
-			if (!texts.isEmpty())
-				texts.remove(0);
-			if (!texts.isEmpty())
-				textTimer = texts.get(0).time;
+			textsPop();
 		}
 		
 		SpriteBatch batch = CoreGame.instance().getBatch();
@@ -412,8 +424,9 @@ public class World { // implements Screen
 	
 	public void feedTextItem(TextItem i) {
 		if (texts.isEmpty())
-			textTimer = 4.0f;
+			textTimer = CHAT_DURATION;
 		texts.add(i);
+		while (texts.size() > CHAT_MAX) textsPop(); // limit the text count
 	}
 	
 	public void submitChat() {
@@ -430,7 +443,7 @@ public class World { // implements Screen
 	// add texts on the top left
 	public void feedText(String text) {
 		CoreGame.instance().flashScreen();
-		feedTextItem(new TextItem(text, 4.0f - textTimer));
+		feedTextItem(new TextItem(text, CHAT_DURATION - textTimer));
 	}
 	
 	public void removeDisconnectedClient(int netID) {
@@ -439,7 +452,7 @@ public class World { // implements Screen
 	}
 	
 	public void feedChat(int netID, String text) {
-		TextItem i = new TextItem(text, 4.0f - textTimer);
+		TextItem i = new TextItem(text, CHAT_DURATION - textTimer);
 		i.author = myClient.getPlayer(netID).getUsername();
 		if (netID == myClient.getMyPlayer().getNetID())
 			i.authorColor = "YELLOW"; // your message

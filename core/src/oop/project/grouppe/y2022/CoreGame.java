@@ -301,6 +301,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 					} else {
 						menu.showMain();
 					}
+				} else if (world.handleEscapeKey()) {
+					return true;
 				} else {
 					menu.toggle();
 					return true;

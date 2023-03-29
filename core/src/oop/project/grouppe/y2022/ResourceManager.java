@@ -26,6 +26,7 @@ public class ResourceManager {
 		preloadFont("hud_font", "font/JLX_Pixel.ttf", 60);
 		
 		preloadFont("chat_font", "font/JLX_Pixel.ttf", 32);
+		preloadFont("character_name_font", "font/JLX_Pixel.ttf", 16);
 		
 		preloadTexture("oop", "core/oop.png");
 		
