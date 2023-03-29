@@ -36,12 +36,14 @@ public abstract class Packet {
 		regPacket(CInput.class);
 		regPacket(SSyncState.class);
 		regPacket(SNewPlayer.class);
-		regPacket(SKick.class);
+		regPacket(SDisconnectPlayer.class);
 		regPacket(SEntCreate.class);
 		regPacket(SEntPos.class);
-		regPacket(SNewLevel.class);
+		regPacket(CPlayerPos.class);
 		regPacket(SGenLevel.class);
 		regPacket(CGenerateDone.class);
+		regPacket(CSendChat.class);
+		regPacket(SSendChat.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -86,6 +88,7 @@ public abstract class Packet {
 		}
 	}
 	
+	// not for movement keys !
 	public static class CInput extends Packet {
 		public int header() { return 2; }
 		
@@ -97,8 +100,10 @@ public abstract class Packet {
 		public void read(DataInputStream s) throws IOException {
 			int input = s.readInt();
 			Client sender = getCSenderOrSMySelf();
-			if (sender.getMyPlayer().getNetID() != 1)
-				getCSenderOrSMySelf().applyInput(input);
+			if (sender.getMyPlayer().getNetID() != 1) {
+				sender.applyInput(input);
+				CoreGame.instance().getConsole().print("INPUT (" + sender.getMyPlayer().getNetID() + ") " + input);
+			}
 		}
 	}
 	
@@ -115,7 +120,8 @@ public abstract class Packet {
 			}
 		}
 		public void read(DataInputStream s) throws IOException {
-			for (int i = 0; i < s.readInt(); i++) {
+			int clientCount = s.readInt();
+			for (int i = 0; i < clientCount; i++) {
 				Player p = new Player();
 				int entID = s.readInt();
 				p.readStream(s);
@@ -151,7 +157,8 @@ public abstract class Packet {
 		}
 	}
 	
-	public static class SKick extends Packet {
+	// client requests the server to exit
+	public static class CRequestDisconnect extends Packet {
 		public int header() { return 5; }
 		
 		String reason;
@@ -160,13 +167,43 @@ public abstract class Packet {
 			s.writeUTF(reason);
 		}
 		public void read(DataInputStream s) throws IOException {
-			// OOF
-			CoreGame.instance().forceDisconnect(s.readUTF());
+			// ah yes byebye
+			getCSenderOrSMySelf().kill("Disconnected by user");
+		}
+	}
+	
+	// player is disconnected
+	public static class SDisconnectPlayer extends Packet {
+		public int header() { return 6; }
+		
+		String reason;
+		int netID;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(netID);
+			s.writeUTF(reason);
+		}
+		public void read(DataInputStream s) throws IOException {
+			int netID = s.readInt();
+			String reason = s.readUTF();
+			
+			getCSenderOrSMySelf().removeClient(netID);
+			world.removeDisconnectedClient(netID);
+			
+			if (netID == 1) {
+				// server is closed !
+				getCSenderOrSMySelf().kill(reason);
+			}
+			
+			if (getCSenderOrSMySelf().getMyPlayer().getNetID() == netID) {
+				// holy crap that's me !
+				getCSenderOrSMySelf().kill(reason);
+			}
 		}
 	}
 	
 	public static class SEntCreate extends Packet {
-		public int header() { return 6; }
+		public int header() { return 7; }
 		
 		int ID;
 		String name;
@@ -177,10 +214,9 @@ public abstract class Packet {
 		Entity ent;
 		
 		public void write(DataOutputStream s) throws IOException {
-			if (ent != null) {
-				ID = ent.getID();
-				name = ent.getClass().getName();
-			}
+			ID = ent.getID();
+			name = ent.getClass().getName();
+			//}
 			s.writeInt(ID);
 			s.writeUTF(name);
 			
@@ -204,47 +240,44 @@ public abstract class Packet {
 	}
 	
 	public static class SEntPos extends Packet {
-		public int header() { return 7; }
+		public int header() { return 8; }
 		Entity ent;
-		boolean predictable = false;
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(ent.getID());
-			s.writeBoolean(predictable);
 			s.writeFloat(ent.getX());
 			s.writeFloat(ent.getY());
 		}
 		public void read(DataInputStream s) throws IOException {
-			int netID = s.readInt();
-			predictable = s.readBoolean();
+			int entID = s.readInt();
 			float X = s.readFloat();
 			float Y = s.readFloat();
 			
-			if (predictable && world.getMyClient().getMyPlayer().getNetID() == netID)
-				return; // this packet allows me to predict and also this is also myself. so don't care
-			
-			ent = world.getCharacterByNetID(s.readInt());
-			ent.setX(s.readFloat());
-			ent.setY(s.readFloat());
+			ent = world.getEntities(entID);
+			ent.setX(X);
+			ent.setY(Y);
 		}
 	}
 	
-	public static class SNewLevel extends Packet {
-		public int header() { return 8; }
-		
-		String mapName;
+	public static class CPlayerPos extends Packet {
+		public int header() { return 9; }
+		Entity ent;
 		
 		public void write(DataOutputStream s) throws IOException {
-			s.writeUTF(mapName);
+			s.writeFloat(ent.getX());
+			s.writeFloat(ent.getY());
 		}
 		public void read(DataInputStream s) throws IOException {
-			// OOF
-			world.loadMap(s.readUTF());
+			Client myClient = getCSenderOrSMySelf();
+			myClient.getCharacter().setPosition(s.readFloat(), s.readFloat());
+			
+			// then broadcast their pos to all clients
+			myClient.updateMyEntPos();
 		}
 	}
 	
 	public static class SGenLevel extends Packet {
-		public int header() { return 9; }
+		public int header() { return 10; }
 		
 		String mapName;
 		int seed;
@@ -263,7 +296,7 @@ public abstract class Packet {
 	}
 	
 	public static class CGenerateDone extends Packet {
-		public int header() { return 10; }
+		public int header() { return 11; }
 		
 		public int input;
 		
@@ -273,8 +306,43 @@ public abstract class Packet {
 		public void read(DataInputStream s) throws IOException {
 			int input = s.readInt();
 			Client sender = getCSenderOrSMySelf();
-			if (sender.getMyPlayer().getNetID() != 1)
+			if (sender.getMyPlayer().getNetID() != 1) {
 				getCSenderOrSMySelf().applyInput(input);
+			}
+		}
+	}
+	
+	public static class CSendChat extends Packet {
+		public int header() { return 12; }
+		
+		public String message;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeUTF(message);
+		}
+		public void read(DataInputStream s) throws IOException {
+			// forward to clients
+			Packet.SSendChat p = new Packet.SSendChat();
+			p.message = s.readUTF();
+			p.netID = getCSenderOrSMySelf().getMyPlayer().getNetID();
+			getCServer().broadcast(p);
+		}
+	}
+	
+	public static class SSendChat extends Packet {
+		public int header() { return 13; }
+		
+		public String message;
+		public int netID;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(netID);
+			s.writeUTF(message);
+		}
+		public void read(DataInputStream s) throws IOException {
+			int netID = s.readInt();
+			String t = s.readUTF();
+			world.feedChat(netID, t);
 		}
 	}
 }

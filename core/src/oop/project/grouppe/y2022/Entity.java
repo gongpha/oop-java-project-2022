@@ -9,6 +9,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+// All entities (except characters) must be controlled by the server
+
 public abstract class Entity extends Actor {
 	private World world = null;
 	private int ID;
@@ -37,7 +39,7 @@ public abstract class Entity extends Actor {
 		return world;
 	}
 	
-	// called by server or client (predict)
+	// called by server or client (their charactere)
 	public void move(Vector2 rel) {
 		if (rel.isZero()) return; // no moving. who cares
 		collide(rel);
@@ -45,8 +47,12 @@ public abstract class Entity extends Actor {
 		setX(getX() + rel.x);
 		setY(getY() + rel.y);
 		
+		reportPos();
+	}
+	
+	public void reportPos() {
 		if (world.getMyClient().isServer()) // if server
-			world.getMyClient().updateEntPos(this, true);
+			world.getMyClient().updateEntPos(this);
 	}
 	
 	public void teleport(float X, float Y) {
@@ -54,7 +60,7 @@ public abstract class Entity extends Actor {
 		setY(Y);
 		
 		if (world.getMyClient().isServer()) // if server
-			world.getMyClient().updateEntPos(this, false); // no predicting
+			world.getMyClient().updateEntPos(this);
 	}
 	
 	/*

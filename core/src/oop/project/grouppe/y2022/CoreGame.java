@@ -33,6 +33,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private Server server = null;
 	public Server getServer() { return server; }
 	private boolean connectOK = false;
+	private boolean disconnected = false;
+	private String disconnectedReason = "@@@";
 	
 	private World world;
 	public World getWorld() { return world; }
@@ -81,7 +83,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	public void killNet() {
 		if (client != null) {
-			client.kill();
+			client.kill("Exited the game");
 		}
 		if (server != null) {
 			server.kill();
@@ -153,19 +155,23 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		
 		status = Status.PLAYING;
 		menu.showAsPauseMenu();
-		if (menu.isShowing()) menu.toggle();
+		if (menu.isShowing()) menu.toggle(); // hide the menu
 	}
 	
-	public void forceDisconnect(String reason) {
-		// OOF
-		
+	public void exitWorld() {
+		if (world != null) {
+			world.dispose();
+			world = null;
+		}
 		if (client != null) {
-			client.kill();
+			client.kill("Disconnected by game");
 			client = null;
 		}
+		menu.showAsMainMenu();
+		status = Status.PLAYING_DEMO;
+		if (!menu.isShowing()) menu.toggle(); // show the menu
 		
-		console.print("disconnected : " + reason);
-		console.showFull();
+		console.print("Exited the world (" + disconnectedReason + ")");
 	}
 	
 	public void flashScreen() {
@@ -200,6 +206,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			break;
 		case PLAYING_DEMO:
 		case PLAYING:
+			if (disconnected) {
+				exitWorld();
+				disconnected = false;
+			}
 			renderBatch();
 			break;
 		case CONNECTING:
@@ -237,6 +247,11 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		connectOK = true;
 	}
 	
+	public void tellDisconnected(String reason) {
+		disconnectedReason = reason;
+		disconnected = true;
+	}
+	
 	////////////////////////////////////////////
 	
 	public boolean keyTyped (char c) {
@@ -248,6 +263,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		if (status == Status.PLAYING_DEMO) {
 			if (menu.isShowing()) {
 				return menu.keyTyped(c);
+			}
+		} else if (status == Status.PLAYING) {
+			if (world != null) {
+				if (world.keyTyped(c)) return true;
 			}
 		}
 		

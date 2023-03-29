@@ -1,8 +1,9 @@
 package oop.project.grouppe.y2022;
 
-// an object that does like a character 
+// a player entity
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -10,6 +11,15 @@ import com.badlogic.gdx.math.Vector2;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+
+/*
+	clients own :
+		- position
+		- direction index
+		- animation (playing)
+	servers own :
+		- otherwise
+*/
 
 public class Character extends Entity {
 	private CoreGame game;
@@ -24,6 +34,14 @@ public class Character extends Entity {
 	
 	private Player player = null;
 	private float speed = 400.0f;
+	
+	public class MoveDirection {
+		public final static int UP =		1;
+		public final static int DOWN =		1 << 1;
+		public final static int LEFT =		1 << 2;
+		public final static int RIGHT =		1 << 3;
+	}
+	private int moveInput = 0;
 	
 	/*  DIRECTIONS :
 	
@@ -112,17 +130,26 @@ public class Character extends Entity {
 		this.input = input;
 	}
 	
+	public void resetMoveInput() {
+		moveInput = 0;
+	}
+	
 	public int getInput() { // TODO : USE THIS INSIDE THE SERVER
 		return input;
 	}
 	
+	public boolean isPressed(int mask) {
+		return (moveInput & mask) != 0;
+	}
+	public int isPressedInt(int mask) {
+		return (int)Math.signum((float)(moveInput & mask));
+	}
+	
+	// only process from their machines
 	public void process(float delta, boolean prediction) {
-		World world = getWorld();
-		
-		wishdir.x = world.isPressedInt(World.InputMap.RIGHT) - world.isPressedInt(World.InputMap.LEFT);
-		wishdir.y = world.isPressedInt(World.InputMap.UP) - world.isPressedInt(World.InputMap.DOWN);
+		wishdir.x = isPressedInt(MoveDirection.RIGHT) - isPressedInt(MoveDirection.LEFT);
+		wishdir.y = isPressedInt(MoveDirection.UP) - isPressedInt(MoveDirection.DOWN);
 		direction = directionBywishdir[(int)(wishdir.y * -1.0f) + 1][(int)wishdir.x + 1];
-		//System.out.println(direction);
 		
 		wishdir = wishdir.nor();
 		
@@ -133,6 +160,10 @@ public class Character extends Entity {
 		velocity = velocity.lerp(wishdir.scl(speed * delta), delta * 20.0f);
 		
 		move(velocity);
+	}
+	
+	public void reportPos() {
+		world.getMyClient().updateMyPlayerPos();
 	}
 	
 	public void setAnimating(boolean yes) {
@@ -165,6 +196,34 @@ public class Character extends Entity {
 		animationIndex += delta;
 		
 		batch.draw(region, getX() + (flipH ? 32.0f : 0.0f), getY(), flipH ? -32.0f : 32.0f, 32.0f);
+	}
+	
+	public boolean keyDown(int i) {
+		switch (i) {
+			case Input.Keys.A :
+				moveInput |= MoveDirection.LEFT; return true;
+			case Input.Keys.S :
+				moveInput |= MoveDirection.DOWN; return true;
+			case Input.Keys.D :
+				moveInput |= MoveDirection.RIGHT; return true;
+			case Input.Keys.W :
+				moveInput |= MoveDirection.UP; return true;
+		}
+		return false;
+	}
+	
+	public boolean keyUp(int i) {
+		switch (i) {
+			case Input.Keys.A :
+				moveInput &= ~MoveDirection.LEFT; return true;
+			case Input.Keys.S :
+				moveInput &= ~MoveDirection.DOWN; return true;
+			case Input.Keys.D :
+				moveInput &= ~MoveDirection.RIGHT; return true;
+			case Input.Keys.W :
+				moveInput &= ~MoveDirection.UP; return true;
+		}
+		return false;
 	}
 	
 	public void serializeConstructor(DataOutputStream d) throws IOException {

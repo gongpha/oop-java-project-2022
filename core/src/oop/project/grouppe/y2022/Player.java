@@ -6,7 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Player {
-	private int netID;
+	private int netID; // a randomized number, the server is always 1
 	private String username;
 	private int[] idents = new int[]{ 0, 0, 0, 0 }; // 4 custom properties. ask gongpha if you want more
 	

@@ -2,6 +2,7 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -30,8 +31,8 @@ public class World { // implements Screen
 	private int lastID = 0;
 	
 	private Client myClient;
-	private HashMap<Integer, Entity> entities;
-	private HashMap<Integer, Character> clientCharacters;
+	private HashMap<Integer, Entity> entities; // < entID : Entity >
+	private HashMap<Integer, Integer> clientCharacters; // < netID : entID >
 	
 	private BSPDungeonGenerator bsp = null;
 	private TiledMap worldMap = null;
@@ -47,14 +48,20 @@ public class World { // implements Screen
 	private BitmapFont hudFont2;
 	private class TextItem {
 		String s;
+		String author = "";
+		String authorColor = "GREEN";
 		float time;
 		public TextItem(String text, float duration) {
-			s = text;
+			s = text.replace("[", "[[");
 			time = duration;
 		}
 	}
 	private LinkedList<TextItem> texts;
 	private float textTimer = 4.0f;
+	private float chatCaret = 0.0f;
+	private boolean chatMode = false;
+	private boolean chatModeReady = false;
+	private TextInput chatText;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
 		public WorldRenderer(TiledMap map) {
@@ -69,15 +76,10 @@ public class World { // implements Screen
 	}
 	
 	public class InputMap {
-		public final static int UP =		1;
-		public final static int DOWN =		1 << 1;
-		public final static int LEFT =		1 << 2;
-		public final static int RIGHT =		1 << 3;
-		public final static int DASH =		1 << 4;
-		
-		public final static int ATTACK1 =	1 << 5;
-		public final static int ATTACK2 =	1 << 6;
-		public final static int ATTACK3 =	1 << 7;
+		public final static int DASH =		1 << 1;
+		public final static int ATTACK1 =	1 << 2;
+		public final static int ATTACK2 =	1 << 3;
+		public final static int ATTACK3 =	1 << 4;
 	}
 	
 	public World() {
@@ -99,9 +101,12 @@ public class World { // implements Screen
 		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();
 		
+		chatText = new TextInput();
+		chatText.setLimited(96);
 		
 		hudFont1 = (BitmapFont) ResourceManager.instance().get("hud_font");
-		hudFont2 = (BitmapFont) ResourceManager.instance().get("default_font");
+		hudFont2 = (BitmapFont) ResourceManager.instance().get("chat_font");
+		hudFont2.getData().markupEnabled = true;
 		
 		
 		
@@ -122,6 +127,16 @@ public class World { // implements Screen
 		stage.addActor(ent);
 		entities.put(ID, ent);
 		ent.setID(ID);
+	}
+	
+	public void deleteEntity(int ID) {
+		Entity ent = entities.get(ID);
+		ent.remove();
+		entities.remove(ID);
+	}
+	
+	public Entity getEntities(int ID) {
+		return entities.get(ID);
 	}
 	
 	// FOR SERVER
@@ -169,7 +184,7 @@ public class World { // implements Screen
 	//}
 	
 	public Character getCharacterByNetID(int netID) {
-		return clientCharacters.get(netID);
+		return (Character) entities.get(clientCharacters.get(netID));
 	}
 	
 	public void registerNewPlayer(int entID, Player p) {
@@ -178,7 +193,8 @@ public class World { // implements Screen
 		);
 		ent.setupPlayer(p);
 		
-		clientCharacters.put(p.getNetID(), ent);
+		clientCharacters.put(p.getNetID(), entID);
+		CoreGame.instance().getConsole().print("Created Player " + p.getNetID());
 		
 		Server server = CoreGame.instance().getServer();
 		if (p.getNetID() == myClient.getMyPlayer().getNetID())
@@ -208,8 +224,8 @@ public class World { // implements Screen
 		currentMapspawnPoint[1] = ((Float)prop.get("y")).floatValue();
 		
 		// reteleport players to the spawn point
-		for (Character c : clientCharacters.values()) {
-			c.teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
+		for (int id : clientCharacters.values()) {
+			entities.get(id).teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
 		}
 		
 		setMap(map);
@@ -234,53 +250,52 @@ public class World { // implements Screen
 	
 	/////////////////////
 	
-	public boolean isPressed(int mask) {
-		return (input & mask) != 0;
-	}
-	public int isPressedInt(int mask) {
-		return (int)Math.signum((float)(input & mask));
+	public boolean keyTyped (char c) {
+		if (!chatModeReady) return false;
+		return chatText.keyTyped(c);
 	}
 	
 	public boolean keyDown(int i) {
-		int old = input;
-		switch (i) {
-			case Input.Keys.A :
-				input |= InputMap.LEFT;
-				feedText("Pressed A WOW !");
-				break;
-			case Input.Keys.S :
-				input |= InputMap.DOWN; break;
-			case Input.Keys.D :
-				input |= InputMap.RIGHT; break;
-			case Input.Keys.W :
-				input |= InputMap.UP; break;
-		}
-		if (old != input) {
-			// UPDATE THE INPUT
-			myClient.updateInput(input);
+		if (!chatMode && i == Input.Keys.T) {
+			chatMode = !chatMode;
+			chatCaret = 0.0f;
+			Character m = myClient.getCharacter();
+			if (m != null) {
+				m.resetMoveInput();
+			}
 			return true;
+		}
+		if (chatMode) {
+			if (i == Input.Keys.ENTER) {
+				submitChat();
+				return true;
+			} else if (i == Input.Keys.ESCAPE) {
+				chatMode = false;
+				return true;
+			}
+			return false;
+		}
+		
+		Character m = myClient.getCharacter();
+		if (m != null) {
+			return m.keyDown(i);
 		}
 		return false;
 	}
 	
 	public boolean keyUp(int i) {
-		int old = input;
-		switch (i) {
-			case Input.Keys.A :
-				input &= ~InputMap.LEFT; break;
-			case Input.Keys.S :
-				input &= ~InputMap.DOWN; break;
-			case Input.Keys.D :
-				input &= ~InputMap.RIGHT; break;
-			case Input.Keys.W :
-				input &= ~InputMap.UP; break;
-		}
-		if (old != input) {
-			// UPDATE THE INPUT
-			myClient.updateInput(input);
-			return true;
+		if (chatMode) return false;
+		
+		Character m = myClient.getCharacter();
+		if (m != null) {
+			return m.keyUp(i);
 		}
 		return false;
+	}
+	
+	public void drawChatText(SpriteBatch batch, String t, String nmt, int X, int Y) {
+		hudFont2.draw(batch, "[BLACK]" + nmt, X + 2, Y - 2);
+		hudFont2.draw(batch, t, X, Y);
 	}
 	
 	public void render(float delta) {
@@ -321,18 +336,48 @@ public class World { // implements Screen
 		
 		SpriteBatch batch = CoreGame.instance().getBatch();
 		batch.begin();
-		for (int i = 0; i < texts.size(); i++) {
-			hudFont2.draw(batch, texts.get(i).s, 20f, 690 + (-i * 40));
+		int i = 0;
+		for (; i < texts.size(); i++) {
+			TextItem j = texts.get(i);
+			String b = texts.get(i).s;
+			String s = b;
+			String st = b;
+			if (j.author.isEmpty()) {
+				batch.setColor(Color.GRAY);
+			} else {
+				s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
+				st = "< " + j.author + " > " + b;
+			}
+				
+			
+			
+			drawChatText(batch, s, st, 20, 690 + (-i * 40));
 		}
+		if (chatMode) {
+			chatModeReady = true;
+			String c = chatText.getString() + (
+				(chatCaret > 1.0f) ? "_" : ""
+			);
+			drawChatText(batch,
+				"[CYAN][[Chat][WHITE] : " + c,	
+				"[Chat] : " + c,	
+			20, 690 + (-i * 40));
+			chatCaret += delta * 1.5f;
+			if (chatCaret >= 2.0f) chatCaret = 0.0f;
+		}
+			
+		
 		batch.end();
 		
 		Character m = myClient.getCharacter();
 		
 		if (myClient.isServer()) {
+			// process entities (server)
 			for (HashMap.Entry<Integer, Entity> e : entities.entrySet()) {
 				e.getValue().process(delta, false);
 			}
 		} else {
+			// process your character (client) 
 			if (m != null) {
 				m.process(delta, true);
 			}
@@ -353,6 +398,7 @@ public class World { // implements Screen
 		
 		/////////////////////
 		if (m != null) {
+			batch.setColor(Color.WHITE);
 			batch.begin();
 			batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f);
 			hudFont1.draw(batch, "" + m.getHealth(), 225.0f, 70.0f);
@@ -364,12 +410,40 @@ public class World { // implements Screen
 		stage.getViewport().update(w, h, true);
 	}
 	
+	public void feedTextItem(TextItem i) {
+		if (texts.isEmpty())
+			textTimer = 4.0f;
+		texts.add(i);
+	}
+	
+	public void submitChat() {
+		if (!chatText.getString().isEmpty()) {
+			Packet.CSendChat p = new Packet.CSendChat();
+			p.message = chatText.getString();
+			myClient.send(p);
+		}
+		chatText.setString("");
+		chatMode = false;
+		chatModeReady = false;
+	}
+	
 	// add texts on the top left
 	public void feedText(String text) {
 		CoreGame.instance().flashScreen();
-		if (texts.isEmpty())
-			textTimer = 4.0f;
-		texts.add(new TextItem(text, 4.0f - textTimer));
+		feedTextItem(new TextItem(text, 4.0f - textTimer));
+	}
+	
+	public void removeDisconnectedClient(int netID) {
+		deleteEntity(clientCharacters.get(netID));
+		clientCharacters.remove(netID);
+	}
+	
+	public void feedChat(int netID, String text) {
+		TextItem i = new TextItem(text, 4.0f - textTimer);
+		i.author = myClient.getPlayer(netID).getUsername();
+		if (netID == myClient.getMyPlayer().getNetID())
+			i.authorColor = "YELLOW"; // your message
+		feedTextItem(i);
 	}
 	
 	public void dispose() {

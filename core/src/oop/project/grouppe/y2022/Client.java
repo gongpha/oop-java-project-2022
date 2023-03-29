@@ -17,6 +17,7 @@ public class Client extends Thread {
 	private String address;
 	private final boolean puppet;
 	private ConnectionStatus status;
+	private String disconnectReason;
 	private boolean running = true;
 	
 	private HashMap<Integer, Player> players;
@@ -52,7 +53,6 @@ public class Client extends Thread {
 			idents[2],
 			idents[3]
 		);
-		this.server = null;
 		players = new HashMap<>();
 	}
 	
@@ -132,6 +132,23 @@ public class Client extends Thread {
 			}
 		}
 		
+		// no more packets ?
+		// byebye
+		status = ConnectionStatus.OFFLINE;
+		if (puppet) {
+			server.removeClient(this);
+			
+			// Tell everyone
+			Packet.SDisconnectPlayer p = new Packet.SDisconnectPlayer();
+			int netID = getMyPlayer().getNetID();
+			p.netID = netID;
+			p.reason = disconnectReason;
+			server.broadcast(p);
+			console.print("Client " + netID + " is disconnected (" + disconnectReason + ")");
+		} else {
+			game.tellDisconnected(disconnectReason);
+		}
+		if (socket != null) socket.dispose();
 	}
 	
 	public void sendMyInfo() {
@@ -148,7 +165,13 @@ public class Client extends Thread {
 			int res = -1;
 			try {
 				res = dis.read();
-				if (res == -1)  { running = false; continue; } // Disconnected
+				if (res == -1)  {
+					if (puppet)
+						kill("Failed to reach the client");
+					else
+						kill("Failed to reach the server");
+					continue;
+				}
 				
 				Class packetClass = Packet.getPacketFromHeader(res);
 				Packet packet = (Packet) packetClass.getDeclaredConstructor().newInstance();
@@ -161,16 +184,16 @@ public class Client extends Thread {
 				StackTraceElement[] s = e.getStackTrace();
 				console.printerr("buffer reading failed (" + res + ") : " + e.getMessage());
 				console.showFull();
-				running = false;
+				kill("Failed to read a packet");
 			}
 		}
 		
 		
 	}
 	
-	public void kill() {
+	public void kill(String reason) {
+		disconnectReason = reason;
 		running = false;
-		if (socket != null) socket.dispose();
 	}
 	
 	////////////////////////////////////
@@ -191,10 +214,27 @@ public class Client extends Thread {
 	}
 	
 	// used by servers ONLY
-	public void updateEntPos(Entity ent, boolean predictable) {
+	public void updateEntPos(Entity ent) {
 		Packet.SEntPos p = new Packet.SEntPos();
 		p.ent = ent;
-		p.predictable = predictable;
 		server.broadcast(p);
+	}
+	
+	// update this client position to all clients except themselves
+	public void updateMyEntPos() {
+		Packet.SEntPos p = new Packet.SEntPos();
+		p.ent = getCharacter();
+		server.broadcastExcept(p, this);
+	}
+	
+	// used by clients
+	public void updateMyPlayerPos() {
+		Packet.CPlayerPos p = new Packet.CPlayerPos();
+		p.ent = getCharacter();
+		send(p);
+	}
+	
+	public void removeClient(int netID) {
+		players.remove(netID);
 	}
 }

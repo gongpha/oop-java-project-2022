@@ -68,9 +68,11 @@ public class Server extends Thread {
 		// send everyone to the new player
 		Packet.SSyncState P = new Packet.SSyncState();
 		client.send(P);
+		CoreGame.instance().getConsole().print("Sending a sync state " + client.getMyPlayer().getNetID());
 		
 		clients.put(netID, client);
 		client.getMyPlayer().putData(netID, name, i1, i2, i3, i4);
+		CoreGame.instance().getConsole().print("Registered Player " + netID);
 		
 		// and . . . send to all players (this client too. becuz it includes an entID)
 		Packet.SNewPlayer p = new Packet.SNewPlayer();
@@ -78,14 +80,20 @@ public class Server extends Thread {
 		p.netID = netID;
 		p.p = client.getMyPlayer();
 		broadcast(p);
+		CoreGame.instance().getConsole().print("Broadcasting Player " + netID + " to everyone");
 		
 		
 	}
 	
 	public void kickClient(Client client, String reason) {
-		Packet.SKick p = new Packet.SKick();
+		Packet.SDisconnectPlayer p = new Packet.SDisconnectPlayer();
 		p.reason = reason;
+		p.netID = client.getMyPlayer().getNetID();
 		client.send(p);
+	}
+	
+	public void removeClient(Client client) {
+		clients.remove(client.getMyPlayer().getNetID());
 	}
 	
 	public void broadcast(Packet packet) {
@@ -124,9 +132,15 @@ public class Server extends Thread {
 	}
 	
 	public void kill() {
+		// tell everyone
+		Packet.SDisconnectPlayer p = new Packet.SDisconnectPlayer();
+		p.netID = 1;
+		p.reason = "Server is closed";
+		broadcast(p);
+		
 		running = false;
 		for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
-			e.getValue().kill();
+			e.getValue().kill("Server closed");
 		}
 		clients.clear();
 		if (server != null) server.dispose();

@@ -9,11 +9,11 @@
     ],
     "fileStates": {
         "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx": {
-            "scale": 3,
-            "selectedLayer": 3,
+            "scale": 1.5,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 65,
-                "y": 103.66666666666667
+                "x": 528.6666666666666,
+                "y": 559.3333333333333
             }
         },
         "demo1.tsx": {
@@ -29,8 +29,7 @@
     "map.tileWidth": 16,
     "map.width": 100,
     "openFiles": [
-        "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx",
-        "demo1.tsx"
+        "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx"
     ],
     "project": "demo1.tiled-project",
     "property.type": "object",
