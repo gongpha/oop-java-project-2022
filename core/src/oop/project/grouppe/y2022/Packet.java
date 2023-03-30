@@ -36,6 +36,7 @@ public abstract class Packet {
 		regPacket(CInput.class);
 		regPacket(SSyncState.class);
 		regPacket(SNewPlayer.class);
+		regPacket(CRequestDisconnect.class);
 		regPacket(SDisconnectPlayer.class);
 		regPacket(SEntCreate.class);
 		regPacket(SEntPos.class);
@@ -150,7 +151,7 @@ public abstract class Packet {
 				int entID = s.readInt();
 				p.readStream(s);
 				getCSenderOrSMySelf().newPlayer(p);
-				world.registerNewPlayer(entID, p);
+				world.registerNewPlayer(entID, p, false);
 			}
 			world.markReady();
 		}
@@ -177,7 +178,7 @@ public abstract class Packet {
 			Player p = new Player();
 			p.readStream(s);
 			myClient.newPlayer(p);
-			world.registerNewPlayer(entID, p);
+			world.registerNewPlayer(entID, p, true);
 		}
 	}
 	
@@ -192,7 +193,7 @@ public abstract class Packet {
 		}
 		public void read(DataInputStream s) throws IOException {
 			// ah yes byebye
-			getCSenderOrSMySelf().kill("Disconnected by user");
+			getCSenderOrSMySelf().kill(s.readUTF());
 		}
 	}
 	
@@ -211,18 +212,26 @@ public abstract class Packet {
 			int netID = s.readInt();
 			String reason = s.readUTF();
 			
-			getCSenderOrSMySelf().removeClient(netID);
+			Client c = getCSenderOrSMySelf();
+			
+			Player that = c.getPlayer(netID);
+			
+			c.removeClient(netID);
 			world.removeDisconnectedClient(netID);
 			
 			if (netID == 1) {
 				// server is closed !
-				getCSenderOrSMySelf().kill(reason);
+				c.kill(reason);
+				return;
 			}
 			
-			if (getCSenderOrSMySelf().getMyPlayer().getNetID() == netID) {
+			if (c.getMyPlayer().getNetID() == netID) {
 				// holy crap that's me !
-				getCSenderOrSMySelf().kill(reason);
+				c.kill(reason);
+				return;
 			}
+			
+			world.feedChat(-1, that.getUsername() + " left the game");
 		}
 	}
 	
@@ -354,10 +363,7 @@ public abstract class Packet {
 		}
 		public void read(DataInputStream s) throws IOException {
 			// forward to clients
-			Packet.SSendChat p = new Packet.SSendChat();
-			p.message = s.readUTF();
-			p.netID = getCSenderOrSMySelf().getMyPlayer().getNetID();
-			getCServer().broadcast(p);
+			getCServer().sendChat(getCSenderOrSMySelf().getMyPlayer().getNetID(), s.readUTF());
 		}
 	}
 	

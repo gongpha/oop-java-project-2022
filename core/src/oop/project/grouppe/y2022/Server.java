@@ -116,6 +116,13 @@ public class Server extends Thread {
 		}
 	}
 	
+	public void sendChat(int netID, String text) {
+		Packet.SSendChat p = new Packet.SSendChat();
+		p.message = text;
+		p.netID = netID;
+		broadcast(p);
+	}
+	
 	public void run() {
 		try {
 			console.print("Creating a server . . .");

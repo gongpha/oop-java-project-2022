@@ -189,7 +189,7 @@ public class World { // implements Screen
 		return (Character) entities.get(clientCharacters.get(netID));
 	}
 	
-	public void registerNewPlayer(int entID, Player p) {
+	public void registerNewPlayer(int entID, Player p, boolean newConnect) {
 		Character ent = (Character) createEntityAuthorized(entID,
 			Character.class.getName()
 		);
@@ -209,6 +209,8 @@ public class World { // implements Screen
 			// teleport to the spawn point
 			if (worldMap != null) // map must be ready
 				ent.teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
+		} else if (newConnect && p.getNetID() != myClient.getMyPlayer().getNetID()) {
+			feedChat(-1, p.getUsername() + "joined the game");
 		}
 	}
 	
@@ -355,7 +357,7 @@ public class World { // implements Screen
 			String s = b;
 			String st = b;
 			if (j.author.isEmpty()) {
-				batch.setColor(Color.GRAY);
+				s = "[" + j.authorColor + "]" + b;
 			} else {
 				s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
 				st = "< " + j.author + " > " + b;
@@ -451,9 +453,14 @@ public class World { // implements Screen
 		clientCharacters.remove(netID);
 	}
 	
+	// -1 is a system chat
 	public void feedChat(int netID, String text) {
 		TextItem i = new TextItem(text, CHAT_DURATION - textTimer);
-		i.author = myClient.getPlayer(netID).getUsername();
+		if (netID == -1)
+			i.authorColor = "YELLOW"; // system
+		else
+			i.author = myClient.getPlayer(netID).getUsername();
+		
 		if (netID == myClient.getMyPlayer().getNetID())
 			i.authorColor = "YELLOW"; // your message
 		feedTextItem(i);

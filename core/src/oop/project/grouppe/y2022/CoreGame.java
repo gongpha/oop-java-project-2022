@@ -91,6 +91,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	}
 	
 	public void quit() {
+		disconnect();
 		Gdx.app.exit();
 	}
 	
@@ -178,6 +179,11 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		flash = 0.5f;
 	}
 	
+	public void disconnect() {
+		if (client == null) return;
+		client.disconnectMe();
+	}
+	
 	////////////////////////////////////////////
 
 	@Override
@@ -238,6 +244,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	}
 	
 	////////////////////////////////////////////
+	// DO NOT CALL THESE
 	
 	public void tellServerKilled() {
 		server = null;
@@ -301,7 +308,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 					} else {
 						menu.showMain();
 					}
-				} else if (world.handleEscapeKey()) {
+				} else if (world != null && world.handleEscapeKey()) {
 					return true;
 				} else {
 					menu.toggle();

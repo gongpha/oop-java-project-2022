@@ -7,6 +7,8 @@ import com.badlogic.gdx.net.Socket;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -17,7 +19,7 @@ public class Client extends Thread {
 	private String address;
 	private final boolean puppet;
 	private ConnectionStatus status;
-	private String disconnectReason;
+	private String disconnectReason = "Unknown reason";
 	private boolean running = true;
 	
 	private HashMap<Integer, Player> players;
@@ -100,6 +102,10 @@ public class Client extends Thread {
 					:
 					("Sending packet to client server (" + packet.header() + "): " + e.getMessage())
 			);
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			console.printerr(sw.toString());
 		}
 	}
 	
@@ -184,6 +190,10 @@ public class Client extends Thread {
 				// OOF
 				StackTraceElement[] s = e.getStackTrace();
 				console.printerr("buffer reading failed (" + res + ") : " + e.getMessage());
+				StringWriter sw = new StringWriter();
+				PrintWriter pw = new PrintWriter(sw);
+				e.printStackTrace(pw);
+				console.printerr(sw.toString());
 				console.showFull();
 				kill("Failed to read a packet");
 			}
@@ -195,6 +205,12 @@ public class Client extends Thread {
 	public void kill(String reason) {
 		disconnectReason = reason;
 		running = false;
+	}
+	
+	public void disconnectMe() {
+		Packet.CRequestDisconnect p = new Packet.CRequestDisconnect();
+		p.reason = "Disconnected by user";
+		send(p);
 	}
 	
 	////////////////////////////////////

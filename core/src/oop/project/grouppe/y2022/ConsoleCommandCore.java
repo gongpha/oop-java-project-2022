@@ -83,6 +83,11 @@ public class ConsoleCommandCore {
 				public void exec(String[] args) {
 					CoreGame.instance().flashScreen();
 				}
+			},
+			new ConsoleCommand("disconnect") {
+				public void exec(String[] args) {
+					CoreGame.instance().disconnect();
+				}
 			}
 			///////////////////////////////////////
 			// ADD YOUR COMMANDS HERE
