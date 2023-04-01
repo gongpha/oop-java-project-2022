@@ -3,18 +3,19 @@ package oop.project.grouppe.y2022;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+// An object that replicates its properties over the network
 // All entities (except characters) must be controlled by the server
 
 public abstract class Entity extends Actor {
 	private World world = null;
 	private int ID;
-	//private Server server = null;
 	
 	private int health = 100;
 	
@@ -48,11 +49,18 @@ public abstract class Entity extends Actor {
 		setY(getY() + rel.y);
 		
 		reportPos();
+		afterPosChange();
 	}
 	
 	public void reportPos() {
-		if (world.getMyClient().isServer()) // if server
+		if (world.getMyClient().isServer()) { // if server
 			world.getMyClient().updateEntPos(this);
+		}
+	}
+	
+	public void afterPosChange() {
+		// report to the world
+		world.tellPosChange(this);
 	}
 	
 	public void teleport(float X, float Y) {
@@ -70,8 +78,6 @@ public abstract class Entity extends Actor {
 		from the 2D array.
 	
 		but also gives us a trash result :/
-	
-		Should I improve it ? ( )
 	*/
 	public void collide(Vector2 rel) {
 		int XX = (int)(getX() + rel.x);
@@ -117,6 +123,8 @@ public abstract class Entity extends Actor {
 	
 	public abstract void serializeConstructor(DataOutputStream d) throws IOException;
 	public abstract void deserializeConstructor(DataInputStream d) throws IOException;
+	
+	public abstract Rectangle getRect();
 	
 	public abstract void process(float delta, boolean prediction);
 }

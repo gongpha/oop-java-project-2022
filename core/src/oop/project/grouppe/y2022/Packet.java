@@ -289,6 +289,7 @@ public abstract class Packet {
 			ent = world.getEntities(entID);
 			ent.setX(X);
 			ent.setY(Y);
+			ent.afterPosChange();
 		}
 	}
 	
@@ -317,6 +318,7 @@ public abstract class Packet {
 		}
 	}
 	
+	// tells clients to start generating the dungeon
 	public static class SGenLevel extends Packet {
 		public int header() { return 10; }
 		
@@ -330,26 +332,18 @@ public abstract class Packet {
 			s.writeInt(tilesetIndex);
 		}
 		public void read(DataInputStream s) throws IOException {
-			// OOF
 			world.setLevelName(s.readUTF());
 			world.generateMap(s.readInt(), s.readInt());
 		}
 	}
 	
+	// tells the server that our dungeon is done
 	public static class CGenerateDone extends Packet {
 		public int header() { return 11; }
 		
-		public int input;
-		
-		public void write(DataOutputStream s) throws IOException {
-			s.writeInt(input);
-		}
+		public void write(DataOutputStream s) throws IOException {}
 		public void read(DataInputStream s) throws IOException {
-			int input = s.readInt();
-			Client sender = getCSenderOrSMySelf();
-			if (sender.getMyPlayer().getNetID() != 1) {
-				getCSenderOrSMySelf().applyInput(input);
-			}
+			
 		}
 	}
 	

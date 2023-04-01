@@ -9,11 +9,11 @@
     ],
     "fileStates": {
         "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx": {
-            "scale": 1.5,
+            "scale": 4,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 528.6666666666666,
-                "y": 559.3333333333333
+                "x": 541.5,
+                "y": 530.25
             }
         },
         "demo1.tsx": {

@@ -165,7 +165,8 @@ public class Client extends Thread {
 	}
 	
 	public void feedPacket() {
-		Console console = CoreGame.instance().getConsole();
+		CoreGame game = CoreGame.instance();
+		Console console = game.getConsole();
 		DataInputStream dis = new DataInputStream(socket.getInputStream());
 		
 		while (running) {
@@ -185,6 +186,8 @@ public class Client extends Thread {
 				packet.setCSenderOrSMySelf(this);
 				if (puppet) packet.setCServer(server);
 				packet.read(dis);
+				
+				game.tellReceivedPacket();
 				
 			} catch (Exception e) {
 				// OOF

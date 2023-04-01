@@ -7,16 +7,21 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.MapProperties;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class World { // implements Screen
 	//private Server server;
@@ -35,12 +40,17 @@ public class World { // implements Screen
 	private HashMap<Integer, Integer> clientCharacters; // < netID : entID >
 	
 	private BSPDungeonGenerator bsp = null;
+	private TextureRegion bspBackgroundTexture = null;
 	private TiledMap worldMap = null;
 	private WorldRenderer worldRenderer = null;
 	private String currentLevelName = "The Nameless City";
 	
 	// usually for servers
+	private boolean atLobby = false;
 	private float[] currentMapspawnPoint;
+	
+	private RectangleMapObject serverReadyArea;
+	private boolean insideReadyArea = false;
 	
 	// HUD
 	
@@ -223,9 +233,13 @@ public class World { // implements Screen
 	
 	public void loadMap(String mapName) {
 		TiledMap map = (TiledMap) ResourceManager.instance().get(mapName);
-		MapProperties prop = map.getLayers().get("OBJECT").getObjects().get("spawnPoint").getProperties();
+		MapObjects objs = map.getLayers().get("OBJECT").getObjects();
+		MapProperties prop = objs.get("spawnPoint").getProperties();
 		currentMapspawnPoint[0] = ((Float)prop.get("x")).floatValue();
 		currentMapspawnPoint[1] = ((Float)prop.get("y")).floatValue();
+		
+		// server ready area
+		serverReadyArea = (RectangleMapObject) objs.get("serverReadyArea");
 		
 		// reteleport players to the spawn point
 		for (int id : clientCharacters.values()) {
@@ -245,10 +259,12 @@ public class World { // implements Screen
 	}
 	
 	public void generateMap(long seed, int tilesetIndex) {
-		bsp = new BSPDungeonGenerator(seed, 64, 64,
-			(Texture)
-			ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex])
-		);
+		Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
+		bspBackgroundTexture = new TextureRegion();
+		bspBackgroundTexture.setTexture(texture);
+		bspBackgroundTexture.setRegion(0, 0, 32, 32);
+		
+		bsp = new BSPDungeonGenerator(seed, 64, 64, texture);
 		bsp.startGenerate();
 	}
 	
@@ -275,6 +291,13 @@ public class World { // implements Screen
 				return true;
 			}
 			return false;
+		}
+		
+		if (insideReadyArea) {
+			if (i == Input.Keys.SPACE) {
+				commitReady();
+				return true;
+			}
 		}
 		
 		Character m = myClient.getCharacter();
@@ -315,14 +338,35 @@ public class World { // implements Screen
 			textTimer = texts.get(0).time;
 	}
 	
+	// called by the server
+	public void commitReady() {
+		if (!insideReadyArea) return;
+		
+		Packet.SGenLevel p = new Packet.SGenLevel();
+		p.mapName = currentLevelName;
+		p.seed = new Random().nextInt();
+		
+		int tilesetIndex = new Random().nextInt();
+		p.tilesetIndex = tilesetIndex % BSPDungeonGenerator.tilesets.length;
+		
+		
+		
+		getMyClient().send(p);
+		
+		insideReadyArea = false;
+		atLobby = false;
+	}
+	
 	public void render(float delta) {
 		if (markInit) {
+			atLobby = true;
 			loadMap("demo1");
 			markInit = false;
 			ready = true;
 		}
 		
 		if (!ready) return;
+		SpriteBatch batch = CoreGame.instance().getBatch();
 		
 		if (bsp != null) {
 			TiledMap map = bsp.getMap();
@@ -333,6 +377,14 @@ public class World { // implements Screen
 				
 				bsp = null;
 			}
+			
+			if (bspBackgroundTexture != null) {
+				batch.begin();
+				batch.draw(bspBackgroundTexture, 0.0f, 0.0f, 1280.0f, 720.0f);
+				hudFont1.draw(batch, "Generating Dungeon . . .", 10.0f, 40.0f);
+				batch.end();
+			}
+			
 			return;
 		}
 		
@@ -348,7 +400,7 @@ public class World { // implements Screen
 			textsPop();
 		}
 		
-		SpriteBatch batch = CoreGame.instance().getBatch();
+		
 		batch.begin();
 		int i = 0;
 		for (; i < texts.size(); i++) {
@@ -378,6 +430,10 @@ public class World { // implements Screen
 			20, 690 + (-i * 40));
 			chatCaret += delta * 1.5f;
 			if (chatCaret >= 2.0f) chatCaret = 0.0f;
+		}
+		
+		if (insideReadyArea) {
+			drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
 		}
 			
 		
@@ -464,6 +520,20 @@ public class World { // implements Screen
 		if (netID == myClient.getMyPlayer().getNetID())
 			i.authorColor = "YELLOW"; // your message
 		feedTextItem(i);
+	}
+	
+	/////////////////////////////////
+	
+	public void tellPosChange(Entity ent) {
+		// is this the server character ?
+		if (ent == getMyClient().getCharacter()) {
+			// is it in the lobby too ?
+			if (atLobby) {
+				// is it touching the ready area ?
+				Rectangle entRect = ent.getRect();
+				insideReadyArea = (serverReadyArea.getRectangle().overlaps(entRect));
+			}
+		}
 	}
 	
 	public void dispose() {

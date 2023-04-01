@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -94,11 +95,11 @@ public class Character extends Entity {
 		"character2",
 	};
 	
+	/* control by clients */
 	private float animationIndex = 0.0f; // [0, 3] index [0, 1, 2] by Math.floor ((int) cast)
 	public void setAnimationIndex(float a) { animationIndex = a; }
 	public float getAnimationIndex() { return animationIndex; }
-	
-	// control by the server & prediction (?)
+
 	private byte direction = 0; // I HATE (java) ENUMS
 	public void setDirection(byte a) { direction = a; }
 	public byte getDirection() { return direction; }
@@ -107,8 +108,7 @@ public class Character extends Entity {
 	public void setAnimating(boolean a) { animating = a; }
 	public boolean getAnimating() { return animating; }
 	
-	// for servers
-	//private Client client;
+	/* end */
 	
 	public Character() {
 		game = CoreGame.instance();
@@ -264,5 +264,9 @@ public class Character extends Entity {
 	}
 	public void deserializeConstructor(DataInputStream d) throws IOException {
 		setupPlayer(world.getMyClient().getPlayer(d.readInt()));
+	}
+	
+	public Rectangle getRect() {
+		return new Rectangle(getX(), getY(), 32, 32);
 	}
 }

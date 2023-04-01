@@ -10,9 +10,12 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
+import java.util.ArrayList;
 
 public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	// singleton hoho
@@ -48,6 +51,13 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private float flash = 0.0f;
 	private ShapeRenderer shapeRenderer;
 	
+	private boolean drawShowinfo = false;
+	private BitmapFont infoFont;
+	private ArrayList<Integer> infoGraph;
+	private final int infoGraphMax = 128;
+	private int graphFrame = 0;
+	private ShapeRenderer graphShapeRenderer;
+	
 	private enum Status {
 		PRELOADING,
 		
@@ -66,8 +76,11 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		rman.preloads();
 		batch = new SpriteBatch();
 		shapeRenderer = new ShapeRenderer();
+		graphShapeRenderer = new ShapeRenderer();
 		
 		console = new Console();
+		infoFont = console.getFont();
+		infoGraph = new ArrayList<>();
 		
 		pref = Gdx.app.getPreferences("oop.proj.2022.settings");
 		
@@ -116,6 +129,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		}
 		
 		if (flash > 0.0) {
+			batch.end();
 			Gdx.gl.glEnable(GL20.GL_BLEND);
 			Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 			shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -124,6 +138,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			shapeRenderer.end();
 			
 			Gdx.gl.glDisable(GL20.GL_BLEND);
+			batch.begin();
 			flash -= delta * 2.0f;
 		}
 		
@@ -184,6 +199,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		client.disconnectMe();
 	}
 	
+	public void toggleShowinfo() {
+		drawShowinfo = !drawShowinfo;
+	}
+	
 	////////////////////////////////////////////
 
 	@Override
@@ -225,6 +244,29 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			}
 			break;
 		}
+		
+		if (drawShowinfo) {
+			// draw network graphs
+			if (infoGraph.size() == 128)
+				infoGraph.remove(0);
+			infoGraph.add(graphFrame);
+			graphFrame = 0;
+			
+			final int POS = 128;
+			if (!infoGraph.isEmpty()) {
+				batch.end();
+				graphShapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+				graphShapeRenderer.setColor(Color.RED);
+				for (int i = 0; i < infoGraph.size(); i++) {
+					graphShapeRenderer.line(
+						new Vector2(POS + i, POS),
+						new Vector2(POS + i, POS + infoGraph.get(i))
+					);
+				}
+				graphShapeRenderer.end();
+				batch.begin();
+			}
+		}
 
 		console.renderConsole();
 		//
@@ -257,6 +299,11 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	public void tellDisconnected(String reason) {
 		disconnectedReason = reason;
 		disconnected = true;
+	}
+	
+	public void tellReceivedPacket() {
+		if (!drawShowinfo) return;
+		graphFrame += 1;
 	}
 	
 	////////////////////////////////////////////

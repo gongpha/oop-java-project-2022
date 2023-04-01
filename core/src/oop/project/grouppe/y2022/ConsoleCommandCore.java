@@ -88,6 +88,11 @@ public class ConsoleCommandCore {
 				public void exec(String[] args) {
 					CoreGame.instance().disconnect();
 				}
+			},
+			new ConsoleCommand("showinfo") {
+				public void exec(String[] args) {
+					CoreGame.instance().toggleShowinfo();
+				}
 			}
 			///////////////////////////////////////
 			// ADD YOUR COMMANDS HERE

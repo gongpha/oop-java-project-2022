@@ -168,9 +168,6 @@ public class BSPDungeonGenerator extends Thread {
 		public void printToLayer() {
 			for (int XX = 0; XX < sizeX; XX++) {
 				for (int YY = 0; YY < sizeY; YY++) {
-					if (XX + X >= 256 || YY + Y >= 256) {
-						int a = 0;
-					}
 					tiles[XX + X][YY + Y] = 1;
 				}
 			}

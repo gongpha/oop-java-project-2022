@@ -84,6 +84,10 @@ public class Console {
 		print("Registered " + commands.size() + " commands !", Color.GREEN);
 	}
 	
+	public BitmapFont getFont() {
+		return font;
+	}
+	
 	public void renderConsole() {
 		// DO ANIMATION
 		float delta = Gdx.graphics.getDeltaTime();
