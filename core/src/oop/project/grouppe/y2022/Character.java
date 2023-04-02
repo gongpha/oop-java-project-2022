@@ -179,8 +179,18 @@ public class Character extends Entity {
 		world.getMyClient().updateMyPlayerPos();
 	}
 	
+	public void setPosition(float x, float y) {
+		super.setPosition(x, y);
+		if (!world.getMyClient().isServer()) return;
+		
+		// check collision (dynamic)
+		QuadTree q = world.getMapQuadTree();
+		if (q != null)
+			q.updatePos(this);
+	}
+	
 	public boolean isMySelf() {
-		return player.getNetID() != world.getMyClient().getMyPlayer().getNetID();
+		return player.getNetID() == world.getMyClient().getMyPlayer().getNetID();
 	}
 	
 	@Override
@@ -218,7 +228,7 @@ public class Character extends Entity {
 		batch.setColor(Color.WHITE);
 		batch.draw(region, getX() + (flipH ? 32.0f : 0.0f), getY(), flipH ? -32.0f : 32.0f, 32.0f);
 		
-		if (isMySelf()) {
+		if (!isMySelf()) {
 			// draw the username if they're others
 			final String username = player.getUsername();
 			GlyphLayout layout = new GlyphLayout(labelFont, username);
@@ -269,4 +279,14 @@ public class Character extends Entity {
 	public Rectangle getRect() {
 		return new Rectangle(getX(), getY(), 32, 32);
 	}
+	public Rectangle getRectInTile() {
+		return new Rectangle(getX() / 32.0f, getY() / 32.0f, 1, 1);
+	}
+	
+	public void collidedWith(Entity collidee) {
+		if (collidee instanceof Item) {
+			if (( (Item) collidee).playerObtained(this)) collidee.deleteMe();
+		}
+	}
+	
 }

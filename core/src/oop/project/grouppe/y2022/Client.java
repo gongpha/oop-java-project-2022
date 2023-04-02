@@ -66,6 +66,10 @@ public class Client extends Thread {
 		return server != null;
 	}
 	
+	public Server getServer() {
+		return server;
+	}
+	
 	public Player getMyPlayer() {
 		return player;
 	}

@@ -8,6 +8,8 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
+import com.badlogic.gdx.math.Vector2;
+import java.util.ArrayList;
 import java.util.Random;
 
 // a dungeon generator powered by binary space partitioning (may be related to dsa)
@@ -39,6 +41,8 @@ public class BSPDungeonGenerator extends Thread {
 	
 	private float spawnPointX;
 	private float spawnPointY;
+	
+	private ArrayList<Vector2> medkits;
 	
 	public final static String[] tilesets = {
 		"dun1",
@@ -79,6 +83,8 @@ public class BSPDungeonGenerator extends Thread {
 		map.getLayers().add(layerRoom);
 		layerObj.setName("objs");
 		map.getLayers().add(layerObj);
+		
+		medkits = new ArrayList<>();
 	}
 	
 	public void startGenerate() {
@@ -103,6 +109,8 @@ public class BSPDungeonGenerator extends Thread {
 		if (done) return map;
 		return null;
 	}
+	
+	public Vector2[] getMedkitSpawns() { return (Vector2[]) medkits.toArray(new Vector2[medkits.size()]); }
 	
 	public float getSpawnPointX() {
 		return spawnPointX;
@@ -185,6 +193,18 @@ public class BSPDungeonGenerator extends Thread {
 				bottomRoom = this;
 				bottomRoomY = Y;
 			}
+			
+			// place medkit in the room (chance 30%)
+			if (rand.nextFloat() <= 0.3) {
+				medkits.add(new Vector2(
+					randomRange(rand, X, sizeX + X - 1) * layerRoom.getTileWidth() * scale,
+					randomRange(rand, Y, sizeX + Y - 1) * layerRoom.getTileWidth() * scale
+				));
+			}
+		}
+		
+		public int randomRange(Random rand, int min, int max) {
+			return min + rand.nextInt(max - min + 1);
 		}
 		
 		public void split(Random rand, int iteration) {

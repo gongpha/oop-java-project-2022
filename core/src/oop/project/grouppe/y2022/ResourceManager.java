@@ -20,6 +20,8 @@ import java.util.HashMap;
 public class ResourceManager {
 	public void preloads() {
 		// FONTS
+		preloadFont("plat", "font/plat.ttf", 32);
+		
 		preloadFont("default_font", "font/JLX_Pixel.ttf", 32);
 		preloadFont("title_font", "font/JLX_Pixel.ttf", 80);
 		preloadFont("menu_font", "font/JLX_Pixel.ttf", 48);
@@ -38,6 +40,8 @@ public class ResourceManager {
 		for (String s : BSPDungeonGenerator.tilesets) {
 			preloadTexture("tileset__" + s, "tileset/" + s + ".png");
 		}
+		
+		preloadTexture("items", "character/items.png");
 	}
 	
 	//////////////////////////////////////////////////////////////////

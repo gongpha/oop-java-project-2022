@@ -39,12 +39,15 @@ public abstract class Packet {
 		regPacket(CRequestDisconnect.class);
 		regPacket(SDisconnectPlayer.class);
 		regPacket(SEntCreate.class);
+		regPacket(SEntDelete.class);
 		regPacket(SEntPos.class);
 		regPacket(FPlayerState.class);
 		regPacket(SGenLevel.class);
 		regPacket(CGenerateDone.class);
 		regPacket(CSendChat.class);
 		regPacket(SSendChat.class);
+		regPacket(SEntUpdateHealth.class);
+		regPacket(SEntCreateMultiple.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -127,7 +130,7 @@ public abstract class Packet {
 			Client sender = getCSenderOrSMySelf();
 			if (sender.getMyPlayer().getNetID() != 1) {
 				sender.applyInput(input);
-				CoreGame.instance().getConsole().print("INPUT (" + sender.getMyPlayer().getNetID() + ") " + input);
+				//CoreGame.instance().getConsole().print("INPUT (" + sender.getMyPlayer().getNetID() + ") " + input);
 			}
 		}
 	}
@@ -231,15 +234,12 @@ public abstract class Packet {
 				return;
 			}
 			
-			world.feedChat(-1, that.getUsername() + " left the game");
+			world.feedChat(-1, that.getUsername() + " left the game", false);
 		}
 	}
 	
 	public static class SEntCreate extends Packet {
 		public int header() { return 7; }
-		
-		int ID;
-		String name;
 		
 		byte[] forwardedBytes;
 		
@@ -247,11 +247,8 @@ public abstract class Packet {
 		Entity ent;
 		
 		public void write(DataOutputStream s) throws IOException {
-			ID = ent.getID();
-			name = ent.getClass().getName();
-			//}
-			s.writeInt(ID);
-			s.writeUTF(name);
+			s.writeInt(ent.getID());
+			s.writeUTF(ent.getClass().getName());
 			
 			//ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			//DataOutputStream dos = new DataOutputStream(baos);
@@ -272,8 +269,21 @@ public abstract class Packet {
 		}
 	}
 	
-	public static class SEntPos extends Packet {
+	public static class SEntDelete extends Packet {
 		public int header() { return 8; }
+		
+		Entity ent;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(ent.getID());
+		}
+		public void read(DataInputStream s) throws IOException {
+			world.deleteEntityInternal(s.readInt());
+		}
+	}
+	
+	public static class SEntPos extends Packet {
+		public int header() { return 9; }
 		Entity ent;
 		
 		public void write(DataOutputStream s) throws IOException {
@@ -294,7 +304,7 @@ public abstract class Packet {
 	}
 	
 	public static class FPlayerState extends ForwardablePacket {
-		public int header() { return 9; }
+		public int header() { return 10; }
 		Character ent;
 		
 		public void write(DataOutputStream s) throws IOException {
@@ -309,10 +319,19 @@ public abstract class Packet {
 		public void read(DataInputStream s) throws IOException {
 			super.read(s);
 			ent = world.getCharacterByNetID(fromNetID);
-			ent.setPosition(s.readFloat(), s.readFloat());
-			ent.setAnimationIndex(s.readFloat());
-			ent.setDirection(s.readByte());
-			ent.setAnimating(s.readBoolean());
+			
+			float X = s.readFloat();
+			float Y = s.readFloat();
+			float aniIndex = s.readFloat();
+			byte direction = s.readByte();
+			boolean animating = s.readBoolean();
+			
+			if (getCSenderOrSMySelf().getMyPlayer().getNetID() != fromNetID) {
+				ent.setPosition(X, Y);
+				ent.setAnimationIndex(aniIndex);
+				ent.setDirection(direction);
+				ent.setAnimating(animating);
+			}
 			
 			forward();
 		}
@@ -320,7 +339,7 @@ public abstract class Packet {
 	
 	// tells clients to start generating the dungeon
 	public static class SGenLevel extends Packet {
-		public int header() { return 10; }
+		public int header() { return 11; }
 		
 		String mapName;
 		int seed;
@@ -339,7 +358,7 @@ public abstract class Packet {
 	
 	// tells the server that our dungeon is done
 	public static class CGenerateDone extends Packet {
-		public int header() { return 11; }
+		public int header() { return 12; }
 		
 		public void write(DataOutputStream s) throws IOException {}
 		public void read(DataInputStream s) throws IOException {
@@ -348,7 +367,7 @@ public abstract class Packet {
 	}
 	
 	public static class CSendChat extends Packet {
-		public int header() { return 12; }
+		public int header() { return 13; }
 		
 		public String message;
 		
@@ -357,24 +376,66 @@ public abstract class Packet {
 		}
 		public void read(DataInputStream s) throws IOException {
 			// forward to clients
-			getCServer().sendChat(getCSenderOrSMySelf().getMyPlayer().getNetID(), s.readUTF());
+			getCServer().sendChat(getCSenderOrSMySelf().getMyPlayer().getNetID(), s.readUTF(), false);
 		}
 	}
 	
 	public static class SSendChat extends Packet {
-		public int header() { return 13; }
+		public int header() { return 14; }
 		
 		public String message;
-		public int netID;
+		public int netID = -1;
+		public boolean flash;
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(netID);
 			s.writeUTF(message);
+			s.writeBoolean(flash);
 		}
 		public void read(DataInputStream s) throws IOException {
 			int netID = s.readInt();
 			String t = s.readUTF();
-			world.feedChat(netID, t);
+			world.feedChat(netID, t, s.readBoolean());
+		}
+	}
+	
+	public static class SEntUpdateHealth extends Packet {
+		public int header() { return 15; }
+		
+		public int entID;
+		public int newHealth;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(entID);
+			s.writeInt(newHealth);
+		}
+		public void read(DataInputStream s) throws IOException {
+			Entity e = world.getEntities(s.readInt());
+			e.setHealth(s.readInt());
+		}
+	}
+	
+	// tell to clients to create a bunch of entities in one packet
+	// do not let the server invoke this (by calling "broadcastExceptServer")
+	public static class SEntCreateMultiple extends Packet {
+		public int header() { return 16; }
+		
+		Entity[] ents;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(ents.length);
+			for (int i = 0; i < ents.length; i++) {
+				s.writeInt(ents[i].getID());
+				s.writeUTF(ents[i].getClass().getName());
+				ents[i].serializeConstructor(s);
+			}
+		}
+		public void read(DataInputStream s) throws IOException {
+			int count = s.readInt();
+			for (int i = 0; i < count; i++) {
+				Entity ent = world.createEntityAuthorized(s.readInt(), s.readUTF());
+				ent.deserializeConstructor(s);
+			}
 		}
 	}
 }

@@ -107,6 +107,12 @@ public class Server extends Thread {
 			e.getValue().send(packet);
 		}
 	}
+	public void broadcastExceptServer(Packet packet) {
+		for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
+			if (e.getValue().getMyPlayer().getNetID() == 1) continue;
+			e.getValue().send(packet);
+		}
+	}
 	public void broadcastExceptAndServer(Packet packet, Client client) {
 		for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
 			int netID = e.getValue().getMyPlayer().getNetID();
@@ -116,11 +122,19 @@ public class Server extends Thread {
 		}
 	}
 	
-	public void sendChat(int netID, String text) {
+	public void sendChat(int netID, String text, boolean flash) {
 		Packet.SSendChat p = new Packet.SSendChat();
 		p.message = text;
 		p.netID = netID;
+		p.flash = flash;
 		broadcast(p);
+	}
+	
+	public void sendChatToClient(int netID, String text, boolean flash) {
+		Packet.SSendChat p = new Packet.SSendChat();
+		p.message = text;
+		p.flash = flash;
+		getClient(netID).send(p);
 	}
 	
 	public void run() {
@@ -141,8 +155,10 @@ public class Server extends Thread {
 			welcomeNewClient(socket);
 		}
 		
-		server.dispose();
-		console.print("Closing Server . . .");
+		if (server != null) {
+			server.dispose();
+			console.print("Closing Server . . .");
+		}
 		game.tellServerKilled();
 	}
 	

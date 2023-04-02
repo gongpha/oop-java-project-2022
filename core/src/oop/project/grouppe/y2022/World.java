@@ -16,12 +16,15 @@ import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
+
+// game world
 
 public class World { // implements Screen
 	//private Server server;
@@ -43,6 +46,7 @@ public class World { // implements Screen
 	private TextureRegion bspBackgroundTexture = null;
 	private TiledMap worldMap = null;
 	private WorldRenderer worldRenderer = null;
+	private QuadTree mapQuadTree = null;
 	private String currentLevelName = "The Nameless City";
 	
 	// usually for servers
@@ -134,14 +138,43 @@ public class World { // implements Screen
 		currentLevelName = name;
 	}
 	
-	public void addEntity(Entity ent, int ID) {
+	public void addEntity(Entity ent) {
+		int i = allocateID();
+		ent.setID(i);
+		addEntityInternal(ent, i);
+		
+		Packet.SEntCreate p = new Packet.SEntCreate();
+		p.ent = ent;
+		myClient.getServer().broadcastExceptServer(p);
+	}
+	
+	public void addEntities(Entity[] ents) {
+		for (int i = 0; i < ents.length; i++) {
+			int id = allocateID();
+			ents[i].setID(id);
+			addEntityInternal(ents[i], id);
+		}
+		Packet.SEntCreateMultiple p = new Packet.SEntCreateMultiple();
+		p.ents = ents;
+		myClient.getServer().broadcastExceptServer(p);
+	}
+	
+	public void deleteEntity(Entity ent) {
+		Packet.SEntDelete p = new Packet.SEntDelete();
+		p.ent = ent;
+		myClient.getServer().broadcastExceptServer(p);
+		
+		deleteEntityInternal(ent.getID());
+	}
+	
+	public void addEntityInternal(Entity ent, int ID) {
 		ent.setWorld(this);
 		stage.addActor(ent);
 		entities.put(ID, ent);
 		ent.setID(ID);
 	}
 	
-	public void deleteEntity(int ID) {
+	public void deleteEntityInternal(int ID) {
 		Entity ent = entities.get(ID);
 		ent.remove();
 		entities.remove(ID);
@@ -161,16 +194,10 @@ public class World { // implements Screen
 		return lastID - 1;
 	}
 	
-	public void reportNewEntity(Entity ent) {
-		Packet.SEntCreate p = new Packet.SEntCreate();
-		p.ent = ent;
-		myClient.send(p);
-	}
-	
 	public Entity createEntityAuthorized(int ID, String className) {
 		try {
 			Entity ent = (Entity) Class.forName(className).getDeclaredConstructor().newInstance();
-			addEntity(ent, ID);
+			addEntityInternal(ent, ID);
 			return ent;
 		} catch (Exception e) {
 			CoreGame.instance().getConsole().printerr("cannot create an entity : " + e.getMessage());
@@ -182,18 +209,9 @@ public class World { // implements Screen
 		return worldMap;
 	}
 	
-	// FOR SERVERS
-	//public Character newCharacter(Player player) {
-	//	Character character = new Character();
-	//	
-	//	addEntity(character);
-	//	character.setupPlayer(player);
-	//	reportNewEntity(character);
-	//	
-	//	clientCharacters.put(player.getNetID(), character);
-	//	
-	//	return character;
-	//}
+	public QuadTree getMapQuadTree() {
+		return mapQuadTree;
+	}
 	
 	public Character getCharacterByNetID(int netID) {
 		return (Character) entities.get(clientCharacters.get(netID));
@@ -215,12 +233,11 @@ public class World { // implements Screen
 			// set on puppets too
 			server.getClient(p.getNetID()).setCharacter(ent);
 			
-			// IM SERVERERE
 			// teleport to the spawn point
 			if (worldMap != null) // map must be ready
 				ent.teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
 		} else if (newConnect && p.getNetID() != myClient.getMyPlayer().getNetID()) {
-			feedChat(-1, p.getUsername() + "joined the game");
+			feedChat(-1, p.getUsername() + " joined the game", false);
 		}
 	}
 	
@@ -369,11 +386,29 @@ public class World { // implements Screen
 		SpriteBatch batch = CoreGame.instance().getBatch();
 		
 		if (bsp != null) {
+			// do not render anything when generating
 			TiledMap map = bsp.getMap();
 			if (map != null) {
 				setMap(map);
+				
+				// setup a quadtree
+				mapQuadTree = new QuadTree(256, 256);
+				
 				if (myClient.getCharacter() != null)
 					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
+				
+				// create objects
+				LinkedList<Entity> added = new LinkedList<>();
+				
+				// medkits
+				Vector2[] spawns = bsp.getMedkitSpawns();
+				for (Vector2 v : spawns) {
+					Medkit m = new Medkit();
+					m.setPosition(v.x, v.y);
+					added.add(m);
+					mapQuadTree.updatePos(m);
+				}
+				addEntities((Entity[]) added.toArray(new Entity[added.size()]));
 				
 				bsp = null;
 			}
@@ -381,7 +416,7 @@ public class World { // implements Screen
 			if (bspBackgroundTexture != null) {
 				batch.begin();
 				batch.draw(bspBackgroundTexture, 0.0f, 0.0f, 1280.0f, 720.0f);
-				hudFont1.draw(batch, "Generating Dungeon . . .", 10.0f, 40.0f);
+				hudFont1.draw(batch, "Generating Dungeon . . .", 10.0f, 60.0f);
 				batch.end();
 			}
 			
@@ -500,17 +535,16 @@ public class World { // implements Screen
 	
 	// add texts on the top left
 	public void feedText(String text) {
-		CoreGame.instance().flashScreen();
 		feedTextItem(new TextItem(text, CHAT_DURATION - textTimer));
 	}
 	
 	public void removeDisconnectedClient(int netID) {
-		deleteEntity(clientCharacters.get(netID));
+		deleteEntityInternal(clientCharacters.get(netID));
 		clientCharacters.remove(netID);
 	}
 	
 	// -1 is a system chat
-	public void feedChat(int netID, String text) {
+	public void feedChat(int netID, String text, boolean flash) {
 		TextItem i = new TextItem(text, CHAT_DURATION - textTimer);
 		if (netID == -1)
 			i.authorColor = "YELLOW"; // system
@@ -520,6 +554,9 @@ public class World { // implements Screen
 		if (netID == myClient.getMyPlayer().getNetID())
 			i.authorColor = "YELLOW"; // your message
 		feedTextItem(i);
+		
+		if (flash)
+			CoreGame.instance().flashScreen();
 	}
 	
 	/////////////////////////////////
@@ -534,6 +571,7 @@ public class World { // implements Screen
 				insideReadyArea = (serverReadyArea.getRectangle().overlaps(entRect));
 			}
 		}
+		
 	}
 	
 	public void dispose() {

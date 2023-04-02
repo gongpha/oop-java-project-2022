@@ -17,6 +17,10 @@ public abstract class Entity extends Actor {
 	private World world = null;
 	private int ID;
 	
+	private QuadTree.Node node;
+	public QuadTree.Node getCurrentNode() { return node; }
+	public void setCurrentNode(QuadTree.Node node) { this.node = node; }
+	
 	private int health = 100;
 	
 	public void setID(int ID) {
@@ -32,6 +36,20 @@ public abstract class Entity extends Actor {
 	public int getHealth() {
 		return health;
 	}
+	public void heal(int add) {
+		health += add;
+		if (health <= 0) {
+			health = 0;
+			die();
+			return;
+		}
+		
+		if (health > 100) health = 100;
+	}
+	
+	public void die() {
+		// TODO
+	}
 	
 	public void setWorld(World w) {
 		this.world = w;
@@ -40,13 +58,15 @@ public abstract class Entity extends Actor {
 		return world;
 	}
 	
-	// called by server or client (their charactere)
+	// called by server or client (their characters)
 	public void move(Vector2 rel) {
 		if (rel.isZero()) return; // no moving. who cares
 		collide(rel);
 		if (rel.isZero()) return; // collided ? nah
-		setX(getX() + rel.x);
-		setY(getY() + rel.y);
+		
+		setPosition(
+			getX() + rel.x, getY() + rel.y
+		);
 		
 		reportPos();
 		afterPosChange();
@@ -60,7 +80,9 @@ public abstract class Entity extends Actor {
 	
 	public void afterPosChange() {
 		// report to the world
-		world.tellPosChange(this);
+		if (world.getMyClient().isServer()) {
+			world.tellPosChange(this);
+		}
 	}
 	
 	public void teleport(float X, float Y) {
@@ -115,16 +137,19 @@ public abstract class Entity extends Actor {
 		}
 	}
 	
-	////////
+	// server only
+	public void deleteMe() {
+		world.deleteEntity(this);
+	}
 	
-	//public void sendPacket(Packet packet) {
-	//	stream.writeInt(getX());
-	//}
+	////////
 	
 	public abstract void serializeConstructor(DataOutputStream d) throws IOException;
 	public abstract void deserializeConstructor(DataInputStream d) throws IOException;
 	
 	public abstract Rectangle getRect();
+	public abstract Rectangle getRectInTile();
+	public abstract void collidedWith(Entity collidee);
 	
 	public abstract void process(float delta, boolean prediction);
 }

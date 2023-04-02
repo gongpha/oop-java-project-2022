@@ -246,6 +246,12 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		}
 		
 		if (drawShowinfo) {
+			//batch.begin();
+			
+			//infoFont.draw(batch, "QuadTree nodes : ")
+			
+			//batch.end();
+			
 			// draw network graphs
 			if (infoGraph.size() == 128)
 				infoGraph.remove(0);
