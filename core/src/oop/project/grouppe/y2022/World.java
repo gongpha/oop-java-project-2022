@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.MapProperties;
@@ -33,6 +34,7 @@ public class World { // implements Screen
 	private boolean ready = false;
 	
 	private OrthographicCamera camera;
+	public OrthographicCamera getCamera() { return camera; }
 	private Stage stage;
 	
 	private int input = 0;
@@ -41,6 +43,7 @@ public class World { // implements Screen
 	private Client myClient;
 	private HashMap<Integer, Entity> entities; // < entID : Entity >
 	private HashMap<Integer, Integer> clientCharacters; // < netID : entID >
+	private LinkedList<Integer> entitiesRemoveLater;
 	
 	private BSPDungeonGenerator bsp = null;
 	private TextureRegion bspBackgroundTexture = null;
@@ -55,6 +58,8 @@ public class World { // implements Screen
 	
 	private RectangleMapObject serverReadyArea;
 	private boolean insideReadyArea = false;
+	
+	private Texture overlay;
 	
 	// HUD
 	
@@ -78,6 +83,15 @@ public class World { // implements Screen
 	private boolean chatMode = false;
 	private boolean chatModeReady = false;
 	private TextInput chatText;
+	
+	private boolean processing = false;
+	
+	private boolean drawQuadTree = false;
+	public void toggleDrawQuadTree() { drawQuadTree = !drawQuadTree; }
+
+	private final int DUNX = 128;
+	private final int DUNY = 128;
+	private final int DUNS = 5;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
 		public WorldRenderer(TiledMap map) {
@@ -116,9 +130,12 @@ public class World { // implements Screen
 		
 		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();
+		entitiesRemoveLater = new LinkedList<>();
 		
 		chatText = new TextInput();
 		chatText.setLimited(96);
+		
+		overlay = (Texture) ResourceManager.instance().get("darkness1");
 		
 		hudFont1 = (BitmapFont) ResourceManager.instance().get("hud_font");
 		hudFont2 = (BitmapFont) ResourceManager.instance().get("chat_font");
@@ -177,7 +194,13 @@ public class World { // implements Screen
 	public void deleteEntityInternal(int ID) {
 		Entity ent = entities.get(ID);
 		ent.remove();
-		entities.remove(ID);
+		if (processing) {
+			// we cannot remove the item during iterating !
+			// remove later
+			entitiesRemoveLater.add(ID);
+		} else {
+			entities.remove(ID);
+		}
 	}
 	
 	public Entity getEntities(int ID) {
@@ -215,6 +238,10 @@ public class World { // implements Screen
 	
 	public Character getCharacterByNetID(int netID) {
 		return (Character) entities.get(clientCharacters.get(netID));
+	}
+	
+	public HashMap<Integer, Integer> dumpCharactersEntID() {
+		return clientCharacters;
 	}
 	
 	public void registerNewPlayer(int entID, Player p, boolean newConnect) {
@@ -281,7 +308,7 @@ public class World { // implements Screen
 		bspBackgroundTexture.setTexture(texture);
 		bspBackgroundTexture.setRegion(0, 0, 32, 32);
 		
-		bsp = new BSPDungeonGenerator(seed, 64, 64, texture);
+		bsp = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
 		bsp.startGenerate();
 	}
 	
@@ -392,7 +419,7 @@ public class World { // implements Screen
 				setMap(map);
 				
 				// setup a quadtree
-				mapQuadTree = new QuadTree(256, 256);
+				mapQuadTree = new QuadTree(DUNX * DUNS, DUNY * DUNS);
 				
 				if (myClient.getCharacter() != null)
 					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
@@ -403,7 +430,7 @@ public class World { // implements Screen
 				// medkits
 				Vector2[] spawns = bsp.getMedkitSpawns();
 				for (Vector2 v : spawns) {
-					Medkit m = new Medkit();
+					Paper m = new Paper();
 					m.setPosition(v.x, v.y);
 					added.add(m);
 					mapQuadTree.updatePos(m);
@@ -428,6 +455,10 @@ public class World { // implements Screen
 			worldRenderer.render();
 		}
 		
+		batch.begin();
+		//batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
+		//batch.end();
+		
 		// texts
 		if (textTimer > 0.0) {
 			textTimer -= delta;
@@ -435,8 +466,16 @@ public class World { // implements Screen
 			textsPop();
 		}
 		
+		if (drawQuadTree && mapQuadTree != null) {
+			ShapeRenderer s = new ShapeRenderer();
+			s.setProjectionMatrix(camera.combined);
+			s.begin(ShapeRenderer.ShapeType.Line);
+			drawQuadTree(mapQuadTree.getRoot(), s);
+			s.end();
+		}
 		
-		batch.begin();
+		
+		//batch.begin();
 		int i = 0;
 		for (; i < texts.size(); i++) {
 			TextItem j = texts.get(i);
@@ -478,13 +517,20 @@ public class World { // implements Screen
 		
 		if (myClient.isServer()) {
 			// process entities (server)
+			processing = true;
 			for (HashMap.Entry<Integer, Entity> e : entities.entrySet()) {
-				e.getValue().process(delta, false);
+				e.getValue().process(delta);
 			}
+			processing = false;
+			
+			for (int j = entitiesRemoveLater.size() - 1; j >= 0; j--) {
+				entities.remove(entitiesRemoveLater.get(j));
+			}
+			entitiesRemoveLater.clear();
 		} else {
 			// process your character (client) 
 			if (m != null) {
-				m.process(delta, true);
+				m.process(delta);
 			}
 		}
 		
@@ -502,12 +548,23 @@ public class World { // implements Screen
 		stage.draw();
 		
 		/////////////////////
+		// draw hud
 		if (m != null) {
 			batch.setColor(Color.WHITE);
 			batch.begin();
 			batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f);
 			hudFont1.draw(batch, "" + m.getHealth(), 225.0f, 70.0f);
 			batch.end();
+		}
+	}
+	
+	private void drawQuadTree(QuadTree.Node n, ShapeRenderer s) {
+		s.setColor(Color.BLUE);
+		s.rect(n.X * 32.0f, n.Y * 32.0f, n.X * 32.0f + n.W * 32.0f, n.Y * 32.0f + n.H * 32.0f);
+		for (int i = 0; i < 4; i++) {
+			QuadTree.Node nn = n.nodes[i];
+			if (nn == null) continue;
+			drawQuadTree(nn, s);
 		}
 	}
 	

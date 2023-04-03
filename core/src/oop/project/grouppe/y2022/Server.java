@@ -126,15 +126,29 @@ public class Server extends Thread {
 		Packet.SSendChat p = new Packet.SSendChat();
 		p.message = text;
 		p.netID = netID;
-		p.flash = flash;
 		broadcast(p);
 	}
 	
 	public void sendChatToClient(int netID, String text, boolean flash) {
 		Packet.SSendChat p = new Packet.SSendChat();
 		p.message = text;
-		p.flash = flash;
+		p.flashID = flash ? netID : -1;
+		
+		Client c = getClient(netID);
+		if (c == null) {
+			int b = 0;
+		}
+		
 		getClient(netID).send(p);
+	}
+	
+	public void sendChatAndFlashesClient(int netID, String text, int flashID) {
+		// like sendChat but also flashes the target netID
+		Packet.SSendChat p = new Packet.SSendChat();
+		p.message = text;
+		p.netID = netID;
+		p.flashID = flashID;
+		broadcast(p);
 	}
 	
 	public void run() {

@@ -385,17 +385,18 @@ public abstract class Packet {
 		
 		public String message;
 		public int netID = -1;
-		public boolean flash;
+		public int flashID = -1; // neg : no flashing, 0 : EVERYONE, otherwise : specific
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(netID);
 			s.writeUTF(message);
-			s.writeBoolean(flash);
+			s.writeInt(flashID);
 		}
 		public void read(DataInputStream s) throws IOException {
 			int netID = s.readInt();
 			String t = s.readUTF();
-			world.feedChat(netID, t, s.readBoolean());
+			int flashID = s.readInt();
+			world.feedChat(netID, t, flashID == 0 || flashID == getCSenderOrSMySelf().getMyPlayer().getNetID());
 		}
 	}
 	

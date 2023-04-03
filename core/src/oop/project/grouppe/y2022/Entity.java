@@ -46,6 +46,9 @@ public abstract class Entity extends Actor {
 		
 		if (health > 100) health = 100;
 	}
+	public void hurt(int rem) {
+		heal(-rem);
+	}
 	
 	public void die() {
 		// TODO
@@ -139,6 +142,11 @@ public abstract class Entity extends Actor {
 	
 	// server only
 	public void deleteMe() {
+		if (node != null) {
+			// delete this out of the node
+			node.entities.remove(this);
+			node = null;
+		}
 		world.deleteEntity(this);
 	}
 	
@@ -151,5 +159,5 @@ public abstract class Entity extends Actor {
 	public abstract Rectangle getRectInTile();
 	public abstract void collidedWith(Entity collidee);
 	
-	public abstract void process(float delta, boolean prediction);
+	public abstract void process(float delta);
 }

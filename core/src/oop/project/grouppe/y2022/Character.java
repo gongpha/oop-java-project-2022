@@ -159,7 +159,7 @@ public class Character extends Entity {
 	}
 	
 	// only process from their machines
-	public void process(float delta, boolean prediction) {
+	public void process(float delta) {
 		wishdir.x = isPressedInt(MoveDirection.RIGHT) - isPressedInt(MoveDirection.LEFT);
 		wishdir.y = isPressedInt(MoveDirection.UP) - isPressedInt(MoveDirection.DOWN);
 		

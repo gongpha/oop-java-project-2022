@@ -19,7 +19,7 @@ public class BSPDungeonGenerator extends Thread {
 	private long seed;
 	private int sizeX;
 	private int sizeY;
-	private int scale = 5;
+	private int scale;
 	private TiledMap map;
 	private TiledMapTileLayer layerRoom;
 	private MapLayer layerObj;
@@ -48,10 +48,11 @@ public class BSPDungeonGenerator extends Thread {
 		"dun1",
 	};
 	
-	public BSPDungeonGenerator(long seed, int sizeX, int sizeY, Texture tileset) {
+	public BSPDungeonGenerator(long seed, int sizeX, int sizeY, int scale, Texture tileset) {
 		this.seed = seed;
 		this.sizeX = sizeX;
 		this.sizeY = sizeY;
+		this.scale = scale;
 		
 		bottomRoom = null;
 		bottomRoomY = sizeY;
@@ -195,10 +196,10 @@ public class BSPDungeonGenerator extends Thread {
 			}
 			
 			// place medkit in the room (chance 30%)
-			if (rand.nextFloat() <= 0.3) {
+			if (rand.nextFloat() <= 0.3 && sizeX > 2 && sizeY > 2) {
 				medkits.add(new Vector2(
-					randomRange(rand, X, sizeX + X - 1) * layerRoom.getTileWidth() * scale,
-					randomRange(rand, Y, sizeX + Y - 1) * layerRoom.getTileWidth() * scale
+					randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
+					randomRange(rand, Y, sizeX + Y - 2) * layerRoom.getTileWidth() * scale
 				));
 			}
 		}

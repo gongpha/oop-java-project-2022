@@ -31,6 +31,7 @@ public class ResourceManager {
 		preloadFont("character_name_font", "font/JLX_Pixel.ttf", 16);
 		
 		preloadTexture("oop", "core/oop.png");
+		preloadTexture("darkness1", "character/darkness1.png");
 		
 		preloadMap("demo1", "map/demo1.tmx");
 		

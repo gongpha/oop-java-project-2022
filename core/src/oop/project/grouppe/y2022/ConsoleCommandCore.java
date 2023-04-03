@@ -93,6 +93,30 @@ public class ConsoleCommandCore {
 				public void exec(String[] args) {
 					CoreGame.instance().toggleShowinfo();
 				}
+			},
+			new ConsoleCommand("zoomout") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.getCamera().zoom = 30.0f;
+					}
+				}
+			},
+			new ConsoleCommand("zoomdef") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.getCamera().zoom = 0.5f;
+					}
+				}
+			},
+			new ConsoleCommand("showquadtree") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.toggleDrawQuadTree();
+					}
+				}
 			}
 			///////////////////////////////////////
 			// ADD YOUR COMMANDS HERE

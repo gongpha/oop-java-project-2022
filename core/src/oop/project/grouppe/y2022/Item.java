@@ -29,7 +29,7 @@ public abstract class Item extends Entity {
 	
 	public void collidedWith(Entity entity) {}
 
-	public void process(float delta, boolean prediction) {}
+	public void process(float delta) {}
 	
 	public abstract TextureRegion getTexture();
 	public abstract boolean playerObtained(Character ch);

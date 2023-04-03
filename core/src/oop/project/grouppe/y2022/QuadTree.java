@@ -12,6 +12,7 @@ public class QuadTree {
 	public final int MAX_OBJECTS = 16;
 	public final int MAX_RECURSION = 3;
 	private Node root;
+	public Node getRoot() { return root; }
 	
 	public class Node {
 		float X, Y, W, H;
@@ -89,6 +90,7 @@ public class QuadTree {
 					Node node = nodes[quad - 1].insert(
 						entities.remove(i)
 					);
+					ent.setCurrentNode(node);
 					if (newEnt == ent) inNode = node;
 				}
 				else {
@@ -118,7 +120,10 @@ public class QuadTree {
 		// test all entities in the node
 		Rectangle r = ent.getRect();
 		//System.out.println(node.entities.size());
-		for (Entity e : node.entities) {
+		
+		ArrayList<Entity> clone = new ArrayList<>(node.entities);
+		
+		for (Entity e : clone) {
 			if (e == ent) continue;
 			if (r.overlaps(e.getRect())) ent.collidedWith(e);
 		}
