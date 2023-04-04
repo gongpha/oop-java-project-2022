@@ -51,6 +51,7 @@ public class World { // implements Screen
 	private WorldRenderer worldRenderer = null;
 	private QuadTree mapQuadTree = null;
 	private String currentLevelName = "The Nameless City";
+	private char[][] mapColTiles;
 	
 	// usually for servers
 	private boolean atLobby = false;
@@ -83,14 +84,15 @@ public class World { // implements Screen
 	private boolean chatMode = false;
 	private boolean chatModeReady = false;
 	private TextInput chatText;
+	private Ghost ghost = null;
 	
 	private boolean processing = false;
 	
 	private boolean drawQuadTree = false;
 	public void toggleDrawQuadTree() { drawQuadTree = !drawQuadTree; }
 
-	private final int DUNX = 128;
-	private final int DUNY = 128;
+	private final int DUNX = 48;
+	private final int DUNY = 48;
 	private final int DUNS = 5;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
@@ -234,6 +236,10 @@ public class World { // implements Screen
 	
 	public QuadTree getMapQuadTree() {
 		return mapQuadTree;
+	}
+	
+	public char[][] getColMapTiles() {
+		return mapColTiles;
 	}
 	
 	public Character getCharacterByNetID(int netID) {
@@ -417,6 +423,7 @@ public class World { // implements Screen
 			TiledMap map = bsp.getMap();
 			if (map != null) {
 				setMap(map);
+				mapColTiles = bsp.getColTiles2DArray();
 				
 				// setup a quadtree
 				mapQuadTree = new QuadTree(DUNX * DUNS, DUNY * DUNS);
@@ -427,8 +434,13 @@ public class World { // implements Screen
 				// create objects
 				LinkedList<Entity> added = new LinkedList<>();
 				
-				// medkits
-				Vector2[] spawns = bsp.getMedkitSpawns();
+				// SPAWN THE ENEMY (ghost)
+				ghost = new Ghost();
+				ghost.setPosition(bsp.getEnemySpawnPointX(), bsp.getEnemySpawnPointY());
+				added.add(ghost);
+				
+				// papers
+				Vector2[] spawns = bsp.getPaperSpawns();
 				for (Vector2 v : spawns) {
 					Paper m = new Paper();
 					m.setPosition(v.x, v.y);
@@ -436,6 +448,7 @@ public class World { // implements Screen
 					mapQuadTree.updatePos(m);
 				}
 				addEntities((Entity[]) added.toArray(new Entity[added.size()]));
+				ghost.setupAStar();
 				
 				bsp = null;
 			}
@@ -456,8 +469,7 @@ public class World { // implements Screen
 		}
 		
 		batch.begin();
-		//batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
-		//batch.end();
+		batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
 		
 		// texts
 		if (textTimer > 0.0) {

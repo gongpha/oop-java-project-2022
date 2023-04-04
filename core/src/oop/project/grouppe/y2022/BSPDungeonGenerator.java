@@ -33,16 +33,21 @@ public class BSPDungeonGenerator extends Thread {
 	
 	private final TextureMapObject entrance;
 	
-	private Room bottomRoom;
+	private Room bottomRoom; // for placing players
 	private int bottomRoomY;
+	private Room topRoom; // for placing the enemy
+	private int topRoomY;
 	
 	private char[][] tiles;
+	private char[][] colTiles;
 	private boolean done = false;
 	
 	private float spawnPointX;
 	private float spawnPointY;
+	private float spawnPointEnemyX;
+	private float spawnPointEnemyY;
 	
-	private ArrayList<Vector2> medkits;
+	private ArrayList<Vector2> papers;
 	
 	public final static String[] tilesets = {
 		"dun1",
@@ -56,6 +61,8 @@ public class BSPDungeonGenerator extends Thread {
 		
 		bottomRoom = null;
 		bottomRoomY = sizeY;
+		topRoom = null;
+		topRoomY = 0;
 		
 		wall = new StaticTiledMapTile(new TextureRegion(tileset, 0, 0, 32, 32));
 		wallTop = new StaticTiledMapTile(new TextureRegion(tileset, 32, 0, 32, 32));
@@ -72,6 +79,10 @@ public class BSPDungeonGenerator extends Thread {
 		Cfloor.setTile(floor);
 		
 		tiles = new char[sizeX][sizeY];
+		colTiles = new char[sizeX * scale][sizeY * scale];
+		for (int i = 0; i < sizeX * scale; i++)
+			for (int j = 0; j < sizeY * scale; j++)
+				colTiles[i][j] = (char)0;
 		map = new TiledMap();
 		layerRoom = new TiledMapTileLayer(sizeX * scale, sizeY * scale, 32, 32);
 		layerObj = new MapLayer();
@@ -85,7 +96,7 @@ public class BSPDungeonGenerator extends Thread {
 		layerObj.setName("objs");
 		map.getLayers().add(layerObj);
 		
-		medkits = new ArrayList<>();
+		papers = new ArrayList<>();
 	}
 	
 	public void startGenerate() {
@@ -100,8 +111,10 @@ public class BSPDungeonGenerator extends Thread {
 		
 		entrance.setX(bottomRoom.X * layerRoom.getTileWidth() * scale);
 		entrance.setY(bottomRoom.Y * layerRoom.getTileHeight() * (scale - 1));
-		spawnPointX = entrance.getX() + layerRoom.getTileWidth();
-		spawnPointY = entrance.getY() + layerRoom.getTileHeight();
+		spawnPointX = entrance.getX() + layerRoom.getTileWidth() + 32.0f; // <<< margin
+		spawnPointY = entrance.getY() + layerRoom.getTileHeight() + 32.0f; // <<< margin
+		spawnPointEnemyX = (topRoom.X + topRoom.sizeX * 0.5f) * layerRoom.getTileWidth() * scale;
+		spawnPointEnemyY = (topRoom.Y + topRoom.sizeY * 0.5f) * layerRoom.getTileHeight() * scale;
 		
 		done = true;
 	}
@@ -111,13 +124,25 @@ public class BSPDungeonGenerator extends Thread {
 		return null;
 	}
 	
-	public Vector2[] getMedkitSpawns() { return (Vector2[]) medkits.toArray(new Vector2[medkits.size()]); }
+	public Vector2[] getPaperSpawns() { return (Vector2[]) papers.toArray(new Vector2[papers.size()]); }
 	
 	public float getSpawnPointX() {
 		return spawnPointX;
 	}
 	public float getSpawnPointY() {
 		return spawnPointY;
+	}
+	public float getEnemySpawnPointX() {
+		return spawnPointEnemyX;
+	}
+	public float getEnemySpawnPointY() {
+		return spawnPointEnemyY;
+	}
+	public char[][] getTiles2DArray() {
+		return tiles;
+	}
+	public char[][] getColTiles2DArray() {
+		return colTiles;
 	}
 	
 	public void printTiles() {
@@ -135,14 +160,17 @@ public class BSPDungeonGenerator extends Thread {
 							// HAHA WALL
 							//plotStaticWall(X, Y);
 							layerRoom.setCell(X, Y, CwallTop);
+							colTiles[X][Y] = (char)1;
 							M = X + 3; // exit M
 							break;
 						}
 					}
 				}
 				if (M != X + 3) {
-					if (tiles[X / scale][Y / scale] == 1)
+					if (tiles[X / scale][Y / scale] == 1) {
 						layerRoom.setCell(X, Y, Cfloor);
+						colTiles[X][Y] = (char)0;
+					}
 						//plotStaticFloor(X, Y);
 				}
 				///////////
@@ -195,9 +223,14 @@ public class BSPDungeonGenerator extends Thread {
 				bottomRoomY = Y;
 			}
 			
-			// place medkit in the room (chance 30%)
+			if (Y > topRoomY) {
+				topRoom = this;
+				topRoomY = Y;
+			}
+			
+			// place paper in the room (chance 30%)
 			if (rand.nextFloat() <= 0.3 && sizeX > 2 && sizeY > 2) {
-				medkits.add(new Vector2(
+				papers.add(new Vector2(
 					randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
 					randomRange(rand, Y, sizeX + Y - 2) * layerRoom.getTileWidth() * scale
 				));

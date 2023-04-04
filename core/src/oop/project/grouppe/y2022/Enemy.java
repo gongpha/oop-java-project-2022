@@ -3,20 +3,36 @@ package oop.project.grouppe.y2022;
 
 // it can hurt you
 
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
 
 
 public abstract class Enemy extends Entity {
-	
+	private AStar pathfinding;
 	private float findDelay = 0.0f;
 	private Random random;
 	
-	public void Enemy() {
+	private TextureRegion region;
+	private AStar.Point walkTo = null;
+	private Character walkingTo = null;
+	private Vector2 lastCheck;
+	
+	public Enemy() {
 		random = new Random();
-		
+		region = getTexture();
+	}
+	
+	public void setupAStar() {
+		pathfinding = new AStar(getWorld().getColMapTiles());
 	}
 	
 	public int getDamage() {
@@ -35,19 +51,97 @@ public abstract class Enemy extends Entity {
 			( (Character) collidee).hurt(getDamage());
 		}
 	}
+	
+	public void draw(Batch batch, float alpha) {
+		if (region.getTexture() == null) return; // no
+		
+		//batch.setColor(Color.WHITE);
+		batch.draw(region, getX(), getY(), 64.0f, 64.0f);
+		
+		
+		
+		
+		if (true) {
+			ShapeRenderer s = new ShapeRenderer();
+			s.setProjectionMatrix(getWorld().getCamera().combined);
+			s.begin(ShapeRenderer.ShapeType.Line);
+			s.setColor(Color.RED);
+			drawNode(s, walkTo, 0);
+			s.end();
+		}
+	}
+	
+	public void drawNode(ShapeRenderer s, AStar.Point node, int i) {
+		if (i > 1000) return;
+		if (node != null) {
+			s.circle(node.x * 32.0f, node.y * 32.0f, 3.0f);
+			if (node.prev != null) {
+				s.line(node.x * 32.0f, node.y * 32.0f, node.prev.x * 32.0f, node.prev.y * 32.0f);
+				drawNode(s, node.prev, i + 1);
+			}
+			
+		}
+	}
+	
+	public void collide(Vector2 rel) {}
 
 	public void process(float delta) {
-		if (findDelay > 0.5) {
+		if (walkTo != null) {
+			Vector2 myPos = new Vector2(getX(), getY());
+			Vector2 walkPos = new Vector2(walkTo.x, walkTo.y).scl(32.0f);
+			if (myPos.dst(walkPos) < 48.0f) {
+				walkTo = walkTo.prev;
+			}
+			move(walkPos.sub(myPos).nor().scl(24.0f * delta));
+		}
+		if (findDelay > 0.25f) {
 			// looking for characters (player entities)
-			HashMap<Integer, Integer> cls = getWorld().dumpCharactersEntID();
-			for (int i = 0; i < cls.size(); i++) {
-				Character c = (Character) getWorld().getEntities(cls.get(i));
+			
+			Character nearest = null;
+			float nearestDist = 9999999.0f;
+			for (HashMap.Entry<Integer, Integer> e : getWorld().dumpCharactersEntID().entrySet()) {
+				Character c = (Character) getWorld().getEntities(e.getValue());
 
 				// check distance
 				Vector2 p = new Vector2(c.getX(), c.getY());
 				float distance = p.dst(new Vector2(getX(), getY()));
-				
+				if (distance < nearestDist) {
+					nearest = c;
+				}
 			}
+			
+			if (nearest != null && pathfinding != null) {
+				if (walkingTo == nearest) {
+					if (lastCheck != null) {
+						if (lastCheck.dst(nearest.getX(), nearest.getY()) > 16.0f) {
+							walkTo = null; // to far
+						}
+					}
+				} else {
+					walkTo = null;
+				}
+				if (walkTo == null) {
+					walkTo = pathfinding.getPath(
+						(int)(getX() / 32.0f),
+						(int)(getY() / 32.0f),
+						(int)(nearest.getX() / 32.0f),
+						(int)(nearest.getY() / 32.0f)
+					);
+					walkingTo = nearest;
+				}
+				lastCheck = new Vector2(nearest.getX(), nearest.getY());
+			}
+			
+			findDelay = 0.0f;
+		} else {
+			findDelay += delta;
 		}
 	}
+	
+	public void serializeConstructor(DataOutputStream d) throws IOException {}
+	public void deserializeConstructor(DataInputStream d) throws IOException {}
+	
+	///////////////////////
+	
+	public abstract TextureRegion getTexture();
 }

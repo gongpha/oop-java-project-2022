@@ -33,6 +33,8 @@ public class ResourceManager {
 		preloadTexture("oop", "core/oop.png");
 		preloadTexture("darkness1", "character/darkness1.png");
 		
+		preloadTexture("ghost1", "character/ghost1.png");
+		
 		preloadMap("demo1", "map/demo1.tmx");
 		
 		for (String s : Character.characters) {

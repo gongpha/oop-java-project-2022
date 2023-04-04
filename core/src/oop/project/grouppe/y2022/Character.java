@@ -171,6 +171,8 @@ public class Character extends Entity {
 		
 		// accel
 		velocity = velocity.lerp(wishdir.scl(speed * delta), delta * 20.0f);
+		if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
+		if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
 		
 		move(velocity);
 	}
@@ -194,7 +196,7 @@ public class Character extends Entity {
 	}
 	
 	@Override
-	public void draw(Batch batch, float alpha){
+	public void draw(Batch batch, float alpha) {
 		if (region.getTexture() == null) return; // no
 		
 		float delta = Gdx.graphics.getDeltaTime() * 3.0f; // 3x faster
