@@ -222,16 +222,6 @@ public class Client extends Thread {
 	
 	////////////////////////////////////
 	
-	// used by clients
-	public void updateInput(int newInput) {
-		Packet.CInput p = new Packet.CInput();
-		p.input = newInput;
-		send(p);
-		
-		// also predict my pos
-		applyInput(newInput);
-	}
-	
 	// used by servers (or predicting)
 	public void applyInput(int newInput) {
 		character.setInput(newInput);

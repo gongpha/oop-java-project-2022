@@ -91,8 +91,8 @@ public class World { // implements Screen
 	private boolean drawQuadTree = false;
 	public void toggleDrawQuadTree() { drawQuadTree = !drawQuadTree; }
 
-	private final int DUNX = 48;
-	private final int DUNY = 48;
+	private final int DUNX = 64;
+	private final int DUNY = 64;
 	private final int DUNS = 5;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
@@ -479,11 +479,13 @@ public class World { // implements Screen
 		}
 		
 		if (drawQuadTree && mapQuadTree != null) {
+			batch.end();
 			ShapeRenderer s = new ShapeRenderer();
 			s.setProjectionMatrix(camera.combined);
 			s.begin(ShapeRenderer.ShapeType.Line);
-			drawQuadTree(mapQuadTree.getRoot(), s);
+			drawQuadTree(mapQuadTree.getRoot(), s, 0);
 			s.end();
+			batch.begin();
 		}
 		
 		
@@ -500,8 +502,6 @@ public class World { // implements Screen
 				s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
 				st = "< " + j.author + " > " + b;
 			}
-				
-			
 			
 			drawChatText(batch, s, st, 20, 690 + (-i * 40));
 		}
@@ -570,13 +570,20 @@ public class World { // implements Screen
 		}
 	}
 	
-	private void drawQuadTree(QuadTree.Node n, ShapeRenderer s) {
-		s.setColor(Color.BLUE);
-		s.rect(n.X * 32.0f, n.Y * 32.0f, n.X * 32.0f + n.W * 32.0f, n.Y * 32.0f + n.H * 32.0f);
+	private Color[] quadTreeColors = {
+		Color.RED, Color.ORANGE, Color.YELLOW,
+		Color.GREEN, Color.CYAN, Color.BLUE, Color.MAGENTA
+	};
+	private void drawQuadTree(QuadTree.Node n, ShapeRenderer s, int index) {
+		s.setColor(quadTreeColors[index % quadTreeColors.length]);
+		s.rect(
+			n.X * 32.0f, n.Y * 32.0f,
+			n.W * 32.0f, n.H * 32.0f
+		);
 		for (int i = 0; i < 4; i++) {
 			QuadTree.Node nn = n.nodes[i];
 			if (nn == null) continue;
-			drawQuadTree(nn, s);
+			drawQuadTree(nn, s, index + 1);
 		}
 	}
 	

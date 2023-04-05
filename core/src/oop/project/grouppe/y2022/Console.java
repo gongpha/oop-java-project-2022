@@ -31,7 +31,7 @@ public class Console {
 	
 	private HashMap<String, ConsoleCommand> commands;
 	private ArrayList<String> history;
-	private int historylook = -3;
+	private int historylook = -3; // TODO : may get removed soon
 	
 	private boolean activating = true;
 	

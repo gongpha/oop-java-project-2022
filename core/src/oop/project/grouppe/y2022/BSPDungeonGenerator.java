@@ -16,13 +16,13 @@ import java.util.Random;
 // i feel stupido
 
 public class BSPDungeonGenerator extends Thread {
-	private long seed;
-	private int sizeX;
-	private int sizeY;
-	private int scale;
-	private TiledMap map;
-	private TiledMapTileLayer layerRoom;
-	private MapLayer layerObj;
+	private final long seed;
+	private final int sizeX;
+	private final int sizeY;
+	private final int scale;
+	private final TiledMap map;
+	private final TiledMapTileLayer layerRoom;
+	private final MapLayer layerObj;
 	
 	private final StaticTiledMapTile wall;
 	private final StaticTiledMapTile wallTop;
@@ -47,7 +47,7 @@ public class BSPDungeonGenerator extends Thread {
 	private float spawnPointEnemyX;
 	private float spawnPointEnemyY;
 	
-	private ArrayList<Vector2> papers;
+	private final ArrayList<Vector2> papers;
 	
 	public final static String[] tilesets = {
 		"dun1",
@@ -154,25 +154,46 @@ public class BSPDungeonGenerator extends Thread {
 					for (int N = -1 + Y; N <= 1 + Y; N++) {
 						if (M < 0 || N < 0) continue;
 						if (M >= layerRoom.getWidth() || N >= layerRoom.getHeight()) continue;
-						int MM = M / scale;
-						int NN = N / scale;
-						if (tiles[MM][NN] == 1) {
+						if (tiles[M / scale][N / scale] == 1) {
 							// HAHA WALL
-							//plotStaticWall(X, Y);
 							layerRoom.setCell(X, Y, CwallTop);
-							colTiles[X][Y] = (char)1;
-							M = X + 3; // exit M
+							colTiles[X][Y] = 1;
+							M = X + 3; // exit. to avoid below (M == X + 3)
 							break;
 						}
 					}
 				}
-				if (M != X + 3) {
-					if (tiles[X / scale][Y / scale] == 1) {
+				if (M != X + 3) { // place floor tiles, usually M >= X + 2
+					if (tiles[X / scale][Y / scale] == 1) { // when it's in the free space
 						layerRoom.setCell(X, Y, Cfloor);
-						colTiles[X][Y] = (char)0;
+						colTiles[X][Y] = 0;
 					}
-						//plotStaticFloor(X, Y);
 				}
+				///////////
+			}	
+		}
+		/////////////////////////////////////////////////////////
+		for (int X = 0; X < layerRoom.getWidth(); X++) {
+			for (int Y = 0; Y < layerRoom.getHeight(); Y++) {
+				/////////////
+				int M;
+				for (M = -1 + X; M <= 1 + X; M++) {
+					for (int N = -1 + Y; N <= 1 + Y; N++) {
+						if (M < 0 || N < 0) continue;
+						if (M >= layerRoom.getWidth() || N >= layerRoom.getHeight()) continue;
+						if (colTiles[M][N] == 1 && colTiles[X][Y] == 0) { // is it solid
+							// cannot walk (enemy)
+							colTiles[X][Y] = 2;
+							//layerRoom.setCell(X, Y, Cwall);
+							M = X + 3; // exit now
+							break;
+						}
+					}
+				}
+				//if (M != X + 3) {
+					
+						//plotStaticFloor(X, Y);
+				//}
 				///////////
 			}	
 		}
@@ -211,12 +232,12 @@ public class BSPDungeonGenerator extends Thread {
 		}
 		
 		public void shrink(Random rand) {
-			int x = (int)lerp(0, sizeX / 2, rand.nextFloat());
-			int y = (int)lerp(0, sizeY / 2, rand.nextFloat());
+			int x = (int)lerp(0, sizeX / 4, rand.nextFloat());
+			int y = (int)lerp(0, sizeY / 4, rand.nextFloat());
 			X += x;
 			Y += y;
-			sizeX -= lerp(0, sizeX / 2, rand.nextFloat()) + x;
-			sizeY -= lerp(0, sizeY / 2, rand.nextFloat()) + y;
+			sizeX -= lerp(0, sizeX / 4, rand.nextFloat()) + x;
+			sizeY -= lerp(0, sizeY / 4, rand.nextFloat()) + y;
 			
 			if (Y < bottomRoomY) {
 				bottomRoom = this;
@@ -232,7 +253,7 @@ public class BSPDungeonGenerator extends Thread {
 			if (rand.nextFloat() <= 0.3 && sizeX > 2 && sizeY > 2) {
 				papers.add(new Vector2(
 					randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
-					randomRange(rand, Y, sizeX + Y - 2) * layerRoom.getTileWidth() * scale
+					randomRange(rand, Y, sizeY + Y - 2) * layerRoom.getTileWidth() * scale
 				));
 			}
 		}

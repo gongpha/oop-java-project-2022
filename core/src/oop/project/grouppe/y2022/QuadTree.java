@@ -36,9 +36,9 @@ public class QuadTree {
 			float hW = W * 0.5f;
 			float hH = H * 0.5f;
 			int l = lvl + 1;
-			nodes[0] = new Node(l, X + hW, Y, hW, hH);
-			nodes[1] = new Node(l, X, Y, hW, hH);
-			nodes[2] = new Node(l, X, Y + hH, hW, hH);
+			nodes[0] = new Node(l, X + hW, Y     , hW, hH);
+			nodes[1] = new Node(l, X     , Y     , hW, hH);
+			nodes[2] = new Node(l, X     , Y + hH, hW, hH);
 			nodes[3] = new Node(l, X + hW, Y + hH, hW, hH);
 		}
 		

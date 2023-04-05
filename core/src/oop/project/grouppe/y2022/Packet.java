@@ -117,6 +117,7 @@ public abstract class Packet {
 	}
 	
 	// not for movement keys !
+	// TODO : may get removed soon
 	public static class CInput extends Packet {
 		public int header() { return 2; }
 		

@@ -1,7 +1,5 @@
 package oop.project.grouppe.y2022;
 
-import com.badlogic.gdx.Gdx;
-
 public class ConsoleCommandCore {
 	public static ConsoleCommand[] regCommands() {
 		return new ConsoleCommand[]{
@@ -99,6 +97,14 @@ public class ConsoleCommandCore {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
 						w.getCamera().zoom = 10.0f;
+					}
+				}
+			},
+			new ConsoleCommand("zoomoutt") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.getCamera().zoom = 30.0f;
 					}
 				}
 			},
