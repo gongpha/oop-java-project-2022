@@ -167,7 +167,7 @@ public class Character extends Entity {
 		if (animating)
 			direction = directionBywishdir[(int)(wishdir.y * -1.0f) + 1][(int)wishdir.x + 1];
 		
-		wishdir = wishdir.nor();
+		// wishdir = wishdir.nor();
 		
 		// accel
 		velocity = velocity.lerp(wishdir.scl(speed * delta), delta * 20.0f);

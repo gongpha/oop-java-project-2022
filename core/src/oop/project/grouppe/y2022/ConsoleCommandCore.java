@@ -112,7 +112,7 @@ public class ConsoleCommandCore {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
-						w.getCamera().zoom = 0.5f;
+						w.getCamera().zoom = 0.75f;
 					}
 				}
 			},

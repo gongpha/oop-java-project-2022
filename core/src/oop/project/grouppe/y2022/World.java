@@ -91,8 +91,8 @@ public class World { // implements Screen
 	private boolean drawQuadTree = false;
 	public void toggleDrawQuadTree() { drawQuadTree = !drawQuadTree; }
 
-	private final int DUNX = 64;
-	private final int DUNY = 64;
+	private final int DUNX = 32;
+	private final int DUNY = 32;
 	private final int DUNS = 5;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
@@ -128,7 +128,7 @@ public class World { // implements Screen
 		
 		stage = new Stage(new FitViewport(w, h));
 		stage.getViewport().setCamera(camera);
-		camera.zoom = 0.5f;
+		camera.zoom = 0.75f;
 		
 		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();

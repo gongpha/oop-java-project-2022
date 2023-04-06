@@ -232,12 +232,12 @@ public class BSPDungeonGenerator extends Thread {
 		}
 		
 		public void shrink(Random rand) {
-			int x = (int)lerp(0, sizeX / 4, rand.nextFloat());
-			int y = (int)lerp(0, sizeY / 4, rand.nextFloat());
+			int x = (int)lerp(0, sizeX / 3, rand.nextFloat());
+			int y = (int)lerp(0, sizeY / 3, rand.nextFloat());
 			X += x;
 			Y += y;
-			sizeX -= lerp(0, sizeX / 4, rand.nextFloat()) + x;
-			sizeY -= lerp(0, sizeY / 4, rand.nextFloat()) + y;
+			sizeX -= lerp(0, sizeX / 3, rand.nextFloat()) + x;
+			sizeY -= lerp(0, sizeY / 3, rand.nextFloat()) + y;
 			
 			if (Y < bottomRoomY) {
 				bottomRoom = this;

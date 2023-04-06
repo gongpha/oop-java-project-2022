@@ -18,7 +18,7 @@ import java.util.Random;
 
 public abstract class Enemy extends Entity {
 	private AStar pathfinding;
-	private float findDelay = 0.0f;
+	private float findDelay = 0.033f;
 	private Random random;
 	private Vector2 velocity;
 	
@@ -101,7 +101,7 @@ public abstract class Enemy extends Entity {
 			//System.out.println("wish : " + wishdir.x + " " + wishdir.y);
 			
 			// accel
-			velocity = velocity.lerp(wishdir.scl(256.0f * delta), delta * 20.0f);
+			velocity = velocity.lerp(wishdir.scl(576.0f * delta), delta * 20.0f);
 			if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
 			if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
 
