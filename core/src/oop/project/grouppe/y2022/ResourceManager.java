@@ -7,6 +7,8 @@ import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
@@ -45,6 +47,11 @@ public class ResourceManager {
 		}
 		
 		preloadTexture("items", "character/items.png");
+		
+		preloadSound("s_cheat", "sound/cheat.wav");
+		preloadSound("s_protect", "sound/protect.wav");
+		preloadSound("s_paper", "sound/paper.wav");
+		preloadSound("s_chat", "sound/chat.wav");
 	}
 	
 	//////////////////////////////////////////////////////////////////
@@ -108,6 +115,16 @@ public class ResourceManager {
 	public void preloadMap(String name, String path) {
 		map.put(name, path);
 		manager.load(path, TiledMap.class);
+	}
+	
+	public void preloadSound(String name, String path) {
+		map.put(name, path);
+		manager.load(path, Sound.class);
+	}
+	
+	public void preloadMusic(String name, String path) {
+		map.put(name, path);
+		manager.load(path, Music.class);
 	}
 	
 	public Object get(String name) {

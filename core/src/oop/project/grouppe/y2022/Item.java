@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.Rectangle;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
+// collectible entity
 // all logics are in the serverside
 
 public abstract class Item extends Entity {

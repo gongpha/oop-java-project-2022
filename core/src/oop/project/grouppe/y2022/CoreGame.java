@@ -202,6 +202,9 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	public void toggleShowinfo() {
 		drawShowinfo = !drawShowinfo;
 	}
+	public void setShowinfo(boolean yes) {
+		drawShowinfo = yes;
+	}
 	
 	////////////////////////////////////////////
 
@@ -248,7 +251,15 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		if (drawShowinfo) {
 			//batch.begin();
 			
-			//infoFont.draw(batch, "QuadTree nodes : ")
+			if (world != null) {
+				Character c = world.getMyClient().getCharacter();
+				String s = "<null>";
+				if (c != null && c.getCurrentNode() != null) {
+					s = c.getCurrentNode().toString();
+				}
+				infoFont.draw(batch, "Quadtree : " + s, 30, 30);
+			}
+			
 			
 			//batch.end();
 			

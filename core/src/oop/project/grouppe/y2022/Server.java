@@ -29,7 +29,7 @@ public class Server extends Thread {
 		game = CoreGame.instance();
 		console = game.getConsole();
 		
-		clients = new HashMap<Integer, Client>();
+		clients = new HashMap<>();
 	}
 	
 	public void welcomeNewClient(Socket socket) {
@@ -71,6 +71,7 @@ public class Server extends Thread {
 		CoreGame.instance().getConsole().print("Sending a sync state " + client.getMyPlayer().getNetID());
 		
 		clients.put(netID, client);
+		
 		client.getMyPlayer().putData(netID, name, i1, i2, i3, i4);
 		CoreGame.instance().getConsole().print("Registered Player " + netID);
 		
@@ -122,9 +123,10 @@ public class Server extends Thread {
 		}
 	}
 	
-	public void sendChat(int netID, String text, boolean flash) {
+	public void sendChat(int netID, String text, int flashID) {
 		Packet.SSendChat p = new Packet.SSendChat();
 		p.message = text;
+		p.flashID = flashID;
 		p.netID = netID;
 		broadcast(p);
 	}
@@ -135,11 +137,7 @@ public class Server extends Thread {
 		p.flashID = flash ? netID : -1;
 		
 		Client c = getClient(netID);
-		if (c == null) {
-			int b = 0;
-		}
-		
-		getClient(netID).send(p);
+		c.send(p);
 	}
 	
 	public void sendChatAndFlashesClient(int netID, String text, int flashID) {
@@ -171,8 +169,8 @@ public class Server extends Thread {
 		
 		if (server != null) {
 			server.dispose();
-			console.print("Closing Server . . .");
 		}
+		console.print("Closing Server . . .");
 		game.tellServerKilled();
 	}
 	
@@ -188,6 +186,9 @@ public class Server extends Thread {
 			e.getValue().kill("Server closed");
 		}
 		clients.clear();
-		if (server != null) server.dispose();
+		if (server != null) {
+			server.dispose();
+			server = null;
+		}
 	}
 }

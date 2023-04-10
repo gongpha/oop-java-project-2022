@@ -60,10 +60,7 @@ public abstract class Enemy extends Entity {
 		//batch.setColor(Color.WHITE);
 		batch.draw(region, getX(), getY(), 64.0f, 64.0f);
 		
-		
-		
-		
-		if (true) {
+		if (getWorld().isDrawPathEnabled()) {
 			batch.end();
 			ShapeRenderer s = new ShapeRenderer();
 			s.setProjectionMatrix(getWorld().getCamera().combined);
@@ -91,13 +88,15 @@ public abstract class Enemy extends Entity {
 	//public void collide(Vector2 rel) {}
 
 	public void process(float delta) {
-		if (walkTo != null) {
+		if (walkTo != null && walkingTo != null) {
 			Vector2 myPos = new Vector2(getX(), getY());
 			Vector2 walkPos = new Vector2(walkTo.x, walkTo.y).scl(32.0f);
 			if (myPos.dst(walkPos) < 48.0f) {
 				walkTo = walkTo.prev;
 			}
 			Vector2 wishdir = walkPos.sub(myPos).nor();
+			
+			//if (walkingTo.hasProtection()) wishdir.scl(-1.0f);
 			//System.out.println("wish : " + wishdir.x + " " + wishdir.y);
 			
 			// accel
@@ -107,8 +106,13 @@ public abstract class Enemy extends Entity {
 
 			move(velocity);
 			//System.out.println("vel : " + velocity.x + " " + velocity.y);
+			
+			// is it nearby the target (check by distance)
+			if (new Vector2(getX() + 32, getY() + 32).dst(new Vector2(walkingTo.getX() + 16, walkingTo.getY() + 16)) <= 96.0) {
+				//System.out.println("WOW");
+			}
 		}
-		if (findDelay > 0.25f) {
+		if (findDelay > 0.125f) {
 			// looking for characters (player entities)
 			
 			Character nearest = null;

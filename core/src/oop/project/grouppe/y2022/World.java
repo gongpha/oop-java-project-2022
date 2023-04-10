@@ -2,6 +2,7 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -52,6 +53,8 @@ public class World { // implements Screen
 	private QuadTree mapQuadTree = null;
 	private String currentLevelName = "The Nameless City";
 	private char[][] mapColTiles;
+	private int paperCount;
+	private int collectedPaperCount;
 	
 	// usually for servers
 	private boolean atLobby = false;
@@ -90,9 +93,12 @@ public class World { // implements Screen
 	
 	private boolean drawQuadTree = false;
 	public void toggleDrawQuadTree() { drawQuadTree = !drawQuadTree; }
+	public void setDrawQuadTree(boolean yes) { drawQuadTree = yes; }
+	
+	private boolean drawPath = false;
 
-	private final int DUNX = 32;
-	private final int DUNY = 32;
+	private final int DUNX = 64;
+	private final int DUNY = 64;
 	private final int DUNS = 5;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
@@ -128,7 +134,7 @@ public class World { // implements Screen
 		
 		stage = new Stage(new FitViewport(w, h));
 		stage.getViewport().setCamera(camera);
-		camera.zoom = 0.75f;
+		camera.zoom = 1.0f;
 		
 		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();
@@ -155,6 +161,18 @@ public class World { // implements Screen
 	
 	public void setLevelName(String name) {
 		currentLevelName = name;
+	}
+	
+	public int getPaperCount() {
+		return paperCount;
+	}
+	
+	public int getCollectedPaperCount() {
+		return collectedPaperCount;
+	}
+	
+	public void addCollectedPaperCount() {
+		collectedPaperCount += 1;
 	}
 	
 	public void addEntity(Entity ent) {
@@ -439,14 +457,48 @@ public class World { // implements Screen
 				ghost.setPosition(bsp.getEnemySpawnPointX(), bsp.getEnemySpawnPointY());
 				added.add(ghost);
 				
+				// items
+				LinkedList<Item> items = new LinkedList<>();
+				
 				// papers
 				Vector2[] spawns = bsp.getPaperSpawns();
 				for (Vector2 v : spawns) {
 					Paper m = new Paper();
 					m.setPosition(v.x, v.y);
 					added.add(m);
-					mapQuadTree.updatePos(m);
+					items.add(m);
 				}
+				paperCount = spawns.length;
+				collectedPaperCount = 0;
+				
+				// powers
+				spawns = bsp.getPowerSpawns();
+				Random rand = new Random();
+				rand.setSeed(bsp.getSeed());
+				for (Vector2 v : spawns) {
+					Item m = null;
+					switch (/*rand.nextInt() % 1*/0) { // TODO : ADD MORE POWERUPS
+					case 0 :
+						m = new Protection();
+						break;
+					}
+					if (m == null) continue;
+					m.setPosition(v.x, v.y);
+					added.add(m);
+					items.add(m);
+				}
+				
+				// remove items that placed at the border of the node
+				for (Item i : items) {
+					mapQuadTree.updatePos(i);
+					QuadTree.Node n = i.getCurrentNode();
+					if (n != null) {
+						if (n.nodes[0] != null) {
+							added.remove(i);
+						}
+					}
+				}
+				
 				addEntities((Entity[]) added.toArray(new Entity[added.size()]));
 				ghost.setupAStar();
 				
@@ -469,7 +521,6 @@ public class World { // implements Screen
 		}
 		
 		batch.begin();
-		batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
 		
 		// texts
 		if (textTimer > 0.0) {
@@ -490,37 +541,7 @@ public class World { // implements Screen
 		
 		
 		//batch.begin();
-		int i = 0;
-		for (; i < texts.size(); i++) {
-			TextItem j = texts.get(i);
-			String b = texts.get(i).s;
-			String s = b;
-			String st = b;
-			if (j.author.isEmpty()) {
-				s = "[" + j.authorColor + "]" + b;
-			} else {
-				s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
-				st = "< " + j.author + " > " + b;
-			}
-			
-			drawChatText(batch, s, st, 20, 690 + (-i * 40));
-		}
-		if (chatMode) {
-			chatModeReady = true;
-			String c = chatText.getString() + (
-				(chatCaret > 1.0f) ? "_" : ""
-			);
-			drawChatText(batch,
-				"[CYAN][[Chat][WHITE] : " + c,	
-				"[Chat] : " + c,	
-			20, 690 + (-i * 40));
-			chatCaret += delta * 1.5f;
-			if (chatCaret >= 2.0f) chatCaret = 0.0f;
-		}
 		
-		if (insideReadyArea) {
-			drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
-		}
 			
 		
 		batch.end();
@@ -559,15 +580,50 @@ public class World { // implements Screen
 		stage.act(delta);
 		stage.draw();
 		
+		batch.begin();
+		batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
+		
+		int i = 0;
+		for (; i < texts.size(); i++) {
+			TextItem j = texts.get(i);
+			String b = texts.get(i).s;
+			String s = b;
+			String st = b;
+			if (j.author.isEmpty()) {
+				s = "[" + j.authorColor + "]" + b;
+			} else {
+				s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
+				st = "< " + j.author + " > " + b;
+			}
+			
+			drawChatText(batch, s, st, 20, 690 + (-i * 40));
+		}
+		if (chatMode) {
+			chatModeReady = true;
+			String c = chatText.getString() + (
+				(chatCaret > 1.0f) ? "_" : ""
+			);
+			drawChatText(batch,
+				"[CYAN][[Chat][WHITE] : " + c,	
+				"[Chat] : " + c,	
+			20, 690 + (-i * 40));
+			chatCaret += delta * 1.5f;
+			if (chatCaret >= 2.0f) chatCaret = 0.0f;
+		}
+		
+		if (insideReadyArea) {
+			drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
+		}
+		
 		/////////////////////
 		// draw hud
 		if (m != null) {
 			batch.setColor(Color.WHITE);
-			batch.begin();
 			batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f);
 			hudFont1.draw(batch, "" + m.getHealth(), 225.0f, 70.0f);
-			batch.end();
+			
 		}
+		batch.end();
 	}
 	
 	private Color[] quadTreeColors = {
@@ -576,15 +632,24 @@ public class World { // implements Screen
 	};
 	private void drawQuadTree(QuadTree.Node n, ShapeRenderer s, int index) {
 		s.setColor(quadTreeColors[index % quadTreeColors.length]);
+		float margin = index * 24.0f;
 		s.rect(
-			n.X * 32.0f, n.Y * 32.0f,
-			n.W * 32.0f, n.H * 32.0f
+			n.X * 32.0f + margin, n.Y * 32.0f + margin,
+			n.W * 32.0f - (margin * 2.0f), n.H * 32.0f - (margin * 2.0f)
 		);
 		for (int i = 0; i < 4; i++) {
 			QuadTree.Node nn = n.nodes[i];
 			if (nn == null) continue;
 			drawQuadTree(nn, s, index + 1);
 		}
+	}
+	
+	public boolean isDrawPathEnabled() {
+		return drawPath;
+	}
+	
+	public void setDrawPathEnabled(boolean yes) {
+		drawPath = yes;
 	}
 	
 	public void resize(int w, int h) {
@@ -599,14 +664,19 @@ public class World { // implements Screen
 	}
 	
 	public void submitChat() {
-		if (!chatText.getString().isEmpty()) {
-			Packet.CSendChat p = new Packet.CSendChat();
-			p.message = chatText.getString();
-			myClient.send(p);
-		}
+		submitChat(getMyClient().getMyPlayer().getNetID(), chatText.getString());
 		chatText.setString("");
 		chatMode = false;
 		chatModeReady = false;
+	}
+	
+	public void submitChat(int netID, String text) {
+		if (!text.isEmpty()) {
+			Packet.CSendChat p = new Packet.CSendChat();
+			p.message = text;
+			p.netID = netID;
+			myClient.send(p);
+		}
 	}
 	
 	// add texts on the top left
@@ -619,13 +689,23 @@ public class World { // implements Screen
 		clientCharacters.remove(netID);
 	}
 	
-	// -1 is a system chat
 	public void feedChat(int netID, String text, boolean flash) {
 		TextItem i = new TextItem(text, CHAT_DURATION - textTimer);
-		if (netID == -1)
+		if (netID == -1) {
 			i.authorColor = "YELLOW"; // system
-		else
+		}
+		else if (netID == -2) {
+			i.authorColor = "RED"; // cheat notify
+			((Sound)ResourceManager.instance().get("s_cheat")).play();
+		}
+		else if (netID == -3) {
+			i.authorColor = "GREEN"; // cheat notify
+			((Sound)ResourceManager.instance().get("s_paper")).play();
+		}
+		else {
 			i.author = myClient.getPlayer(netID).getUsername();
+			((Sound)ResourceManager.instance().get("s_chat")).play();
+		}
 		
 		if (netID == myClient.getMyPlayer().getNetID())
 			i.authorColor = "YELLOW"; // your message

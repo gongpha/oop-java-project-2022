@@ -9,16 +9,18 @@ import java.util.ArrayList;
 // not included in dsa curriculum. go read by yourself lmao
 
 public class QuadTree {
-	public final int MAX_OBJECTS = 16;
-	public final int MAX_RECURSION = 3;
+	public final int MAX_OBJECTS = 8;
+	public final int MAX_RECURSION = 4;
 	private Node root;
 	public Node getRoot() { return root; }
 	
 	public class Node {
 		float X, Y, W, H;
+		Rectangle rect;
 		int lvl;
 		int quadrant; // 0 : leaf, 1|2|3|4 : quadrant
 		Node[] nodes;
+		Node parent = null;
 		ArrayList<Entity> entities;
 		
 		public Node(int lvl, float X, float Y, float W, float H) {
@@ -27,19 +29,25 @@ public class QuadTree {
 			this.Y = Y;
 			this.W = W;
 			this.H = H;
+			this.rect = new Rectangle(X, Y, W, H);
 			nodes = new Node[4];
 			entities = new ArrayList<>();
 			quadrant = 0;
+		}
+		
+		public Node(int lvl, float X, float Y, float W, float H, Node parent) {
+			this(lvl, X, Y, W, H);
+			this.parent = parent;
 		}
 		
 		public void split() {
 			float hW = W * 0.5f;
 			float hH = H * 0.5f;
 			int l = lvl + 1;
-			nodes[0] = new Node(l, X + hW, Y     , hW, hH);
-			nodes[1] = new Node(l, X     , Y     , hW, hH);
-			nodes[2] = new Node(l, X     , Y + hH, hW, hH);
-			nodes[3] = new Node(l, X + hW, Y + hH, hW, hH);
+			nodes[0] = new Node(l, X + hW, Y     , hW, hH, this);
+			nodes[1] = new Node(l, X     , Y     , hW, hH, this);
+			nodes[2] = new Node(l, X     , Y + hH, hW, hH, this);
+			nodes[3] = new Node(l, X + hW, Y + hH, hW, hH, this);
 		}
 		
 		public Node insert(Entity ent) {
@@ -56,6 +64,13 @@ public class QuadTree {
 				return expand(ent);
 			}
 			return this;
+		}
+		
+		public Node findChildren(Entity ent) {
+			int quad = getQuadrant(ent);
+			
+			if (quad != 0) return nodes[quad - 1];
+			return null;
 		}
 		
 		public int getQuadrant(Entity ent) {
@@ -100,6 +115,24 @@ public class QuadTree {
 			}
 			return inNode;
 		}
+		
+		/*
+			( 3 4 ) -> ( 2 1 )
+			( 2 1 ) -> ( 3 4 )
+		*/
+		private int vflipquad(int quad) {
+			return Math.abs(quad - 3);
+		}
+		
+		public String toString() {
+			String l = "";
+			Node p = this;
+			while (p != null) {
+				l += vflipquad(p.quadrant) + " ";
+				p = p.parent;
+			}
+			return "( " + X + " " + Y + " " + W + " " + H + " ) { " + entities.size() + " } < " + l + ">";
+		}
 	}
 	
 	public QuadTree(int sizeX, int sizeY) {
@@ -108,8 +141,24 @@ public class QuadTree {
 	
 	public void updatePos(Entity ent) {
 		Node node = ent.getCurrentNode();
-		
-		if (node == null || !new Rectangle(node.X, node.Y, node.W, node.H).contains(ent.getRectInTile())) {
+		boolean findNew = false;
+		if (node == null) {
+			findNew = true;
+		} else {
+			if (node.nodes[0] == null) {
+				// this node is a leaf (no children)
+				if (!node.rect.contains(ent.getRectInTile())) {
+					// the entity is not inside the node rectangle !
+					findNew = true;
+				}
+			} else {
+				// check if touched any child nodes
+				Node c = node.findChildren(ent);
+				if (c != null) node = c;
+			}
+			
+		}
+		if (findNew) {
 			// find a new node
 			node = root.insert(ent);
 			//System.out.println(ent.getID() + " changes the node to " + node);

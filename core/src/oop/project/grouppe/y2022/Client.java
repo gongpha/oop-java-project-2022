@@ -215,6 +215,10 @@ public class Client extends Thread {
 	}
 	
 	public void disconnectMe() {
+		if (server != null) {
+			server.kill();
+			return;
+		}
 		Packet.CRequestDisconnect p = new Packet.CRequestDisconnect();
 		p.reason = "Disconnected by user";
 		send(p);

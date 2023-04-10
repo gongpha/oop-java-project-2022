@@ -15,12 +15,14 @@ public class Paper extends Item {
 	public boolean playerObtained(Character ch) {
 		// tell this guy (client) that you collect the paper
 		// then tell everyone
-		getWorld().getMyClient().getServer().sendChatToClient(ch.getPlayer().getNetID(),
-			"You got the paper!"
-		, true);
-		getWorld().getMyClient().getServer().sendChat(-1,
-			ch.getPlayer().getUsername() + " collects a paper. (0/0)"
-		, true);
+		World w = getWorld();
+		w.addCollectedPaperCount();
+		
+		w.getMyClient().getServer().sendChat(-3,
+			ch.getPlayer().getUsername() + " collects a paper. (" + w.getCollectedPaperCount() + "/" + w.getPaperCount() + ")"
+		, ch.getPlayer().getNetID());
+		
+		
 
 		return true;
 		//return false;

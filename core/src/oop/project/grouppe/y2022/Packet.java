@@ -48,6 +48,7 @@ public abstract class Packet {
 		regPacket(SSendChat.class);
 		regPacket(SEntUpdateHealth.class);
 		regPacket(SEntCreateMultiple.class);
+		regPacket(SCharacterUpdatePowerup.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -370,14 +371,17 @@ public abstract class Packet {
 	public static class CSendChat extends Packet {
 		public int header() { return 13; }
 		
+		public int netID = -1;
 		public String message;
 		
 		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(netID);
 			s.writeUTF(message);
 		}
 		public void read(DataInputStream s) throws IOException {
 			// forward to clients
-			getCServer().sendChat(getCSenderOrSMySelf().getMyPlayer().getNetID(), s.readUTF(), false);
+			netID = s.readInt();
+			getCServer().sendChat(netID, s.readUTF(), -1);
 		}
 	}
 	
@@ -385,7 +389,7 @@ public abstract class Packet {
 		public int header() { return 14; }
 		
 		public String message;
-		public int netID = -1;
+		public int netID = -1; // -1 : system messages (yellow), -2 : cheat notify (red and sound fx), -3 : paper
 		public int flashID = -1; // neg : no flashing, 0 : EVERYONE, otherwise : specific
 		
 		public void write(DataOutputStream s) throws IOException {
@@ -438,6 +442,34 @@ public abstract class Packet {
 				Entity ent = world.createEntityAuthorized(s.readInt(), s.readUTF());
 				ent.deserializeConstructor(s);
 			}
+		}
+	}
+	
+	public static class SCharacterUpdatePowerup extends Packet {
+		public int header() { return 17; }
+		
+		Character target;
+		
+		// 0 = protecc
+		// . = MORE SOON !
+		char powerup;
+		
+		// 0 = begin
+		// 1 = about to end
+		// 2 = end
+		char tell;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(target.getPlayer().getNetID());
+			s.writeChar(powerup);
+			s.writeChar(tell);
+		}
+		public void read(DataInputStream s) throws IOException {
+			int netID = s.readInt();
+			char powerup = s.readChar();
+			char tell = s.readChar();
+			Character target = world.getCharacterByNetID(netID);
+			target.updatePowerup(powerup, tell);
 		}
 	}
 }

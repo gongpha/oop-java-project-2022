@@ -100,6 +100,7 @@ public class ConsoleCommandCore {
 					}
 				}
 			},
+			// zoom further
 			new ConsoleCommand("zoomoutt") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
@@ -108,11 +109,12 @@ public class ConsoleCommandCore {
 					}
 				}
 			},
+			// reset zoom
 			new ConsoleCommand("zoomdef") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
-						w.getCamera().zoom = 0.75f;
+						w.getCamera().zoom = 1.0f;
 					}
 				}
 			},
@@ -121,6 +123,33 @@ public class ConsoleCommandCore {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
 						w.toggleDrawQuadTree();
+					}
+				}
+			},
+			new ConsoleCommand("showpath") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.setDrawPathEnabled(!w.isDrawPathEnabled());
+					}
+				}
+			},
+			new ConsoleCommand("d_zoom") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.getCamera().zoom = 10.0f;
+						w.setDrawPathEnabled(true);
+						w.setDrawQuadTree(true);
+					}
+					CoreGame.instance().setShowinfo(true);
+				}
+			},
+			new ConsoleCommand("noclip") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.getMyClient().getCharacter().toggleNoclip();
 					}
 				}
 			}

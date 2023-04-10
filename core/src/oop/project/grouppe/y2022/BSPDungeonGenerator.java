@@ -48,6 +48,7 @@ public class BSPDungeonGenerator extends Thread {
 	private float spawnPointEnemyY;
 	
 	private final ArrayList<Vector2> papers;
+	private final ArrayList<Vector2> powers;
 	
 	public final static String[] tilesets = {
 		"dun1",
@@ -97,7 +98,10 @@ public class BSPDungeonGenerator extends Thread {
 		map.getLayers().add(layerObj);
 		
 		papers = new ArrayList<>();
+		powers = new ArrayList<>();
 	}
+	
+	public long getSeed() { return seed; }
 	
 	public void startGenerate() {
 		start();
@@ -125,6 +129,7 @@ public class BSPDungeonGenerator extends Thread {
 	}
 	
 	public Vector2[] getPaperSpawns() { return (Vector2[]) papers.toArray(new Vector2[papers.size()]); }
+	public Vector2[] getPowerSpawns() { return (Vector2[]) powers.toArray(new Vector2[powers.size()]); }
 	
 	public float getSpawnPointX() {
 		return spawnPointX;
@@ -249,12 +254,22 @@ public class BSPDungeonGenerator extends Thread {
 				topRoomY = Y;
 			}
 			
-			// place paper in the room (chance 30%)
-			if (rand.nextFloat() <= 0.3 && sizeX > 2 && sizeY > 2) {
-				papers.add(new Vector2(
-					randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
-					randomRange(rand, Y, sizeY + Y - 2) * layerRoom.getTileWidth() * scale
-				));
+			if (sizeX > 2 && sizeY > 2) {
+				// place paper in the room (chance 80%)
+				if (rand.nextFloat() <= 0.8) {
+					papers.add(new Vector2(
+						randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
+						randomRange(rand, Y, sizeY + Y - 2) * layerRoom.getTileWidth() * scale
+					));
+				}
+
+				// place power spawn point in the room (chance 10%)
+				if (rand.nextFloat() <= 0.1) {
+					powers.add(new Vector2(
+						randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
+						randomRange(rand, Y, sizeY + Y - 2) * layerRoom.getTileWidth() * scale
+					));
+				}
 			}
 		}
 		

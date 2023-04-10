@@ -21,6 +21,11 @@ public abstract class Entity extends Actor {
 	public QuadTree.Node getCurrentNode() { return node; }
 	public void setCurrentNode(QuadTree.Node node) { this.node = node; }
 	
+	private boolean noclip = false;
+	public void toggleNoclip() {
+		noclip = !noclip;
+	}
+	
 	private int health = 100;
 	
 	public void setID(int ID) {
@@ -105,6 +110,8 @@ public abstract class Entity extends Actor {
 		but also gives us a trash result :/
 	*/
 	public void collide(Vector2 rel) {
+		if (noclip) return;
+		
 		int XX = (int)(getX() + rel.x);
 		int YY = (int)(getY() + rel.y);
 		TiledMap worldMap = world.getWorldMap();

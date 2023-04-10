@@ -3,11 +3,9 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.net.SocketHints;
 
-// no wat
-
 public class GameSocketHint extends SocketHints {
 	public GameSocketHint() {
-		connectTimeout = 30000;
-		//tcpNoDelay = true;
+		connectTimeout = 30000; // sure ?
+		tcpNoDelay = true; // disable nagle's algorithm (dont wait for a reasonable packet size. just send them anyways)
 	}
 }
