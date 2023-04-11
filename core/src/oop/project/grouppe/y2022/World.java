@@ -93,6 +93,7 @@ public class World { // implements Screen
 	
 	private boolean drawQuadTree = false;
 	public void toggleDrawQuadTree() { drawQuadTree = !drawQuadTree; }
+	public boolean isDrawQuadTree() { return drawQuadTree; }
 	public void setDrawQuadTree(boolean yes) { drawQuadTree = yes; }
 	
 	private boolean drawPath = false;
@@ -489,14 +490,15 @@ public class World { // implements Screen
 				}
 				
 				// remove items that placed at the border of the node
+				
 				for (Item i : items) {
 					mapQuadTree.updatePos(i);
-					QuadTree.Node n = i.getCurrentNode();
-					if (n != null) {
-						if (n.nodes[0] != null) {
-							added.remove(i);
-						}
-					}
+					//QuadTree.Node n = i.getCurrentNode();
+					//if (n != null) {
+					//	if (n.nodes[0] != null) {
+					//		added.remove(i);
+					//	}
+					//}
 				}
 				
 				addEntities((Entity[]) added.toArray(new Entity[added.size()]));

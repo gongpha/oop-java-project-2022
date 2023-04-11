@@ -23,7 +23,7 @@ public class QuadTree {
 		Node parent = null;
 		ArrayList<Entity> entities;
 		
-		public Node(int lvl, float X, float Y, float W, float H) {
+		public Node(int lvl, float X, float Y, float W, float H, int quadrant) {
 			this.lvl = lvl;
 			this.X = X;
 			this.Y = Y;
@@ -32,11 +32,11 @@ public class QuadTree {
 			this.rect = new Rectangle(X, Y, W, H);
 			nodes = new Node[4];
 			entities = new ArrayList<>();
-			quadrant = 0;
+			this.quadrant = quadrant;
 		}
 		
-		public Node(int lvl, float X, float Y, float W, float H, Node parent) {
-			this(lvl, X, Y, W, H);
+		public Node(int lvl, float X, float Y, float W, float H, int quadrant, Node parent) {
+			this(lvl, X, Y, W, H, quadrant);
 			this.parent = parent;
 		}
 		
@@ -44,10 +44,10 @@ public class QuadTree {
 			float hW = W * 0.5f;
 			float hH = H * 0.5f;
 			int l = lvl + 1;
-			nodes[0] = new Node(l, X + hW, Y     , hW, hH, this);
-			nodes[1] = new Node(l, X     , Y     , hW, hH, this);
-			nodes[2] = new Node(l, X     , Y + hH, hW, hH, this);
-			nodes[3] = new Node(l, X + hW, Y + hH, hW, hH, this);
+			nodes[0] = new Node(l, X + hW, Y     , hW, hH, 1, this);
+			nodes[1] = new Node(l, X     , Y     , hW, hH, 2, this);
+			nodes[2] = new Node(l, X     , Y + hH, hW, hH, 3, this);
+			nodes[3] = new Node(l, X + hW, Y + hH, hW, hH, 4, this);
 		}
 		
 		public Node insert(Entity ent) {
@@ -58,6 +58,7 @@ public class QuadTree {
 			}
 			
 			entities.add(ent);
+			ent.setCurrentNode(this);
 			
 			if (lvl < MAX_RECURSION && entities.size() > MAX_OBJECTS) {
 				// oh no
@@ -91,7 +92,7 @@ public class QuadTree {
 		}
 		
 		public Node expand(Entity newEnt) {
-			if (quadrant == 0) split();
+			split();
 			
 			Node inNode = null;
 			
@@ -105,7 +106,6 @@ public class QuadTree {
 					Node node = nodes[quad - 1].insert(
 						entities.remove(i)
 					);
-					ent.setCurrentNode(node);
 					if (newEnt == ent) inNode = node;
 				}
 				else {
@@ -121,7 +121,8 @@ public class QuadTree {
 			( 2 1 ) -> ( 3 4 )
 		*/
 		private int vflipquad(int quad) {
-			return Math.abs(quad - 3);
+			if (quad == 0) return 0;
+			return Math.abs(quad - 4) + 1;
 		}
 		
 		public String toString() {
@@ -136,7 +137,7 @@ public class QuadTree {
 	}
 	
 	public QuadTree(int sizeX, int sizeY) {
-		root = new Node(0, 0, 0, sizeX, sizeY);
+		root = new Node(0, 0, 0, sizeX, sizeY, 0);
 	}
 	
 	public void updatePos(Entity ent) {
@@ -154,7 +155,9 @@ public class QuadTree {
 			} else {
 				// check if touched any child nodes
 				Node c = node.findChildren(ent);
-				if (c != null) node = c;
+				if (c != null) {
+					node = c.insert(ent);
+				}
 			}
 			
 		}
@@ -164,18 +167,26 @@ public class QuadTree {
 			//System.out.println(ent.getID() + " changes the node to " + node);
 		}
 		
-		ent.setCurrentNode(node);
-		
 		// test all entities in the node
-		Rectangle r = ent.getRect();
-		//System.out.println(node.entities.size());
-		
+		checkOverlaps(ent, node);
+	}
+	
+	private void checkOverlaps(Entity ent, Node node) {
 		ArrayList<Entity> clone = new ArrayList<>(node.entities);
+		Rectangle r = ent.getRect();
 		
 		for (Entity e : clone) {
 			if (e == ent) continue;
 			if (r.overlaps(e.getRect())) ent.collidedWith(e);
 		}
 		
+		if (node.nodes[0] != null) {
+			// not a leaf
+			checkOverlaps(ent, node.nodes[0]);
+			checkOverlaps(ent, node.nodes[1]);
+			checkOverlaps(ent, node.nodes[2]);
+			checkOverlaps(ent, node.nodes[3]);
+		}
+		clone.clear(); // i hate gc
 	}
 }

@@ -70,6 +70,8 @@ public abstract class Enemy extends Entity {
 			s.end();
 			batch.begin();
 		}
+		
+		super.draw(batch, alpha);
 	}
 	
 	public void drawNode(ShapeRenderer s, AStar.Point node, int i) {

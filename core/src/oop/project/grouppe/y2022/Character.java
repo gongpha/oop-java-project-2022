@@ -243,8 +243,8 @@ public class Character extends Entity {
 					packet.powerup = p.powerup;
 					packet.tell = 2;
 					world.getMyClient().send(packet);
+					toRemove.add(p);
 				}
-				toRemove.clear();
 			}
 			
 			for (Power p : toRemove) {
@@ -253,6 +253,7 @@ public class Character extends Entity {
 				}
 				powers.remove(p);
 			}
+			toRemove.clear();
 		}
 
 		int[] aniDir = animationsDir[direction];
@@ -283,6 +284,8 @@ public class Character extends Entity {
 		
 		batch.setColor(Color.WHITE);
 		batch.draw(region, getX() + (flipH ? 32.0f : 0.0f), getY(), flipH ? -32.0f : 32.0f, 32.0f);
+		
+		super.draw(batch, alpha);
 		
 		if (!isMySelf()) {
 			// draw the username if they're others

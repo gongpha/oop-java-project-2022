@@ -17,8 +17,9 @@ public abstract class Item extends Entity {
 		texture = getTexture();
 	}
 	
-	public void draw(Batch batch, float alpha){
+	public void draw(Batch batch, float alpha) {
 		batch.draw(texture, getX(), getY(), 32.0f, 32.0f);
+		super.draw(batch, alpha);
 	}
 	
 	public Rectangle getRect() {

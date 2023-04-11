@@ -1,5 +1,6 @@
 package oop.project.grouppe.y2022;
 
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
@@ -19,7 +20,12 @@ public abstract class Entity extends Actor {
 	
 	private QuadTree.Node node;
 	public QuadTree.Node getCurrentNode() { return node; }
-	public void setCurrentNode(QuadTree.Node node) { this.node = node; }
+	public void setCurrentNode(QuadTree.Node node) {
+		if (this.node != null) {
+			this.node.entities.remove(this);
+		}
+		this.node = node;
+	}
 	
 	private boolean noclip = false;
 	public void toggleNoclip() {
@@ -155,6 +161,12 @@ public abstract class Entity extends Actor {
 			node = null;
 		}
 		world.deleteEntity(this);
+	}
+	
+	public void draw(Batch batch, float alpha) {
+		if (node != null && world.isDrawQuadTree()) {
+			CoreGame.instance().getConsole().getFont().draw(batch, node.toString(), getX(), getY() + 64.0f);
+		}
 	}
 	
 	////////
