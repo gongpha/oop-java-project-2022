@@ -130,6 +130,9 @@ public class Character extends Entity {
 	public void setAnimating(boolean a) { animating = a; }
 	public boolean getAnimating() { return animating; }
 	
+	private boolean faster = false;
+	public boolean hasFaster() { return faster; }
+	
 	/* end */
 	
 	public Character() {
@@ -194,7 +197,13 @@ public class Character extends Entity {
 		// wishdir = wishdir.nor();
 		
 		// accel
-		velocity = velocity.lerp(wishdir.scl(speed * delta), delta * 20.0f);
+		
+		float fast = 1.0f;
+		if (faster) {
+			fast *= 2.0f;
+		}
+		
+		velocity = velocity.lerp(wishdir.scl(speed * delta * fast), delta * 20.0f);
 		if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
 		if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
 		
@@ -388,6 +397,14 @@ public class Character extends Entity {
 				c = "You got the protection !";
 				((Sound)ResourceManager.instance().get("s_protect")).play();
 				break;
+			case 1 : // faster
+				regionIcon.setRegion(32, 224, 32, 32);
+				c = "You move faster !";
+				((Sound)ResourceManager.instance().get("s_faster")).play();
+				
+				faster = true;
+				
+				break;
 		}
 		world.feedChat(-1, c, true);
 	}
@@ -399,12 +416,19 @@ public class Character extends Entity {
 			case 0 : // protecc
 				c = "Protection is about to expire !";
 				break;
+			case 1 : // faster
+				c = "Faster is about to expire !";
+				break;
 		}
 		world.feedChat(-1, c, true);
 	}
 	
 	private void powerEnd(char powerup) {
 		if (!isMySelf()) return; // not my self. dont care
+		
+		if (powerup == 1) {
+			faster = false;
+		}
 		
 		// reset
 		regionIcon.setRegion(128, 0, 32, 32);

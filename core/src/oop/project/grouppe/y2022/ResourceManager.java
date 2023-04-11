@@ -52,6 +52,7 @@ public class ResourceManager {
 		preloadSound("s_protect", "sound/protect.wav");
 		preloadSound("s_paper", "sound/paper.wav");
 		preloadSound("s_chat", "sound/chat.wav");
+		preloadSound("s_faster", "sound/faster.wav");
 	}
 	
 	//////////////////////////////////////////////////////////////////

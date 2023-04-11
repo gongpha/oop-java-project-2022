@@ -478,9 +478,12 @@ public class World { // implements Screen
 				rand.setSeed(bsp.getSeed());
 				for (Vector2 v : spawns) {
 					Item m = null;
-					switch (/*rand.nextInt() % 1*/0) { // TODO : ADD MORE POWERUPS
+					switch (rand.nextInt() % 2) {
 					case 0 :
 						m = new Protection();
+						break;
+					case 1 :
+						m = new Faster();
 						break;
 					}
 					if (m == null) continue;
@@ -493,12 +496,13 @@ public class World { // implements Screen
 				
 				for (Item i : items) {
 					mapQuadTree.updatePos(i);
-					//QuadTree.Node n = i.getCurrentNode();
-					//if (n != null) {
-					//	if (n.nodes[0] != null) {
-					//		added.remove(i);
-					//	}
-					//}
+					QuadTree.Node n = i.getCurrentNode();
+					if (n != null) {
+						if (n.nodes[0] != null) {
+							added.remove(i);
+							i.setCurrentNode(null);
+						}
+					}
 				}
 				
 				addEntities((Entity[]) added.toArray(new Entity[added.size()]));
