@@ -39,7 +39,7 @@ public class Character extends Entity {
 	private int input = 0;
 	
 	private Player player = null;
-	private float speed = 400.0f;
+	private float speed = 500.0f;
 	
 	private final BitmapFont labelFont;
 	
@@ -105,17 +105,20 @@ public class Character extends Entity {
 	// server side
 	private final float POWER_DURATION = 15.0f;
 	private final float POWER_DURATION_END = 3.0f;
+	private boolean protection = false;
+	public boolean hasProtection() { return protection; }
+	
 	private class Power {
 		char powerup;
 		float timer = POWER_DURATION;
+		int regionX;
+		int regionY;
 		boolean aboutToEnd = false;
 		public Power(char powerup) {
 			this.powerup = powerup;
 		}
 	}
 	private ArrayList<Power> powers;
-	private boolean protection = false;
-	public boolean hasProtection() { return protection; }
 	
 	/* control by clients */
 	private float animationIndex = 0.0f; // [0, 3] index [0, 1, 2] by Math.floor ((int) cast)
@@ -222,6 +225,7 @@ public class Character extends Entity {
 		QuadTree q = world.getMapQuadTree();
 		if (q != null)
 			q.updatePos(this);
+			//System.out.println(q.updatePos(this));
 	}
 	
 	public boolean isMySelf() {
@@ -235,8 +239,7 @@ public class Character extends Entity {
 		float delta = Gdx.graphics.getDeltaTime(); // 3x faster
 		
 		if (world.getMyClient().isServer()) {
-			ArrayList<Power> toRemove = new ArrayList<>();
-			for (Power p : powers) {
+			for (Power p : new ArrayList<>(powers)) {
 				p.timer -= delta;
 				if (!p.aboutToEnd && p.timer < POWER_DURATION_END) {
 					p.aboutToEnd = true;
@@ -251,18 +254,26 @@ public class Character extends Entity {
 					packet.target = this;
 					packet.powerup = p.powerup;
 					packet.tell = 2;
+					
+					// reset to default face
+					packet.x = 128;
+					packet.y = 0;
+					
+					powers.remove(p);
+					if (p.powerup == (char)0) {
+						protection = false;
+					}
+					
+					// set the status to the latest power
+					if (!powers.isEmpty()) {
+						Power po = powers.get(powers.size() - 1);
+						packet.x = po.regionX;
+						packet.y = po.regionY;
+					}
+					
 					world.getMyClient().send(packet);
-					toRemove.add(p);
 				}
 			}
-			
-			for (Power p : toRemove) {
-				if (p.powerup == (char)0) {
-					protection = false;
-				}
-				powers.remove(p);
-			}
-			toRemove.clear();
 		}
 
 		int[] aniDir = animationsDir[direction];
@@ -361,13 +372,26 @@ public class Character extends Entity {
 	
 	// server only
 	public void givePower(char powerup) {
-		powers.add(new Power(powerup));
-		
-		if (powerup == (char)0) {
-			protection = true;
-		}
+		Power po = new Power(powerup);
+		powers.add(po);
 		
 		Packet.SCharacterUpdatePowerup p = new Packet.SCharacterUpdatePowerup();
+
+		switch (powerup) {
+		case 0 :
+			p.x = 0;
+			p.y = 224;
+			protection = true;
+			break;
+		case 1 :
+			p.x = 32;
+			p.y = 224;
+			break;
+		}
+		
+		po.regionX = p.x;
+		po.regionY = p.y;
+		
 		p.target = this;
 		p.powerup = powerup;
 		p.tell = 0;
@@ -376,32 +400,32 @@ public class Character extends Entity {
 	}
 	
 	// called from the server
-	public void updatePowerup(char powerup, char tell) {
+	public void updatePowerup(char powerup, char tell, int x, int y) {
+		
+		CoreGame.instance().getConsole().print("!P " + (int)powerup + " " + (int)tell + " " + x + " " + y);
+		
 		switch (tell) {
 			case 0 : powerBegin(powerup); break;
 			case 1 : powerAboutToEnd(powerup); break;
 			case 2 : powerEnd(powerup); break;
 		}
+		if (x != -1)
+			regionIcon.setRegion(x, y, 32, 32);
 	}
 	
 	private void powerBegin(char powerup) {
 		if (!isMySelf()) return; // not my self. dont care
 		
-		
-		
 		// set icon
 		String c = "??? begin ???";
 		switch (powerup) {
 			case 0 : // protecc
-				regionIcon.setRegion(0, 224, 32, 32);
 				c = "You got the protection !";
-				((Sound)ResourceManager.instance().get("s_protect")).play();
+				ResourceManager.instance().playSound("s_protect");
 				break;
 			case 1 : // faster
-				regionIcon.setRegion(32, 224, 32, 32);
 				c = "You move faster !";
-				((Sound)ResourceManager.instance().get("s_faster")).play();
-				
+				ResourceManager.instance().playSound("s_faster");
 				faster = true;
 				
 				break;
@@ -411,6 +435,7 @@ public class Character extends Entity {
 	
 	private void powerAboutToEnd(char powerup) {
 		if (!isMySelf()) return; // not my self. dont care
+		
 		String c = "??? expire ???";
 		switch (powerup) {
 			case 0 : // protecc
@@ -429,12 +454,7 @@ public class Character extends Entity {
 		if (powerup == 1) {
 			faster = false;
 		}
-		
-		// reset
-		regionIcon.setRegion(128, 0, 32, 32);
 		//world.feedChat(-1, c, true);
 	}
-	
-	
 	
 }

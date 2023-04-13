@@ -3,6 +3,7 @@ package oop.project.grouppe.y2022;
 
 // it can hurt you
 
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -27,10 +28,26 @@ public abstract class Enemy extends Entity {
 	private Character walkingTo = null;
 	private Vector2 lastCheck;
 	
+	private Music music;
+	
 	public Enemy() {
 		random = new Random();
 		region = getTexture();
 		velocity = new Vector2();
+		
+		music = getMusic();
+		if (music != null) {
+			music.setLooping(true);
+			ResourceManager.instance().playMusic(music);
+		}
+	}
+	
+	public void updateCameraPos(float camX, float camY) {
+		//float X = camX - getX();
+		float dst = new Vector2(camX, camY).dst(getX(), getY());
+		dst = Utils.clamp(dst / 1200.0f, 0.0f, 1.0f);
+		//System.out.println(dst);
+		music.setVolume((1.0f - dst) * CoreGame.instance().getVolumef());
 	}
 	
 	public void setupAStar() {
@@ -118,7 +135,7 @@ public abstract class Enemy extends Entity {
 			// looking for characters (player entities)
 			
 			Character nearest = null;
-			float nearestDist = 9999999.0f;
+			float nearestDist = 555555.0f;
 			for (HashMap.Entry<Integer, Integer> e : getWorld().dumpCharactersEntID().entrySet()) {
 				Character c = (Character) getWorld().getEntities(e.getValue());
 
@@ -164,4 +181,5 @@ public abstract class Enemy extends Entity {
 	///////////////////////
 	
 	public abstract TextureRegion getTexture();
+	public abstract Music getMusic();
 }

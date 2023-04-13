@@ -140,7 +140,7 @@ public class QuadTree {
 		root = new Node(0, 0, 0, sizeX, sizeY, 0);
 	}
 	
-	public void updatePos(Entity ent) {
+	public int updatePos(Entity ent) {
 		Node node = ent.getCurrentNode();
 		boolean findNew = false;
 		if (node == null) {
@@ -168,25 +168,36 @@ public class QuadTree {
 		}
 		
 		// test all entities in the node
-		checkOverlaps(ent, node);
+		// ite : test count
+		return checkOverlaps(ent, node);
 	}
 	
-	private void checkOverlaps(Entity ent, Node node) {
+	private int checkOverlaps(Entity ent, Node node) { return checkOverlaps(ent, node, true); }
+	private int checkOverlaps(Entity ent, Node node, boolean recursionAll) {
+		int i = 0;
 		ArrayList<Entity> clone = new ArrayList<>(node.entities);
 		Rectangle r = ent.getRect();
 		
 		for (Entity e : clone) {
 			if (e == ent) continue;
 			if (r.overlaps(e.getRect())) ent.collidedWith(e);
+			i += 1;
 		}
 		
-		if (node.nodes[0] != null) {
-			// not a leaf
-			checkOverlaps(ent, node.nodes[0]);
-			checkOverlaps(ent, node.nodes[1]);
-			checkOverlaps(ent, node.nodes[2]);
-			checkOverlaps(ent, node.nodes[3]);
+		if (recursionAll) {
+			if (node.nodes[0] != null) {
+				// not a leaf
+				i += checkOverlaps(ent, node.nodes[0]);
+				i += checkOverlaps(ent, node.nodes[1]);
+				i += checkOverlaps(ent, node.nodes[2]);
+				i += checkOverlaps(ent, node.nodes[3]);
+			}
+		}
+		if ((r.x == ent.getX() || r.y == ent.getY()) && node.parent != null) {
+			// check parent too
+			i += checkOverlaps(ent, node.parent, false);
 		}
 		clone.clear(); // i hate gc
+		return i;
 	}
 }

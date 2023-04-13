@@ -459,17 +459,25 @@ public abstract class Packet {
 		// 2 = end
 		char tell;
 		
+		// status texture region
+		int x = -1;
+		int y = -1;
+		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(target.getPlayer().getNetID());
 			s.writeChar(powerup);
 			s.writeChar(tell);
+			s.writeInt(x);
+			s.writeInt(y);
 		}
 		public void read(DataInputStream s) throws IOException {
 			int netID = s.readInt();
-			char powerup = s.readChar();
-			char tell = s.readChar();
+			powerup = s.readChar();
+			tell = s.readChar();
+			x = s.readInt();
+			y = s.readInt();
 			Character target = world.getCharacterByNetID(netID);
-			target.updatePowerup(powerup, tell);
+			target.updatePowerup(powerup, tell, x, y);
 		}
 	}
 }

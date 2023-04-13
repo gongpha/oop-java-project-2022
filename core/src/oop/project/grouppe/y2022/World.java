@@ -413,11 +413,12 @@ public class World { // implements Screen
 		
 		Packet.SGenLevel p = new Packet.SGenLevel();
 		p.mapName = currentLevelName;
+		//p.seed = -977121143;
 		p.seed = new Random().nextInt();
 		
 		int tilesetIndex = new Random().nextInt();
-		p.tilesetIndex = tilesetIndex % BSPDungeonGenerator.tilesets.length;
-		
+		p.tilesetIndex = Math.abs(tilesetIndex) % BSPDungeonGenerator.tilesets.length;
+		CoreGame.instance().getConsole().print(">> " + p.seed + " : " + p.tilesetIndex);
 		
 		
 		getMyClient().send(p);
@@ -496,13 +497,13 @@ public class World { // implements Screen
 				
 				for (Item i : items) {
 					mapQuadTree.updatePos(i);
-					QuadTree.Node n = i.getCurrentNode();
+					/*QuadTree.Node n = i.getCurrentNode();
 					if (n != null) {
 						if (n.nodes[0] != null) {
 							added.remove(i);
 							i.setCurrentNode(null);
 						}
-					}
+					}*/
 				}
 				
 				addEntities((Entity[]) added.toArray(new Entity[added.size()]));
@@ -571,6 +572,11 @@ public class World { // implements Screen
 			if (m != null) {
 				m.process(delta);
 			}
+		}
+		
+		// poll the cam position to all entites
+		for (HashMap.Entry<Integer, Entity> e : entities.entrySet()) {
+			e.getValue().updateCameraPos(camera.position.x, camera.position.y);
 		}
 		
 		if (m != null) {
@@ -702,15 +708,15 @@ public class World { // implements Screen
 		}
 		else if (netID == -2) {
 			i.authorColor = "RED"; // cheat notify
-			((Sound)ResourceManager.instance().get("s_cheat")).play();
+			ResourceManager.instance().playSound("s_cheat");
 		}
 		else if (netID == -3) {
 			i.authorColor = "GREEN"; // cheat notify
-			((Sound)ResourceManager.instance().get("s_paper")).play();
+			ResourceManager.instance().playSound("s_paper");
 		}
 		else {
 			i.author = myClient.getPlayer(netID).getUsername();
-			((Sound)ResourceManager.instance().get("s_chat")).play();
+			ResourceManager.instance().playSound("s_chat");
 		}
 		
 		if (netID == myClient.getMyPlayer().getNetID())

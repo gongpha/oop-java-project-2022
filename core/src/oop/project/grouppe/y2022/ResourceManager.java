@@ -17,6 +17,7 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader.FreeTypeFontLoaderParameter;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ResourceManager {
@@ -53,6 +54,8 @@ public class ResourceManager {
 		preloadSound("s_paper", "sound/paper.wav");
 		preloadSound("s_chat", "sound/chat.wav");
 		preloadSound("s_faster", "sound/faster.wav");
+		
+		preloadMusic("m_ghost", "sound/ghost_idle1.mp3");
 	}
 	
 	//////////////////////////////////////////////////////////////////
@@ -70,12 +73,20 @@ public class ResourceManager {
 	private HashMap<String, String> map; // < Name : Path >
 	private HashMap<String, Object> loaded; // < Name : Object >
 	
+	private class PlayingSoundMusic {
+		Object sm;
+		long i;
+	}
+	private ArrayList<PlayingSoundMusic> psms;
+	
 	private float lastProgress = -1.0f;
 	
 	public ResourceManager() {
 		map = new HashMap<String, String>();
 		loaded = new HashMap<String, Object>();
 		manager = new AssetManager();
+		
+		psms = new ArrayList<>();
 		
 		// declare a font loader
 		FileHandleResolver resolver = new InternalFileHandleResolver();
@@ -133,6 +144,52 @@ public class ResourceManager {
 			loaded.put(name, manager.get(map.get(name)));
 		}
 		return loaded.get(name);
+	}
+	
+	/////////////////////////////////
+	
+	public void playSound(String name) {
+		Sound s = ((Sound)ResourceManager.instance().get(name));
+		long i = s.play(CoreGame.instance().getVolumef());
+		PlayingSoundMusic psm = new PlayingSoundMusic();
+		psm.sm = s;
+		psm.i = i;
+		psms.add(psm);
+	}
+	
+	public void playMusic(Music m) {
+		m.setVolume(CoreGame.instance().getVolumef());
+		m.play();
+		PlayingSoundMusic psm = new PlayingSoundMusic();
+		psm.sm = m;
+		psm.i = -1L;
+		psms.add(psm);
+	}
+	
+	public void setVolume(int percent) {
+		float v = percent /= 100.0f;
+		for (PlayingSoundMusic psm : psms) {
+			Object o = psm.sm;
+			if (o instanceof Music) {
+				((Music) o).setVolume(v);
+			}
+			if (o instanceof Sound) {
+				((Sound) o).setVolume(psm.i, v);
+			}
+		}
+	}
+	
+	public void stopAllSoundMusic() {
+		for (PlayingSoundMusic psm : psms) {
+			Object o = psm.sm;
+			if (o instanceof Music) {
+				((Music) o).stop();
+			}
+			if (o instanceof Sound) {
+				((Sound) o).stop();
+			}
+		}
+		psms.clear();
 	}
 	
 	/////////////////////////////////

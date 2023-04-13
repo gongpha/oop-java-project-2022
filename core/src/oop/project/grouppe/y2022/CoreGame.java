@@ -54,9 +54,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private boolean drawShowinfo = false;
 	private BitmapFont infoFont;
 	private ArrayList<Integer> infoGraph;
-	private final int infoGraphMax = 128;
 	private int graphFrame = 0;
 	private ShapeRenderer graphShapeRenderer;
+	
+	private int volume = 0;
 	
 	private enum Status {
 		PRELOADING,
@@ -83,6 +84,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		infoGraph = new ArrayList<>();
 		
 		pref = Gdx.app.getPreferences("oop.proj.2022.settings");
+		volume = pref.getInteger("volume");
 		
 		Gdx.input.setInputProcessor(this);
 		////////////////////////////////
@@ -183,6 +185,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			client.kill("Disconnected by game");
 			client = null;
 		}
+		ResourceManager.instance().stopAllSoundMusic();
 		menu.showAsMainMenu();
 		status = Status.PLAYING_DEMO;
 		if (!menu.isShowing()) menu.toggle(); // show the menu
@@ -322,6 +325,15 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		if (!drawShowinfo) return;
 		graphFrame += 1;
 	}
+	
+	////////////////////////////////////////////
+	
+	public void setVolume(int v) {
+		volume = v;
+		ResourceManager.instance().setVolume(v);
+	}
+	public int getVolume() { return volume; }
+	public float getVolumef() { return volume / 100.0f; }
 	
 	////////////////////////////////////////////
 	

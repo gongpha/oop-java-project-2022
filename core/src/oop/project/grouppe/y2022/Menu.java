@@ -38,7 +38,7 @@ public class Menu {
 		{"Quit",		"quit"},
 	};
 	private final static String[][] pauseMenuStructure = {
-		{"Resume",		"menu_toggle"},
+		{"Close Menu",	"menu_toggle"},
 		{"Leave Game",	"disconnect"},
 		{"Settings",	"menu_settings"},
 		{"Quit",		"quit"},
@@ -192,7 +192,7 @@ public class Menu {
 	
 	public void renderSettings() {		
 		font.draw(batch, (
-			"Volume : " + pref.getInteger("volume", 100) + "%" + (cursor == 0 ? " <<" : "")
+			"Volume : " + CoreGame.instance().getVolume() + "%" + (cursor == 0 ? " <<" : "")
 		), 200, 600);
 	}
 	
@@ -333,11 +333,13 @@ public class Menu {
 					volume -= 10;
 					volume = Math.max(0, Math.min(100, volume));
 					pref.putInteger("volume", volume);
+					CoreGame.instance().setVolume(volume);
 					pref.flush();
 				} else if (i == Input.Keys.RIGHT) {
 					volume += 10;
 					volume = Math.max(0, Math.min(100, volume));
 					pref.putInteger("volume", volume);
+					CoreGame.instance().setVolume(volume);
 					pref.flush();
 				}
 			}

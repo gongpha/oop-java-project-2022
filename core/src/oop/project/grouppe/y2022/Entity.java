@@ -169,6 +169,8 @@ public abstract class Entity extends Actor {
 		}
 	}
 	
+	public void updateCameraPos(float camX, float camY) {}
+	
 	////////
 	
 	public abstract void serializeConstructor(DataOutputStream d) throws IOException;

@@ -51,7 +51,7 @@ public class BSPDungeonGenerator extends Thread {
 	private final ArrayList<Vector2> powers;
 	
 	public final static String[] tilesets = {
-		"dun1",
+		"dun1", "dun2"
 	};
 	
 	public BSPDungeonGenerator(long seed, int sizeX, int sizeY, int scale, Texture tileset) {
@@ -214,11 +214,6 @@ public class BSPDungeonGenerator extends Thread {
 		Room left;
 		Room right;
 		
-		public float lerp(float a, float b, float w)
-		{
-			return a * (1.0f - w) + (b * w);
-		}
-		
 		public Room(int X, int Y, int sX, int sY) {
 			this.X = X;
 			this.Y = Y;
@@ -237,12 +232,12 @@ public class BSPDungeonGenerator extends Thread {
 		}
 		
 		public void shrink(Random rand) {
-			int x = (int)lerp(0, sizeX / 3, rand.nextFloat());
-			int y = (int)lerp(0, sizeY / 3, rand.nextFloat());
+			int x = (int)Utils.lerp(0, sizeX / 3, rand.nextFloat());
+			int y = (int)Utils.lerp(0, sizeY / 3, rand.nextFloat());
 			X += x;
 			Y += y;
-			sizeX -= lerp(0, sizeX / 3, rand.nextFloat()) + x;
-			sizeY -= lerp(0, sizeY / 3, rand.nextFloat()) + y;
+			sizeX -= Utils.lerp(0, sizeX / 3, rand.nextFloat()) + x;
+			sizeY -= Utils.lerp(0, sizeY / 3, rand.nextFloat()) + y;
 			
 			if (Y < bottomRoomY) {
 				bottomRoom = this;
@@ -278,17 +273,17 @@ public class BSPDungeonGenerator extends Thread {
 		}
 		
 		public void split(Random rand, int iteration) {
-			float ratio = lerp(0.45f, 0.55f, rand.nextFloat());
+			float ratio = Utils.lerp(0.45f, 0.55f, rand.nextFloat());
 			int ratioAt;
 			boolean vert = rand.nextFloat() < hv;
 			if (vert) {
-				ratioAt = (int)lerp(0, sizeY, ratio);
+				ratioAt = (int)Utils.lerp(0, sizeY, ratio);
 				left = new Room(X, Y, sizeX, ratioAt);
 				right = new Room(X, Y + ratioAt, sizeX, sizeY - ratioAt);
 				left.hv = 0.0125f;
 				right.hv = 0.0125f;
 			} else {
-				ratioAt = (int)lerp(0, sizeX, ratio);
+				ratioAt = (int)Utils.lerp(0, sizeX, ratio);
 				left = new Room(X, Y, ratioAt, sizeY);
 				right = new Room(X + ratioAt, Y, sizeX - ratioAt, sizeY);
 				left.hv = 0.9875f;
