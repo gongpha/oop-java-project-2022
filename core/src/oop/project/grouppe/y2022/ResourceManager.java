@@ -55,6 +55,10 @@ public class ResourceManager {
 		preloadSound("s_chat", "sound/chat.wav");
 		preloadSound("s_faster", "sound/faster.wav");
 		
+		preloadSound("s_menu1", "sound/menu1.wav");
+		preloadSound("s_menu2", "sound/menu2.wav");
+		preloadSound("s_menu3", "sound/menu3.wav");
+		
 		preloadMusic("m_ghost", "sound/ghost_idle1.mp3");
 	}
 	

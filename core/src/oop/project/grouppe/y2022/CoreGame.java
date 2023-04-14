@@ -380,8 +380,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			if (i == Input.Keys.ESCAPE) {
 				if (menu.isShowing()) {
 					if (menu.isOnRoot()) {
+						menu.playSoundEnter();
 						menu.toggle();
 					} else {
+						menu.playSoundEnter();
 						menu.showMain();
 					}
 				} else if (world != null && world.handleEscapeKey()) {

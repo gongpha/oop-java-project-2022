@@ -288,6 +288,7 @@ public class Menu {
 		case MAINMENU:
 			structure = getCurrentStructure();
 			if (i == Input.Keys.ENTER) {
+				playSoundEnter();
 				String cmd = structure[cursor][1];
 				CoreGame.instance().getConsole().exec(cmd);
 			}
@@ -301,8 +302,10 @@ public class Menu {
 				String[] sss = Character.characters;
 				if (i == Input.Keys.LEFT) {
 					selectingCharacterIndex -= 1;
+					playSoundAdjust();
 				} else if (i == Input.Keys.RIGHT) {
 					selectingCharacterIndex += 1;
+					playSoundAdjust();
 				}
 				selectingCharacterIndex = Math.max(0, Math.min(sss.length - 1, selectingCharacterIndex));
 				resetSelectingCharacter();
@@ -310,6 +313,7 @@ public class Menu {
 				if (forHost) {
 					if (cursor == 2) {
 						if (i == Input.Keys.ENTER) {
+							playSoundEnter();
 							saveCustomize();
 							CoreGame.instance().getConsole().exec("host");
 						}
@@ -317,6 +321,7 @@ public class Menu {
 				} else {
 					if (cursor == 3) {
 						if (i == Input.Keys.ENTER) {
+							playSoundEnter();
 							saveCustomize();
 							CoreGame.instance().getConsole().exec("join");
 						}
@@ -335,12 +340,14 @@ public class Menu {
 					pref.putInteger("volume", volume);
 					CoreGame.instance().setVolume(volume);
 					pref.flush();
+					playSoundAdjust();
 				} else if (i == Input.Keys.RIGHT) {
 					volume += 10;
 					volume = Math.max(0, Math.min(100, volume));
 					pref.putInteger("volume", volume);
 					CoreGame.instance().setVolume(volume);
 					pref.flush();
+					playSoundAdjust();
 				}
 			}
 			
@@ -356,6 +363,7 @@ public class Menu {
 				cursor = 0;
 			else
 				cursor += 1;
+			playSoundSelect();
 			return true;
 		} else if (i == Input.Keys.UP) {
 			caret = 0.0f;
@@ -363,9 +371,20 @@ public class Menu {
 				cursor = structure.length - 1;
 			else
 				cursor -= 1;
+			playSoundSelect();
 			return true;
 		}
 		return false;
+	}
+	
+	public void playSoundSelect() {
+		ResourceManager.instance().playSound("s_menu1");
+	}
+	public void playSoundEnter() {
+		ResourceManager.instance().playSound("s_menu2");
+	}
+	public void playSoundAdjust() {
+		ResourceManager.instance().playSound("s_menu3");
 	}
 	
 	public boolean isOnRoot() {
