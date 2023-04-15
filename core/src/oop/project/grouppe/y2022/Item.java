@@ -18,7 +18,8 @@ public abstract class Item extends Entity {
 	}
 	
 	public void draw(Batch batch, float alpha) {
-		batch.draw(texture, getX(), getY(), 32.0f, 32.0f);
+		if (texture != null)
+			batch.draw(texture, getX(), getY(), 32.0f, 32.0f);
 		super.draw(batch, alpha);
 	}
 	

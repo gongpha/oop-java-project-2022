@@ -44,11 +44,13 @@ public abstract class Packet {
 		regPacket(FPlayerState.class);
 		regPacket(SGenLevel.class);
 		regPacket(CGenerateDone.class);
+		regPacket(SInitGame.class);
 		regPacket(CSendChat.class);
 		regPacket(SSendChat.class);
 		regPacket(SEntUpdateHealth.class);
 		regPacket(SEntCreateMultiple.class);
 		regPacket(SCharacterUpdatePowerup.class);
+		regPacket(SPlayerScoreAdd.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -364,12 +366,26 @@ public abstract class Packet {
 		
 		public void write(DataOutputStream s) throws IOException {}
 		public void read(DataInputStream s) throws IOException {
-			
+			world.pendingRemove(getCSenderOrSMySelf().getMyPlayer().getNetID());
+		}
+	}
+	
+	public static class SInitGame extends Packet {
+		public int header() { return 13; }
+		
+		int maxPaperCount = 666;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(maxPaperCount);
+		}
+		public void read(DataInputStream s) throws IOException {
+			maxPaperCount = s.readInt();
+			world.initGamePuppet(maxPaperCount);
 		}
 	}
 	
 	public static class CSendChat extends Packet {
-		public int header() { return 13; }
+		public int header() { return 14; }
 		
 		public int netID = -1;
 		public String message;
@@ -386,10 +402,15 @@ public abstract class Packet {
 	}
 	
 	public static class SSendChat extends Packet {
-		public int header() { return 14; }
+		public int header() { return 15; }
 		
 		public String message;
-		public int netID = -1; // -1 : system messages (yellow), -2 : cheat notify (red and sound fx), -3 : paper
+		
+		// -1 : system messages (yellow)
+		// -2 : cheat notify (red and sound fx)
+		// -3 : paper
+		// -4 : cheerful notify
+		public int netID = -1;
 		public int flashID = -1; // neg : no flashing, 0 : EVERYONE, otherwise : specific
 		
 		public void write(DataOutputStream s) throws IOException {
@@ -406,7 +427,7 @@ public abstract class Packet {
 	}
 	
 	public static class SEntUpdateHealth extends Packet {
-		public int header() { return 15; }
+		public int header() { return 16; }
 		
 		public int entID;
 		public int newHealth;
@@ -424,7 +445,7 @@ public abstract class Packet {
 	// tell to clients to create a bunch of entities in one packet
 	// do not let the server invoke this (by calling "broadcastExceptServer")
 	public static class SEntCreateMultiple extends Packet {
-		public int header() { return 16; }
+		public int header() { return 17; }
 		
 		Entity[] ents;
 		
@@ -446,11 +467,12 @@ public abstract class Packet {
 	}
 	
 	public static class SCharacterUpdatePowerup extends Packet {
-		public int header() { return 17; }
+		public int header() { return 18; }
 		
 		Character target;
 		
 		// 0 = protecc
+		// 1 = faster
 		// . = MORE SOON !
 		char powerup;
 		
@@ -478,6 +500,23 @@ public abstract class Packet {
 			y = s.readInt();
 			Character target = world.getCharacterByNetID(netID);
 			target.updatePowerup(powerup, tell, x, y);
+		}
+	}
+	
+	public static class SPlayerScoreAdd extends Packet {
+		public int header() { return 19; }
+		
+		Character ch;
+		int currentPaperCount = -1;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(ch.getPlayer().getNetID());
+			s.writeInt(currentPaperCount);
+		}
+		public void read(DataInputStream s) throws IOException {
+			int netID = s.readInt();
+			currentPaperCount = s.readInt();
+			world.addCollectedPaperCountPuppet(netID, currentPaperCount);
 		}
 	}
 }

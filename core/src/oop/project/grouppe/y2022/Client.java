@@ -133,6 +133,11 @@ public class Client extends Thread {
 				} catch (Exception e) {
 					retries += 1;
 					console.print("Connecting failed (" + retries + ") : " + e.getMessage());
+					if (retries >= 4) {
+						console.print("Can't connect after 4 retries");
+						kill("Can't connect after 4 retries");
+						break;
+					}
 				}
 			}
 		}
@@ -203,6 +208,8 @@ public class Client extends Thread {
 				console.printerr(sw.toString());
 				console.showFull();
 				kill("Failed to read a packet");
+				CoreGame.instance().tellDisconnected(disconnectReason);
+				interrupt();
 			}
 		}
 		

@@ -2,7 +2,6 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -38,13 +37,12 @@ public class World { // implements Screen
 	public OrthographicCamera getCamera() { return camera; }
 	private Stage stage;
 	
-	private int input = 0;
 	private int lastID = 0;
 	
 	private Client myClient;
-	private HashMap<Integer, Entity> entities; // < entID : Entity >
-	private HashMap<Integer, Integer> clientCharacters; // < netID : entID >
-	private LinkedList<Integer> entitiesRemoveLater;
+	private final HashMap<Integer, Entity> entities; // < entID : Entity >
+	private final HashMap<Integer, Integer> clientCharacters; // < netID : entID >, included ourselves
+	private final LinkedList<Integer> entitiesRemoveLater;
 	
 	private BSPDungeonGenerator bsp = null;
 	private TextureRegion bspBackgroundTexture = null;
@@ -53,17 +51,19 @@ public class World { // implements Screen
 	private QuadTree mapQuadTree = null;
 	private String currentLevelName = "The Nameless City";
 	private char[][] mapColTiles;
+	
 	private int paperCount;
 	private int collectedPaperCount;
 	
 	// usually for servers
 	private boolean atLobby = false;
-	private float[] currentMapspawnPoint;
+	private final float[] currentMapspawnPoint;
+	private final LinkedList<Integer> pendingPlayer; // generating levels
 	
 	private RectangleMapObject serverReadyArea;
 	private boolean insideReadyArea = false;
 	
-	private Texture overlay;
+	private final Texture overlay;
 	
 	// HUD
 	
@@ -98,9 +98,11 @@ public class World { // implements Screen
 	
 	private boolean drawPath = false;
 
-	private final int DUNX = 64;
-	private final int DUNY = 64;
+	private final int DUNX = 48;
+	private final int DUNY = 48;
 	private final int DUNS = 5;
+	
+	private boolean scoreboardVisible = false;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
 		public WorldRenderer(TiledMap map) {
@@ -123,7 +125,6 @@ public class World { // implements Screen
 	
 	public World() {
 		//this.server = server;
-		Packet.world = this;
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
 		
@@ -150,7 +151,7 @@ public class World { // implements Screen
 		hudFont2 = (BitmapFont) ResourceManager.instance().get("chat_font");
 		hudFont2.getData().markupEnabled = true;
 		
-		
+		pendingPlayer = new LinkedList<>();
 		
 		
 		camera.update();
@@ -172,8 +173,31 @@ public class World { // implements Screen
 		return collectedPaperCount;
 	}
 	
-	public void addCollectedPaperCount() {
+	// serverside
+	public void addCollectedPaperCount(Character ch) {
 		collectedPaperCount += 1;
+		
+		Server s = getMyClient().getServer();
+		Player p = ch.getPlayer();
+		
+		s.sendChat(-3,
+			p.getUsername() + " collects a paper. (" + collectedPaperCount + "/" + paperCount + ")"
+		, p.getNetID());
+		
+		if (collectedPaperCount >= paperCount) {
+			s.sendChat(-4, "All papers have been collected ! Come back to the entrance", -1);
+		}
+	}
+	
+	// clientside
+	public void addCollectedPaperCountPuppet(int netID, int currentPaperCount) {
+		collectedPaperCount += 1;
+		
+		Player p = getCharacterByNetID(netID).getPlayer();
+		
+		feedChat(-3,
+			p.getUsername() + " collects a paper. (" + currentPaperCount + "/" + paperCount + ")"
+		, netID == getMyClient().getMyPlayer().getNetID());
 	}
 	
 	public void addEntity(Entity ent) {
@@ -369,6 +393,11 @@ public class World { // implements Screen
 			}
 		}
 		
+		if (i == Input.Keys.TAB) {
+			showScoreboard(true);
+			return true;
+		}
+		
 		Character m = myClient.getCharacter();
 		if (m != null) {
 			return m.keyDown(i);
@@ -383,7 +412,17 @@ public class World { // implements Screen
 		if (m != null) {
 			return m.keyUp(i);
 		}
+		
+		if (i == Input.Keys.TAB) {
+			showScoreboard(false);
+			return true;
+		}
+		
 		return false;
+	}
+	
+	public void showScoreboard(boolean visible) {
+		scoreboardVisible = visible;
 	}
 	
 	public boolean handleEscapeKey() {
@@ -407,7 +446,7 @@ public class World { // implements Screen
 			textTimer = texts.get(0).time;
 	}
 	
-	// called by the server
+	// serverside
 	public void commitReady() {
 		if (!insideReadyArea) return;
 		
@@ -415,6 +454,12 @@ public class World { // implements Screen
 		p.mapName = currentLevelName;
 		//p.seed = -977121143;
 		p.seed = new Random().nextInt();
+		
+		
+		// add all players as pending
+		for (HashMap.Entry<Integer, Integer> e : clientCharacters.entrySet()) {
+			pendingPlayer.add(e.getKey());
+		}
 		
 		int tilesetIndex = new Random().nextInt();
 		p.tilesetIndex = Math.abs(tilesetIndex) % BSPDungeonGenerator.tilesets.length;
@@ -425,6 +470,94 @@ public class World { // implements Screen
 		
 		insideReadyArea = false;
 		atLobby = false;
+	}
+	
+	public void pendingRemove(int netID) {
+		pendingPlayer.remove(Integer.valueOf(netID));
+		
+		if (pendingPlayer.isEmpty()) {
+			// ALRIGHT LETS GO
+			initGame();
+			
+			Packet.SInitGame p = new Packet.SInitGame();
+			p.maxPaperCount = paperCount;
+			getMyClient().send(p);
+		}
+	}
+	
+	// serverside
+	private void initGame() {
+		mapColTiles = bsp.getColTiles2DArray();
+		
+		// setup a quadtree
+		mapQuadTree = new QuadTree(DUNX * DUNS, DUNY * DUNS);
+
+		if (myClient.getCharacter() != null)
+			myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
+
+		// create objects
+		LinkedList<Entity> added = new LinkedList<>();
+
+		// SPAWN THE ENEMY (ghost)
+		ghost = new Ghost();
+		ghost.setPosition(bsp.getEnemySpawnPointX(), bsp.getEnemySpawnPointY());
+		added.add(ghost);
+
+		// items
+		LinkedList<Item> items = new LinkedList<>();
+
+		// papers
+		Vector2[] spawns = bsp.getPaperSpawns();
+		for (Vector2 v : spawns) {
+			Paper m = new Paper();
+			m.setPosition(v.x, v.y);
+			added.add(m);
+			items.add(m);
+		}
+		paperCount = spawns.length;
+		collectedPaperCount = 0;
+
+		// powers
+		spawns = bsp.getPowerSpawns();
+		Random rand = new Random();
+		rand.setSeed(bsp.getSeed());
+		for (Vector2 v : spawns) {
+			Item m = null;
+			switch (rand.nextInt() % 2) {
+			case 0 :
+				m = new Protection();
+				break;
+			case 1 :
+				m = new Faster();
+				break;
+			}
+			if (m == null) continue;
+			m.setPosition(v.x, v.y);
+			added.add(m);
+			items.add(m);
+		}
+
+		// remove items that placed at the border of the node
+
+		for (Item i : items) {
+			mapQuadTree.updatePos(i);
+			/*QuadTree.Node n = i.getCurrentNode();
+			if (n != null) {
+				if (n.nodes[0] != null) {
+					added.remove(i);
+					i.setCurrentNode(null);
+				}
+			}*/
+		}
+
+		addEntities((Entity[]) added.toArray(new Entity[added.size()]));
+		ghost.setupAStar();
+	}
+	
+	// clientside
+	public void initGamePuppet(int maxPaperCount) {
+		paperCount = maxPaperCount;
+		bsp = null;
 	}
 	
 	public void render(float delta) {
@@ -443,73 +576,15 @@ public class World { // implements Screen
 			TiledMap map = bsp.getMap();
 			if (map != null) {
 				setMap(map);
-				mapColTiles = bsp.getColTiles2DArray();
 				
-				// setup a quadtree
-				mapQuadTree = new QuadTree(DUNX * DUNS, DUNY * DUNS);
-				
-				if (myClient.getCharacter() != null)
-					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
-				
-				// create objects
-				LinkedList<Entity> added = new LinkedList<>();
-				
-				// SPAWN THE ENEMY (ghost)
-				ghost = new Ghost();
-				ghost.setPosition(bsp.getEnemySpawnPointX(), bsp.getEnemySpawnPointY());
-				added.add(ghost);
-				
-				// items
-				LinkedList<Item> items = new LinkedList<>();
-				
-				// papers
-				Vector2[] spawns = bsp.getPaperSpawns();
-				for (Vector2 v : spawns) {
-					Paper m = new Paper();
-					m.setPosition(v.x, v.y);
-					added.add(m);
-					items.add(m);
+				if (myClient.isServer()) {
+					// remove myself
+					pendingRemove(1);
+				} else {
+					// tell the server
+					Packet.CGenerateDone p = new Packet.CGenerateDone();
+					myClient.send(p);
 				}
-				paperCount = spawns.length;
-				collectedPaperCount = 0;
-				
-				// powers
-				spawns = bsp.getPowerSpawns();
-				Random rand = new Random();
-				rand.setSeed(bsp.getSeed());
-				for (Vector2 v : spawns) {
-					Item m = null;
-					switch (rand.nextInt() % 2) {
-					case 0 :
-						m = new Protection();
-						break;
-					case 1 :
-						m = new Faster();
-						break;
-					}
-					if (m == null) continue;
-					m.setPosition(v.x, v.y);
-					added.add(m);
-					items.add(m);
-				}
-				
-				// remove items that placed at the border of the node
-				
-				for (Item i : items) {
-					mapQuadTree.updatePos(i);
-					/*QuadTree.Node n = i.getCurrentNode();
-					if (n != null) {
-						if (n.nodes[0] != null) {
-							added.remove(i);
-							i.setCurrentNode(null);
-						}
-					}*/
-				}
-				
-				addEntities((Entity[]) added.toArray(new Entity[added.size()]));
-				ghost.setupAStar();
-				
-				bsp = null;
 			}
 			
 			if (bspBackgroundTexture != null) {
@@ -629,12 +704,27 @@ public class World { // implements Screen
 		
 		/////////////////////
 		// draw hud
-		if (m != null) {
-			batch.setColor(Color.WHITE);
-			batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f);
-			hudFont1.draw(batch, "" + m.getHealth(), 225.0f, 70.0f);
-			
+		batch.setColor(Color.WHITE);
+		
+		if (scoreboardVisible) {
+			// show everyone's names
+			int cursorY = 0;
+			drawChatText(batch, "[PINK]PLAYERS", "PLAYERS", 800, 1000 - cursorY);
+			cursorY = -32;
+			for (HashMap.Entry<Integer, Integer> e : clientCharacters.entrySet()) {
+				Character ch = (Character) entities.get(e.getValue());
+				Player player = ch.getPlayer();
+				
+				drawChatText(batch, player.getUsername(), player.getUsername(), 200, 1000 - cursorY);
+				cursorY -= 32;
+			}
+		} else {
+			if (m != null) {
+				batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f); // player status
+				hudFont1.draw(batch, "" + m.getHealth(), 225.0f, 70.0f); // health point. remove soon
+			}
 		}
+		
 		batch.end();
 	}
 	
@@ -714,6 +804,10 @@ public class World { // implements Screen
 			i.authorColor = "GREEN"; // cheat notify
 			ResourceManager.instance().playSound("s_paper");
 		}
+		else if (netID == -4) {
+			i.authorColor = "MAGENTA"; // cheerful notify
+			ResourceManager.instance().playSound("s_completed");
+		}
 		else {
 			i.author = myClient.getPlayer(netID).getUsername();
 			ResourceManager.instance().playSound("s_chat");
@@ -742,7 +836,18 @@ public class World { // implements Screen
 		
 	}
 	
+	/////////////////////////////////
+	
+	public boolean attemptExit(Character ch) {
+		if (paperCount < collectedPaperCount) return false; // nah
+		
+		return false;
+	}
+	
+	/////////////////////////////////
+	
 	public void dispose() {
+		stage.clear();
 		stage.dispose();
 	}
 }

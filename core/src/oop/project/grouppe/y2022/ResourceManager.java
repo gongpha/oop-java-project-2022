@@ -34,6 +34,7 @@ public class ResourceManager {
 		preloadFont("character_name_font", "font/JLX_Pixel.ttf", 16);
 		
 		preloadTexture("oop", "core/oop.png");
+		preloadTexture("connecting", "core/connecting.jpg");
 		preloadTexture("darkness1", "character/darkness1.png");
 		
 		preloadTexture("ghost1", "character/ghost1.png");
@@ -54,6 +55,7 @@ public class ResourceManager {
 		preloadSound("s_paper", "sound/paper.wav");
 		preloadSound("s_chat", "sound/chat.wav");
 		preloadSound("s_faster", "sound/faster.wav");
+		preloadSound("s_completed", "sound/completed.wav");
 		
 		preloadSound("s_menu1", "sound/menu1.wav");
 		preloadSound("s_menu2", "sound/menu2.wav");

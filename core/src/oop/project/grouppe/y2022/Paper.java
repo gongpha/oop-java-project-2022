@@ -16,13 +16,7 @@ public class Paper extends Item {
 		// tell this guy (client) that you collect the paper
 		// then tell everyone
 		World w = getWorld();
-		w.addCollectedPaperCount();
-		
-		w.getMyClient().getServer().sendChat(-3,
-			ch.getPlayer().getUsername() + " collects a paper. (" + w.getCollectedPaperCount() + "/" + w.getPaperCount() + ")"
-		, ch.getPlayer().getNetID());
-		
-		
+		w.addCollectedPaperCount(ch);
 
 		return true;
 		//return false;

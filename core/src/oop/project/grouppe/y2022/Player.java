@@ -5,6 +5,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+// player information
+
 public class Player {
 	private int netID; // a randomized number, the server is always 1
 	private String username = "???";

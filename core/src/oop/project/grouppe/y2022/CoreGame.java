@@ -10,6 +10,7 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -68,6 +69,9 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		CONNECTING,
 	}
 	private Status status = Status.PRELOADING;
+	private String connectingIP = "?localhost?";
+	
+	private Texture connectingTexture;
 	
 	@Override
 	public void create() {
@@ -75,6 +79,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		singleton = this;
 		rman = ResourceManager.instance();
 		rman.preloads();
+		
 		batch = new SpriteBatch();
 		shapeRenderer = new ShapeRenderer();
 		graphShapeRenderer = new ShapeRenderer();
@@ -113,6 +118,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	////////////////////////////////////////////
 	
 	private void startGame() {
+		connectingTexture = (Texture) rman.get("connecting");
+		
 		menu = new Menu();
 		//console.exec("map");
 		
@@ -164,10 +171,12 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		);
 		client.start();
 		status = Status.CONNECTING;
+		connectingIP = ip;
 	}
 	
 	public void enterWorld() {
 		world = new World();
+		Packet.world = world;
 		world.setMyClient(client);
 		client.sendMyInfo();
 		
@@ -244,10 +253,18 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			renderBatch();
 			break;
 		case CONNECTING:
+			if (disconnected) {
+				exitWorld();
+				disconnected = false;
+				break;
+			}
 			if (connectOK) {
 				enterWorld();
 				connectOK = false;
 			}
+			batch.draw(connectingTexture, 0, 0);
+			console.getFont().setColor(Color.BLACK);
+			console.getFont().draw(batch, "Connecting to " + connectingIP, 40, 650);
 			break;
 		}
 		
@@ -380,7 +397,6 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			if (i == Input.Keys.ESCAPE) {
 				if (menu.isShowing()) {
 					if (menu.isOnRoot()) {
-						menu.playSoundEnter();
 						menu.toggle();
 					} else {
 						menu.playSoundEnter();
