@@ -48,6 +48,7 @@ public class World { // implements Screen
 	private TextureRegion bspBackgroundTexture = null;
 	private TiledMap worldMap = null;
 	private WorldRenderer worldRenderer = null;
+	private boolean waiting = false;
 	private QuadTree mapQuadTree = null;
 	private String currentLevelName = "The Nameless City";
 	private char[][] mapColTiles;
@@ -293,7 +294,7 @@ public class World { // implements Screen
 		return clientCharacters;
 	}
 	
-	public void registerNewPlayer(int entID, Player p, boolean newConnect) {
+	public Character registerNewPlayer(int entID, Player p, boolean newConnect) {
 		Character ent = (Character) createEntityAuthorized(entID,
 			Character.class.getName()
 		);
@@ -315,6 +316,8 @@ public class World { // implements Screen
 		} else if (newConnect && p.getNetID() != myClient.getMyPlayer().getNetID()) {
 			feedChat(-1, p.getUsername() + " joined the game", false);
 		}
+		
+		return ent;
 	}
 	
 	public void setMyClient(Client myClient) {
@@ -326,17 +329,20 @@ public class World { // implements Screen
 	
 	public void loadMap(String mapName) {
 		TiledMap map = (TiledMap) ResourceManager.instance().get(mapName);
-		MapObjects objs = map.getLayers().get("OBJECT").getObjects();
-		MapProperties prop = objs.get("spawnPoint").getProperties();
-		currentMapspawnPoint[0] = ((Float)prop.get("x")).floatValue();
-		currentMapspawnPoint[1] = ((Float)prop.get("y")).floatValue();
 		
-		// server ready area
-		serverReadyArea = (RectangleMapObject) objs.get("serverReadyArea");
-		
-		// reteleport players to the spawn point
-		for (int id : clientCharacters.values()) {
-			entities.get(id).teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
+		if (myClient.isServer()) {
+			MapObjects objs = map.getLayers().get("OBJECT").getObjects();
+			MapProperties prop = objs.get("spawnPoint").getProperties();
+			currentMapspawnPoint[0] = ((Float)prop.get("x")).floatValue();
+			currentMapspawnPoint[1] = ((Float)prop.get("y")).floatValue();
+
+			// server ready area
+			serverReadyArea = (RectangleMapObject) objs.get("serverReadyArea");
+
+			// reteleport players to the spawn point
+			for (int id : clientCharacters.values()) {
+				entities.get(id).teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
+			}
 		}
 		
 		setMap(map);
@@ -347,6 +353,10 @@ public class World { // implements Screen
 	}
 	
 	public void setMap(TiledMap map) {
+		if (worldMap != null)
+			worldMap.dispose();
+		if (worldRenderer != null)
+			worldRenderer.dispose();
 		worldMap = map;
 		worldRenderer = new WorldRenderer(map);
 	}
@@ -449,6 +459,8 @@ public class World { // implements Screen
 	// serverside
 	public void commitReady() {
 		if (!insideReadyArea) return;
+		atLobby = false;
+		insideReadyArea = false;
 		
 		Packet.SGenLevel p = new Packet.SGenLevel();
 		p.mapName = currentLevelName;
@@ -466,23 +478,11 @@ public class World { // implements Screen
 		CoreGame.instance().getConsole().print(">> " + p.seed + " : " + p.tilesetIndex);
 		
 		
-		getMyClient().send(p);
-		
-		insideReadyArea = false;
-		atLobby = false;
+		getMyClient().getServer().broadcast(p);	
 	}
 	
 	public void pendingRemove(int netID) {
 		pendingPlayer.remove(Integer.valueOf(netID));
-		
-		if (pendingPlayer.isEmpty()) {
-			// ALRIGHT LETS GO
-			initGame();
-			
-			Packet.SInitGame p = new Packet.SInitGame();
-			p.maxPaperCount = paperCount;
-			getMyClient().send(p);
-		}
 	}
 	
 	// serverside
@@ -573,17 +573,31 @@ public class World { // implements Screen
 		
 		if (bsp != null) {
 			// do not render anything when generating
+			
 			TiledMap map = bsp.getMap();
 			if (map != null) {
-				setMap(map);
-				
-				if (myClient.isServer()) {
-					// remove myself
-					pendingRemove(1);
+				if (!waiting) {
+					setMap(map);
+					if (myClient.isServer()) {
+						// remove myself
+						pendingRemove(1);
+					} else {
+						// tell the server
+						Packet.CGenerateDone p = new Packet.CGenerateDone();
+						myClient.send(p);
+					}
+					waiting = true;
 				} else {
-					// tell the server
-					Packet.CGenerateDone p = new Packet.CGenerateDone();
-					myClient.send(p);
+					// await (for server)
+					if (myClient.isServer() && pendingPlayer.isEmpty()) {
+						// ALRIGHT LETS GO
+						initGame();
+
+						Packet.SInitGame p = new Packet.SInitGame();
+						p.maxPaperCount = paperCount;
+						getMyClient().getServer().broadcastExceptServer(p);
+						bsp = null;
+					}
 				}
 			}
 			
@@ -847,6 +861,10 @@ public class World { // implements Screen
 	/////////////////////////////////
 	
 	public void dispose() {
+		if (worldMap != null)
+			worldMap.dispose();
+		if (worldRenderer != null)
+			worldRenderer.dispose();
 		stage.clear();
 		stage.dispose();
 	}

@@ -172,9 +172,25 @@ public abstract class Entity extends Actor {
 	public void updateCameraPos(float camX, float camY) {}
 	
 	////////
+	/*
+		serializeConstructor & deserializeConstructor
 	
-	public abstract void serializeConstructor(DataOutputStream d) throws IOException;
-	public abstract void deserializeConstructor(DataInputStream d) throws IOException;
+		Used for when a new player has entered the server
+		and the entity is created and needs to sync their current state
+		(usually for player characters)
+	*/
+	
+	public void serializeConstructor(DataOutputStream d) throws IOException {
+		// sync pos on create
+		d.writeFloat(getX());
+		d.writeFloat(getY());
+	}
+	public void deserializeConstructor(DataInputStream d) throws IOException {
+		float x = d.readFloat();
+		float y = d.readFloat();
+		setX(x);
+		setY(y);
+	}
 	
 	public abstract Rectangle getRect();
 	public abstract Rectangle getRectInTile();

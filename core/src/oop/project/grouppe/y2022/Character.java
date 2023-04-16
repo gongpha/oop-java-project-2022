@@ -4,7 +4,6 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -214,7 +213,7 @@ public class Character extends Entity {
 	}
 	
 	public void reportPos() {
-		world.getMyClient().updateMyPlayerPos();
+		world.getMyClient().updateMyPlayerState();
 	}
 	
 	public void setPosition(float x, float y) {
@@ -288,7 +287,7 @@ public class Character extends Entity {
 			
 		}
 		
-		int[] aniCoord = aniSeq[(int)animationIndex];
+		int[] aniCoord = aniSeq[(int)animationIndex]; // 0 1 2
 		boolean flipH = aniDir[1] == 1;
 		region.setRegion(
 			aniCoord[0],
@@ -298,6 +297,7 @@ public class Character extends Entity {
 		
 		if (isMySelf()) {
 			animationIndex += delta;
+			if (animationIndex >= 3) animationIndex = 0.0f; // reset
 		}
 		
 		
@@ -350,9 +350,21 @@ public class Character extends Entity {
 	
 	public void serializeConstructor(DataOutputStream d) throws IOException {
 		d.writeInt(player.getNetID());
+		
+		d.writeFloat(getAnimationIndex());
+		d.writeByte(getDirection());
+		d.writeBoolean(getAnimating());
+		
+		super.serializeConstructor(d);
 	}
 	public void deserializeConstructor(DataInputStream d) throws IOException {
 		setupPlayer(world.getMyClient().getPlayer(d.readInt()));
+		
+		setAnimationIndex(d.readFloat());
+		setDirection(d.readByte());
+		setAnimating(d.readBoolean());
+		
+		super.deserializeConstructor(d);
 	}
 	
 	public Rectangle getRect() {

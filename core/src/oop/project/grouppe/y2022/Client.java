@@ -86,7 +86,7 @@ public class Client extends Thread {
 	}
 	public Character getCharacter() { return character; }
 	
-	public void send(Packet packet) {
+	public synchronized void send(Packet packet) {
 		try {
 			// write the packet for sending
 			
@@ -206,6 +206,7 @@ public class Client extends Thread {
 				PrintWriter pw = new PrintWriter(sw);
 				e.printStackTrace(pw);
 				console.printerr(sw.toString());
+				System.err.println(sw.toString());
 				console.showFull();
 				kill("Failed to read a packet");
 				CoreGame.instance().tellDisconnected(disconnectReason);
@@ -245,15 +246,8 @@ public class Client extends Thread {
 		server.broadcast(p);
 	}
 	
-	// update this client position to all clients except themselves
-	public void updateMyEntPos() {
-		Packet.SEntPos p = new Packet.SEntPos();
-		p.ent = getCharacter();
-		server.broadcastExcept(p, this);
-	}
-	
 	// used by clients (and the server's client)
-	public void updateMyPlayerPos() {
+	public void updateMyPlayerState() {
 		Packet.FPlayerState p = new Packet.FPlayerState();
 		p.ent = getCharacter();
 		send(p);

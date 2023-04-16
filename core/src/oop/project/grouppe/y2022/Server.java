@@ -19,7 +19,7 @@ public class Server extends Thread {
 	private final static int MAX_PLAYER = 8;
 	
 	private boolean gameStarted = false;
-	private boolean running = true;
+	private boolean running = false;
 	
 	private HashMap<Integer, Client> clients;
 	
@@ -78,7 +78,6 @@ public class Server extends Thread {
 		// and . . . send to all players (this client too. becuz it includes an entID)
 		Packet.SNewPlayer p = new Packet.SNewPlayer();
 		p.entID = game.getWorld().allocateID();
-		p.netID = netID;
 		p.p = client.getMyPlayer();
 		broadcast(p);
 		CoreGame.instance().getConsole().print("Broadcasting Player " + netID + " to everyone");
@@ -155,6 +154,8 @@ public class Server extends Thread {
 			ServerSocketHints s = new ServerSocketHints();
 			s.acceptTimeout = 0;
 			server = Gdx.net.newServerSocket(Net.Protocol.TCP, port, s);
+			running = true;
+			game.tellServerCreated();
 		} catch (Exception e) {
 			console.printerr("Creating failed : " + e.getMessage());
 			running = false;
@@ -171,10 +172,12 @@ public class Server extends Thread {
 			server.dispose();
 		}
 		console.print("Closing Server . . .");
-		game.tellServerKilled();
+		game.tellDisconnected("Cannot create the server");
 	}
 	
 	public void kill() {
+		if (server == null) return;
+		
 		// tell everyone
 		Packet.SDisconnectPlayer p = new Packet.SDisconnectPlayer();
 		p.netID = 1;

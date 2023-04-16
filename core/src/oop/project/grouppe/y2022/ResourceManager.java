@@ -156,16 +156,22 @@ public class ResourceManager {
 	
 	public void playSound(String name) {
 		Sound s = ((Sound)ResourceManager.instance().get(name));
-		long i = s.play(CoreGame.instance().getVolumef());
-		PlayingSoundMusic psm = new PlayingSoundMusic();
-		psm.sm = s;
-		psm.i = i;
-		psms.add(psm);
+		//long i = s.play(CoreGame.instance().getVolumef());
+		//PlayingSoundMusic psm = new PlayingSoundMusic();
+		//psm.sm = s;
+		//psm.i = i;
+		//psms.add(psm);
 	}
 	
 	public void playMusic(Music m) {
 		m.setVolume(CoreGame.instance().getVolumef());
-		m.play();
+		try {
+			//m.play();
+		} catch (Exception e) {
+			CoreGame.instance().getConsole().printerr("Cannot play music " + m.toString());
+			//m.stop();
+		}
+		
 		PlayingSoundMusic psm = new PlayingSoundMusic();
 		psm.sm = m;
 		psm.i = -1L;

@@ -160,6 +160,9 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		// UDP is unreliable, u kno ?
 		server = new Server(PORT);
 		server.start();
+	}
+	
+	public void tellServerCreated() {
 		joinGame("localhost");
 	}
 	
@@ -193,6 +196,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		if (client != null) {
 			client.kill("Disconnected by game");
 			client = null;
+		}
+		if (server != null) {
+			server.kill();
+			server = null;
 		}
 		ResourceManager.instance().stopAllSoundMusic();
 		menu.showAsMainMenu();
@@ -264,7 +271,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			}
 			batch.draw(connectingTexture, 0, 0);
 			console.getFont().setColor(Color.BLACK);
-			console.getFont().draw(batch, "Connecting to " + connectingIP, 40, 650);
+			console.getFont().draw(batch, "Connecting to " + connectingIP, 60, 600);
 			break;
 		}
 		
@@ -324,10 +331,6 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	////////////////////////////////////////////
 	// DO NOT CALL THESE
-	
-	public void tellServerKilled() {
-		server = null;
-	}
 	
 	public void tellConnectSuccess() {
 		connectOK = true;

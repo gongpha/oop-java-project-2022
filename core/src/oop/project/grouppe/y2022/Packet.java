@@ -146,9 +146,11 @@ public abstract class Packet {
 			HashMap<Integer, Client> clients = getCServer().dumpClients();
 			s.writeInt(clients.size());
 			for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
+				Character ch = e.getValue().getCharacter();
 				Player p = e.getValue().getMyPlayer();
-				s.writeInt(e.getValue().getCharacter().getID());
+				s.writeInt(ch.getID());
 				p.writeStream(s);
+				ch.serializeConstructor(s);
 			}
 		}
 		public void read(DataInputStream s) throws IOException {
@@ -158,7 +160,8 @@ public abstract class Packet {
 				int entID = s.readInt();
 				p.readStream(s);
 				getCSenderOrSMySelf().newPlayer(p);
-				world.registerNewPlayer(entID, p, false);
+				Character nch = world.registerNewPlayer(entID, p, false);
+				nch.deserializeConstructor(s);
 			}
 			world.markReady();
 		}
@@ -167,17 +170,11 @@ public abstract class Packet {
 		public int header() { return 4; }
 		
 		int entID;
-		int netID;
 		Player p;
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(entID);
-			s.writeInt(netID);
-			s.writeUTF(p.getUsername());
-			s.writeInt(p.getIdent(0));
-			s.writeInt(p.getIdent(1));
-			s.writeInt(p.getIdent(2));
-			s.writeInt(p.getIdent(3));
+			p.writeStream(s);
 		}
 		public void read(DataInputStream s) throws IOException {
 			int entID = s.readInt();
@@ -303,7 +300,7 @@ public abstract class Packet {
 			ent = world.getEntities(entID);
 			ent.setX(X);
 			ent.setY(Y);
-			ent.afterPosChange();
+			//ent.afterPosChange();
 		}
 	}
 	
@@ -329,8 +326,13 @@ public abstract class Packet {
 			float aniIndex = s.readFloat();
 			byte direction = s.readByte();
 			boolean animating = s.readBoolean();
+			/*System.out.println(X);
+			System.out.println(Y);
+			System.out.println(aniIndex);
+			System.out.println(direction);
+			System.out.println(animating);*/
 			
-			if (getCSenderOrSMySelf().getMyPlayer().getNetID() != fromNetID) {
+			if (world.getMyClient().getMyPlayer().getNetID() != fromNetID) {
 				ent.setPosition(X, Y);
 				ent.setAnimationIndex(aniIndex);
 				ent.setDirection(direction);
@@ -451,6 +453,7 @@ public abstract class Packet {
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(ents.length);
+			CoreGame.instance().getConsole().print("Sending " + ents.length + " entities");
 			for (int i = 0; i < ents.length; i++) {
 				s.writeInt(ents[i].getID());
 				s.writeUTF(ents[i].getClass().getName());
@@ -459,8 +462,13 @@ public abstract class Packet {
 		}
 		public void read(DataInputStream s) throws IOException {
 			int count = s.readInt();
+			Console cs = CoreGame.instance().getConsole();
+			cs.print("Received " + count + " entities");
 			for (int i = 0; i < count; i++) {
-				Entity ent = world.createEntityAuthorized(s.readInt(), s.readUTF());
+				int entID = s.readInt();
+				String c = s.readUTF();
+				cs.print("    - " + c);
+				Entity ent = world.createEntityAuthorized(entID, c);
 				ent.deserializeConstructor(s);
 			}
 		}
