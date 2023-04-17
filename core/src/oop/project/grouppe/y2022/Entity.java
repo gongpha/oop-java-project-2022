@@ -103,8 +103,7 @@ public abstract class Entity extends Actor {
 		setX(X);
 		setY(Y);
 		
-		if (world.getMyClient().isServer()) // if server
-			world.getMyClient().updateEntPos(this);
+		reportPos();
 	}
 	
 	/*

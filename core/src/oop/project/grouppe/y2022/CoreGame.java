@@ -192,6 +192,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		if (world != null) {
 			world.dispose();
 			world = null;
+			Packet.world = null;
 		}
 		if (client != null) {
 			client.kill("Disconnected by game");

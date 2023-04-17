@@ -12,6 +12,9 @@ public class Player {
 	private String username = "???";
 	private int[] idents = new int[]{ 0, 0, 0, 0 }; // 4 custom properties. ask gongpha if you want more
 	
+	// when playing
+	private int score = 0;
+	
 	public Player() {}
 
 	public Player(int netID) {
@@ -59,5 +62,13 @@ public class Player {
 		idents[1] = i2;
 		idents[2] = i3;
 		idents[3] = i4;
+	}
+	
+	public void addScore() {
+		score += 1;
+	}
+	
+	public int getScore() {
+		return score;
 	}
 }

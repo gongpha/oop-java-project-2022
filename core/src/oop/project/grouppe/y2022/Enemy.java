@@ -175,9 +175,6 @@ public abstract class Enemy extends Entity {
 		}
 	}
 	
-	public void serializeConstructor(DataOutputStream d) throws IOException {}
-	public void deserializeConstructor(DataInputStream d) throws IOException {}
-	
 	///////////////////////
 	
 	public abstract TextureRegion getTexture();

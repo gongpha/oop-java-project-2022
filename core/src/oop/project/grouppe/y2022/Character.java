@@ -213,7 +213,11 @@ public class Character extends Entity {
 	}
 	
 	public void reportPos() {
-		world.getMyClient().updateMyPlayerState();
+		if (world.getMyClient().isServer() && player.getNetID() != world.getMyClient().getMyPlayer().getNetID()) {
+			super.reportPos();
+		} else {
+			world.getMyClient().updateMyPlayerState();
+		}
 	}
 	
 	public void setPosition(float x, float y) {

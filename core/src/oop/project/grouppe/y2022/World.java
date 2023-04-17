@@ -58,6 +58,7 @@ public class World { // implements Screen
 	
 	// usually for servers
 	private boolean atLobby = false;
+	public boolean isInLobby() { return atLobby; }
 	private final float[] currentMapspawnPoint;
 	private final LinkedList<Integer> pendingPlayer; // generating levels
 	
@@ -181,9 +182,10 @@ public class World { // implements Screen
 		Server s = getMyClient().getServer();
 		Player p = ch.getPlayer();
 		
-		s.sendChat(-3,
-			p.getUsername() + " collects a paper. (" + collectedPaperCount + "/" + paperCount + ")"
-		, p.getNetID());
+		Packet.SPlayerScoreAdd pa = new Packet.SPlayerScoreAdd();
+		pa.ch = ch;
+		pa.currentPaperCount = p.getScore() + 1;
+		s.broadcast(pa);
 		
 		if (collectedPaperCount >= paperCount) {
 			s.sendChat(-4, "All papers have been collected ! Come back to the entrance", -1);
@@ -195,6 +197,7 @@ public class World { // implements Screen
 		collectedPaperCount += 1;
 		
 		Player p = getCharacterByNetID(netID).getPlayer();
+		p.addScore();
 		
 		feedChat(-3,
 			p.getUsername() + " collects a paper. (" + currentPaperCount + "/" + paperCount + ")"
@@ -313,7 +316,10 @@ public class World { // implements Screen
 			// teleport to the spawn point
 			if (worldMap != null) // map must be ready
 				ent.teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
-		} else if (newConnect && p.getNetID() != myClient.getMyPlayer().getNetID()) {
+		}
+		
+		// print to chat
+		if (newConnect && p.getNetID() != myClient.getMyPlayer().getNetID()) {
 			feedChat(-1, p.getUsername() + " joined the game", false);
 		}
 		
@@ -340,6 +346,7 @@ public class World { // implements Screen
 			serverReadyArea = (RectangleMapObject) objs.get("serverReadyArea");
 
 			// reteleport players to the spawn point
+			// usually for the server character
 			for (int id : clientCharacters.values()) {
 				entities.get(id).teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
 			}
@@ -418,14 +425,14 @@ public class World { // implements Screen
 	public boolean keyUp(int i) {
 		if (chatMode) return false;
 		
-		Character m = myClient.getCharacter();
-		if (m != null) {
-			return m.keyUp(i);
-		}
-		
 		if (i == Input.Keys.TAB) {
 			showScoreboard(false);
 			return true;
+		}
+		
+		Character m = myClient.getCharacter();
+		if (m != null) {
+			return m.keyUp(i);
 		}
 		
 		return false;
@@ -491,9 +498,6 @@ public class World { // implements Screen
 		
 		// setup a quadtree
 		mapQuadTree = new QuadTree(DUNX * DUNS, DUNY * DUNS);
-
-		if (myClient.getCharacter() != null)
-			myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
 
 		// create objects
 		LinkedList<Entity> added = new LinkedList<>();
@@ -586,6 +590,10 @@ public class World { // implements Screen
 						Packet.CGenerateDone p = new Packet.CGenerateDone();
 						myClient.send(p);
 					}
+					
+					// set our character location to the spawn point
+					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
+					
 					waiting = true;
 				} else {
 					// await (for server)
@@ -684,38 +692,39 @@ public class World { // implements Screen
 		batch.begin();
 		batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
 		
-		int i = 0;
-		for (; i < texts.size(); i++) {
-			TextItem j = texts.get(i);
-			String b = texts.get(i).s;
-			String s = b;
-			String st = b;
-			if (j.author.isEmpty()) {
-				s = "[" + j.authorColor + "]" + b;
-			} else {
-				s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
-				st = "< " + j.author + " > " + b;
+		if (!scoreboardVisible) {
+			int i = 0;
+			for (; i < texts.size(); i++) {
+				TextItem j = texts.get(i);
+				String b = texts.get(i).s;
+				String s = b;
+				String st = b;
+				if (j.author.isEmpty()) {
+					s = "[" + j.authorColor + "]" + b;
+				} else {
+					s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
+					st = "< " + j.author + " > " + b;
+				}
+
+				drawChatText(batch, s, st, 20, 690 + (-i * 40));
 			}
-			
-			drawChatText(batch, s, st, 20, 690 + (-i * 40));
+			if (chatMode) {
+				chatModeReady = true;
+				String c = chatText.getString() + (
+					(chatCaret > 1.0f) ? "_" : ""
+				);
+				drawChatText(batch,
+					"[CYAN][[Chat][WHITE] : " + c,	
+					"[Chat] : " + c,	
+				20, 690 + (-i * 40));
+				chatCaret += delta * 1.5f;
+				if (chatCaret >= 2.0f) chatCaret = 0.0f;
+			}
+
+			if (insideReadyArea) {
+				drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
+			}
 		}
-		if (chatMode) {
-			chatModeReady = true;
-			String c = chatText.getString() + (
-				(chatCaret > 1.0f) ? "_" : ""
-			);
-			drawChatText(batch,
-				"[CYAN][[Chat][WHITE] : " + c,	
-				"[Chat] : " + c,	
-			20, 690 + (-i * 40));
-			chatCaret += delta * 1.5f;
-			if (chatCaret >= 2.0f) chatCaret = 0.0f;
-		}
-		
-		if (insideReadyArea) {
-			drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
-		}
-		
 		/////////////////////
 		// draw hud
 		batch.setColor(Color.WHITE);
@@ -723,13 +732,24 @@ public class World { // implements Screen
 		if (scoreboardVisible) {
 			// show everyone's names
 			int cursorY = 0;
-			drawChatText(batch, "[PINK]PLAYERS", "PLAYERS", 800, 1000 - cursorY);
+			drawChatText(batch, "[PINK]PLAYERS", "PLAYERS", 600, 600 - cursorY);
 			cursorY = -32;
 			for (HashMap.Entry<Integer, Integer> e : clientCharacters.entrySet()) {
 				Character ch = (Character) entities.get(e.getValue());
 				Player player = ch.getPlayer();
 				
-				drawChatText(batch, player.getUsername(), player.getUsername(), 200, 1000 - cursorY);
+				// Name
+				
+				String c = "";
+				if (player.getNetID() == myClient.getMyPlayer().getNetID()) {
+					// highlight myself in green
+					c = "[YELLOW]";
+				}
+				drawChatText(batch, c + player.getUsername(), player.getUsername(), 200, 500 + cursorY);
+				
+				// Score
+				String s = "" + player.getScore();
+				drawChatText(batch, c + s, s, 1000, 500 - cursorY);
 				cursorY -= 32;
 			}
 		} else {
@@ -801,6 +821,7 @@ public class World { // implements Screen
 	}
 	
 	public void removeDisconnectedClient(int netID) {
+		if (!clientCharacters.containsKey(netID)) return;
 		deleteEntityInternal(clientCharacters.get(netID));
 		clientCharacters.remove(netID);
 	}

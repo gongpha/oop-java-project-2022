@@ -18,7 +18,6 @@ public class Server extends Thread {
 	
 	private final static int MAX_PLAYER = 8;
 	
-	private boolean gameStarted = false;
 	private boolean running = false;
 	
 	private HashMap<Integer, Client> clients;
@@ -35,7 +34,9 @@ public class Server extends Thread {
 	public void welcomeNewClient(Socket socket) {
 		Client client = new Client(this, socket);
 		
-		if (gameStarted) {
+		World world = Packet.world;
+		
+		if (world != null && !world.isInLobby()) {
 			// NAH
 			kickClient(client, "the game is starting");
 			return;

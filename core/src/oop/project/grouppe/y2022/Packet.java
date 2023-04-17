@@ -221,7 +221,8 @@ public abstract class Packet {
 			Player that = c.getPlayer(netID);
 			
 			c.removeClient(netID);
-			world.removeDisconnectedClient(netID);
+			if (world != null)
+				world.removeDisconnectedClient(netID);
 			
 			if (netID == 1) {
 				// server is closed !
@@ -235,7 +236,8 @@ public abstract class Packet {
 				return;
 			}
 			
-			world.feedChat(-1, that.getUsername() + " left the game", false);
+			if (world != null)
+				world.feedChat(-1, that.getUsername() + " left the game", false);
 		}
 	}
 	
@@ -467,7 +469,7 @@ public abstract class Packet {
 			for (int i = 0; i < count; i++) {
 				int entID = s.readInt();
 				String c = s.readUTF();
-				cs.print("    - " + c);
+				//cs.print("    - " + c);
 				Entity ent = world.createEntityAuthorized(entID, c);
 				ent.deserializeConstructor(s);
 			}

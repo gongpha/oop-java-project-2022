@@ -36,7 +36,4 @@ public abstract class Item extends Entity {
 	
 	public abstract TextureRegion getTexture();
 	public abstract boolean playerObtained(Character ch);
-	
-	public void serializeConstructor(DataOutputStream d) {}
-	public void deserializeConstructor(DataInputStream d) {}
 }

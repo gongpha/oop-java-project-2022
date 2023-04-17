@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ResourceManager {
+	
+	// for debugging
+	public static boolean playMusic = false;
+	
 	public void preloads() {
 		// FONTS
 		preloadFont("plat", "font/plat.ttf", 32);
@@ -156,20 +160,22 @@ public class ResourceManager {
 	
 	public void playSound(String name) {
 		Sound s = ((Sound)ResourceManager.instance().get(name));
-		//long i = s.play(CoreGame.instance().getVolumef());
-		//PlayingSoundMusic psm = new PlayingSoundMusic();
-		//psm.sm = s;
-		//psm.i = i;
-		//psms.add(psm);
+		long i = s.play(CoreGame.instance().getVolumef());
+		PlayingSoundMusic psm = new PlayingSoundMusic();
+		psm.sm = s;
+		psm.i = i;
+		psms.add(psm);
 	}
 	
 	public void playMusic(Music m) {
+		if (!playMusic) return;
+		
 		m.setVolume(CoreGame.instance().getVolumef());
 		try {
-			//m.play();
+			m.play();
 		} catch (Exception e) {
 			CoreGame.instance().getConsole().printerr("Cannot play music " + m.toString());
-			//m.stop();
+			m.stop();
 		}
 		
 		PlayingSoundMusic psm = new PlayingSoundMusic();

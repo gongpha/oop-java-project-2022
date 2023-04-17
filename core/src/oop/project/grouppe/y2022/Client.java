@@ -47,8 +47,20 @@ public class Client extends Thread {
 		status = ConnectionStatus.OFFLINE;
 		player = new Player();
 		this.server = server;
+		
+		int netID = server != null ? 1 : new Random().nextInt();
+		
+		if (username.isEmpty()) {
+			// use placeholder
+			if (server == null) {
+				username = "client" + netID; // client . . .
+			} else {
+				username = "server" + netID; // server1
+			}
+		}
+		
 		player.putData(
-			server != null ? 1 : new Random().nextInt(),
+			netID,
 			username,
 			idents[0],
 			idents[1],
