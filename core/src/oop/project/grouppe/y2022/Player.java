@@ -64,8 +64,8 @@ public class Player {
 		idents[3] = i4;
 	}
 	
-	public void addScore() {
-		score += 1;
+	public void setScore(int score) {
+		this.score = score;
 	}
 	
 	public int getScore() {

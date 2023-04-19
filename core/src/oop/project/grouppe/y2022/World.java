@@ -22,14 +22,13 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
 
 // game world
 
-public class World { // implements Screen
-	//private Server server;
-	
+public class World {
 	private boolean markInit = false;
 	private boolean ready = false;
 	
@@ -52,18 +51,26 @@ public class World { // implements Screen
 	private QuadTree mapQuadTree = null;
 	private String currentLevelName = "The Nameless City";
 	private char[][] mapColTiles;
+	private final LinkedList<Entity> currentLevelEntities;
 	
 	private int paperCount;
 	private int collectedPaperCount;
+	private int currentLevel = 0;
 	
 	// usually for servers
 	private boolean atLobby = false;
 	public boolean isInLobby() { return atLobby; }
 	private final float[] currentMapspawnPoint;
-	private final LinkedList<Integer> pendingPlayer; // generating levels
+	
+	// generating levels AND using for counting players at the entrance
+	private final HashSet<Integer> pendingPlayer;
 	
 	private RectangleMapObject serverReadyArea;
 	private boolean insideReadyArea = false;
+	
+	// common
+	private boolean insideEntranceArea = false;
+	
 	
 	private final Texture overlay;
 	
@@ -153,7 +160,9 @@ public class World { // implements Screen
 		hudFont2 = (BitmapFont) ResourceManager.instance().get("chat_font");
 		hudFont2.getData().markupEnabled = true;
 		
-		pendingPlayer = new LinkedList<>();
+		pendingPlayer = new HashSet<>();
+		
+		currentLevelEntities = new LinkedList();
 		
 		
 		camera.update();
@@ -177,31 +186,48 @@ public class World { // implements Screen
 	
 	// serverside
 	public void addCollectedPaperCount(Character ch) {
-		collectedPaperCount += 1;
-		
 		Server s = getMyClient().getServer();
 		Player p = ch.getPlayer();
 		
 		Packet.SPlayerScoreAdd pa = new Packet.SPlayerScoreAdd();
 		pa.ch = ch;
-		pa.currentPaperCount = p.getScore() + 1;
+		pa.playerCurrentPaperCount = p.getScore() + 1;
+		pa.currentPaperCount = collectedPaperCount + 1;
 		s.broadcast(pa);
+	}
+	
+	// serverside, debugging purpose
+	public void setCollectedPaperCount(Character ch, int to) {
+		Server s = getMyClient().getServer();
+		Player p = ch.getPlayer();
 		
-		if (collectedPaperCount >= paperCount) {
-			s.sendChat(-4, "All papers have been collected ! Come back to the entrance", -1);
-		}
+		Packet.SPlayerScoreAdd pa = new Packet.SPlayerScoreAdd();
+		pa.ch = ch;
+		pa.playerCurrentPaperCount = p.getScore() + to;
+		pa.currentPaperCount = to;
+		s.broadcast(pa);
 	}
 	
 	// clientside
-	public void addCollectedPaperCountPuppet(int netID, int currentPaperCount) {
-		collectedPaperCount += 1;
+	public void addCollectedPaperCountPuppet(int netID, int playerCurrentPaperCount, int currentPaperCount) {
+		collectedPaperCount = currentPaperCount;
 		
 		Player p = getCharacterByNetID(netID).getPlayer();
-		p.addScore();
+		p.setScore(playerCurrentPaperCount);
 		
 		feedChat(-3,
-			p.getUsername() + " collects a paper. (" + currentPaperCount + "/" + paperCount + ")"
+			p.getUsername() + " collects a paper. (" + collectedPaperCount + "/" + paperCount + ")"
 		, netID == getMyClient().getMyPlayer().getNetID());
+		
+		checkPaperCount();
+	}
+	
+	public void checkPaperCount() {
+		if (getMyClient().isServer()) {
+			if (collectedPaperCount >= paperCount) {
+				getMyClient().getServer().sendChat(-4, "All papers have been collected ! Come back to the entrance", -1);
+			}
+		}
 	}
 	
 	public void addEntity(Entity ent) {
@@ -241,6 +267,8 @@ public class World { // implements Screen
 	}
 	
 	public void deleteEntityInternal(int ID) {
+		if (!entities.containsKey(ID)) return;
+		
 		Entity ent = entities.get(ID);
 		ent.remove();
 		if (processing) {
@@ -368,7 +396,11 @@ public class World { // implements Screen
 		worldRenderer = new WorldRenderer(map);
 	}
 	
-	public void generateMap(long seed, int tilesetIndex) {
+	public void generateMap(long seed, int tilesetIndex, int level) {
+		removeOldLevelEnts();
+		
+		currentLevel = level;
+		
 		Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
 		bspBackgroundTexture = new TextureRegion();
 		bspBackgroundTexture.setTexture(texture);
@@ -405,6 +437,7 @@ public class World { // implements Screen
 		
 		if (insideReadyArea) {
 			if (i == Input.Keys.SPACE) {
+				if (!insideReadyArea) return true;
 				commitReady();
 				return true;
 			}
@@ -465,7 +498,6 @@ public class World { // implements Screen
 	
 	// serverside
 	public void commitReady() {
-		if (!insideReadyArea) return;
 		atLobby = false;
 		insideReadyArea = false;
 		
@@ -473,6 +505,7 @@ public class World { // implements Screen
 		p.mapName = currentLevelName;
 		//p.seed = -977121143;
 		p.seed = new Random().nextInt();
+		p.level = currentLevel + 1;
 		
 		
 		// add all players as pending
@@ -497,15 +530,19 @@ public class World { // implements Screen
 		mapColTiles = bsp.getColTiles2DArray();
 		
 		// setup a quadtree
+		if (mapQuadTree != null) {
+			// delete the old tree
+			mapQuadTree.release();
+			mapQuadTree = null;
+		}
 		mapQuadTree = new QuadTree(DUNX * DUNS, DUNY * DUNS);
 
 		// create objects
-		LinkedList<Entity> added = new LinkedList<>();
 
 		// SPAWN THE ENEMY (ghost)
 		ghost = new Ghost();
 		ghost.setPosition(bsp.getEnemySpawnPointX(), bsp.getEnemySpawnPointY());
-		added.add(ghost);
+		currentLevelEntities.add(ghost);
 
 		// items
 		LinkedList<Item> items = new LinkedList<>();
@@ -515,7 +552,7 @@ public class World { // implements Screen
 		for (Vector2 v : spawns) {
 			Paper m = new Paper();
 			m.setPosition(v.x, v.y);
-			added.add(m);
+			currentLevelEntities.add(m);
 			items.add(m);
 		}
 		paperCount = spawns.length;
@@ -537,7 +574,7 @@ public class World { // implements Screen
 			}
 			if (m == null) continue;
 			m.setPosition(v.x, v.y);
-			added.add(m);
+			currentLevelEntities.add(m);
 			items.add(m);
 		}
 
@@ -554,8 +591,17 @@ public class World { // implements Screen
 			}*/
 		}
 
-		addEntities((Entity[]) added.toArray(new Entity[added.size()]));
+		addEntities((Entity[]) currentLevelEntities.toArray(new Entity[currentLevelEntities.size()]));
 		ghost.setupAStar();
+	}
+	
+	// locally delete all entities that are associated with this level
+	public void removeOldLevelEnts() {
+		for (Entity e : currentLevelEntities) {
+			//if (e == null) continue;
+			deleteEntityInternal(e.getID());
+		}
+		currentLevelEntities.clear();
 	}
 	
 	// clientside
@@ -593,10 +639,13 @@ public class World { // implements Screen
 					
 					// set our character location to the spawn point
 					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
+					currentMapspawnPoint[0] = bsp.getSpawnPointX();
+					currentMapspawnPoint[1] = bsp.getSpawnPointY();
 					
 					waiting = true;
 				} else {
 					// await (for server)
+					waiting = false;
 					if (myClient.isServer() && pendingPlayer.isEmpty()) {
 						// ALRIGHT LETS GO
 						initGame();
@@ -724,6 +773,15 @@ public class World { // implements Screen
 			if (insideReadyArea) {
 				drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
 			}
+			else if (insideEntranceArea) {
+				String s;
+				if (collectedPaperCount >= paperCount) {
+					s = "Waiting for players";
+				} else {
+					s = "Collect all papers to exit";
+				}
+				drawChatText(batch, s, s, 20, 200);
+			}
 		}
 		/////////////////////
 		// draw hud
@@ -749,13 +807,13 @@ public class World { // implements Screen
 				
 				// Score
 				String s = "" + player.getScore();
-				drawChatText(batch, c + s, s, 1000, 500 - cursorY);
+				drawChatText(batch, c + s, s, 1000, 500 + cursorY);
 				cursorY -= 32;
 			}
 		} else {
-			if (m != null) {
+			if (m != null && !atLobby) {
 				batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f); // player status
-				hudFont1.draw(batch, "" + m.getHealth(), 225.0f, 70.0f); // health point. remove soon
+				hudFont1.draw(batch, "Level " + currentLevel, 550.0f, 70.0f); // level number
 			}
 		}
 		
@@ -859,14 +917,43 @@ public class World { // implements Screen
 	/////////////////////////////////
 	
 	public void tellPosChange(Entity ent) {
-		// is this the server character ?
-		if (ent == getMyClient().getCharacter()) {
-			// is it in the lobby too ?
-			if (atLobby) {
+		// in tha lobby ?
+		if (atLobby) {
+			// is this the server character ?
+			if (ent == getMyClient().getCharacter()) {
 				// is it touching the ready area ?
 				Rectangle entRect = ent.getRect();
 				insideReadyArea = (serverReadyArea.getRectangle().overlaps(entRect));
 			}
+		} else {
+			// playing
+			// inside the entrance radius ?
+			boolean oldV = insideEntranceArea;
+			Vector2 mapSpawnPoint = new Vector2(currentMapspawnPoint[0], currentMapspawnPoint[1]);
+			Vector2 playerPoint = new Vector2(getMyClient().getCharacter().getX(), getMyClient().getCharacter().getY());
+			insideEntranceArea = mapSpawnPoint.dst(playerPoint) < 64.0f;
+			if (oldV != insideEntranceArea) {
+				// lets they know !
+				Packet.CUpdateAtTheEntrance p = new Packet.CUpdateAtTheEntrance();
+				p.yes = insideEntranceArea;
+				getMyClient().send(p);
+				CoreGame.instance().getConsole().print("entr : " + insideEntranceArea);
+			}
+			
+		}
+	}
+	
+	public void updateAtTheEntrance(int netID, boolean yes) {
+		Integer i = Integer.valueOf(netID);
+		if (yes) {
+			pendingPlayer.add(i);
+		} else {
+			pendingPlayer.remove(i);
+		}
+		
+		if (pendingPlayer.size() >= clientCharacters.size() && collectedPaperCount >= paperCount) {
+			pendingPlayer.clear();
+			commitReady(); // NEXT LEVEL
 		}
 		
 	}
@@ -877,6 +964,10 @@ public class World { // implements Screen
 		if (paperCount < collectedPaperCount) return false; // nah
 		
 		return false;
+	}
+	
+	public void dForceWin() {
+		setCollectedPaperCount(getMyClient().getCharacter(), 666);
 	}
 	
 	/////////////////////////////////

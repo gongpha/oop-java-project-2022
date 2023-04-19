@@ -152,6 +152,14 @@ public class ConsoleCommandCore {
 						w.getMyClient().getCharacter().toggleNoclip();
 					}
 				}
+			},
+			new ConsoleCommand("forcewin") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.dForceWin();
+					}
+				}
 			}
 			///////////////////////////////////////
 			// ADD YOUR COMMANDS HERE

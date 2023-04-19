@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 // packets for communication
+// most of them are RPCs
 
 public abstract class Packet {
 	public int header() { return 0; }
@@ -51,6 +52,7 @@ public abstract class Packet {
 		regPacket(SEntCreateMultiple.class);
 		regPacket(SCharacterUpdatePowerup.class);
 		regPacket(SPlayerScoreAdd.class);
+		regPacket(CUpdateAtTheEntrance.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -241,9 +243,13 @@ public abstract class Packet {
 		}
 	}
 	
+	// create one entity
+	// not suitable for multiple objects. use SEntCreateMultiple instead
 	public static class SEntCreate extends Packet {
 		public int header() { return 7; }
 		
+		// when has no object.
+		// "i would like to send a pure byte sequence"
 		byte[] forwardedBytes;
 		
 		// when using an object
@@ -285,6 +291,7 @@ public abstract class Packet {
 		}
 	}
 	
+	// used for syncing entity position
 	public static class SEntPos extends Packet {
 		public int header() { return 9; }
 		Entity ent;
@@ -306,6 +313,7 @@ public abstract class Packet {
 		}
 	}
 	
+	// used for syncing player properties i.e. animation state and position
 	public static class FPlayerState extends ForwardablePacket {
 		public int header() { return 10; }
 		Character ent;
@@ -328,13 +336,10 @@ public abstract class Packet {
 			float aniIndex = s.readFloat();
 			byte direction = s.readByte();
 			boolean animating = s.readBoolean();
-			/*System.out.println(X);
-			System.out.println(Y);
-			System.out.println(aniIndex);
-			System.out.println(direction);
-			System.out.println(animating);*/
 			
-			if (world.getMyClient().getMyPlayer().getNetID() != fromNetID) {
+			int myNetID = world.getMyClient().getMyPlayer().getNetID();
+			
+			if (myNetID != fromNetID) {
 				ent.setPosition(X, Y);
 				ent.setAnimationIndex(aniIndex);
 				ent.setDirection(direction);
@@ -350,6 +355,7 @@ public abstract class Packet {
 		public int header() { return 11; }
 		
 		String mapName;
+		int level;
 		int seed;
 		int tilesetIndex;
 		
@@ -357,10 +363,11 @@ public abstract class Packet {
 			s.writeUTF(mapName);
 			s.writeInt(seed);
 			s.writeInt(tilesetIndex);
+			s.writeInt(level);
 		}
 		public void read(DataInputStream s) throws IOException {
 			world.setLevelName(s.readUTF());
-			world.generateMap(s.readInt(), s.readInt());
+			world.generateMap(s.readInt(), s.readInt(), s.readInt());
 		}
 	}
 	
@@ -412,10 +419,11 @@ public abstract class Packet {
 		
 		// -1 : system messages (yellow)
 		// -2 : cheat notify (red and sound fx)
-		// -3 : paper
-		// -4 : cheerful notify
+		// -3 : paper (green)
+		// -4 : cheerful notify (completed a level, pink)
 		public int netID = -1;
 		public int flashID = -1; // neg : no flashing, 0 : EVERYONE, otherwise : specific
+		// ^^^ TODO : wat about negative-number netIDs ???
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(netID);
@@ -517,16 +525,33 @@ public abstract class Packet {
 		public int header() { return 19; }
 		
 		Character ch;
+		int playerCurrentPaperCount = -1;
 		int currentPaperCount = -1;
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(ch.getPlayer().getNetID());
+			s.writeInt(playerCurrentPaperCount);
 			s.writeInt(currentPaperCount);
 		}
 		public void read(DataInputStream s) throws IOException {
 			int netID = s.readInt();
+			playerCurrentPaperCount = s.readInt();
 			currentPaperCount = s.readInt();
-			world.addCollectedPaperCountPuppet(netID, currentPaperCount);
+			world.addCollectedPaperCountPuppet(netID, playerCurrentPaperCount, currentPaperCount);
+		}
+	}
+	
+	public static class CUpdateAtTheEntrance extends Packet {
+		public int header() { return 20; }
+		
+		boolean yes;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeBoolean(yes);
+		}
+		public void read(DataInputStream s) throws IOException {
+			yes = s.readBoolean();
+			world.updateAtTheEntrance(getCSenderOrSMySelf().getMyPlayer().getNetID(), yes);
 		}
 	}
 }

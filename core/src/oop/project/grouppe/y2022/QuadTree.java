@@ -134,6 +134,16 @@ public class QuadTree {
 			}
 			return "( " + X + " " + Y + " " + W + " " + H + " ) { " + entities.size() + " } < " + l + ">";
 		}
+		
+		public void release() {
+			for (Entity e : new ArrayList<>(entities)) {
+				e.setCurrentNode(null); // clear the current
+			}
+			entities.clear();
+			for (int i = 0; i < 4; i++)
+				if (nodes[i] != null)
+					nodes[i].release();
+		}
 	}
 	
 	public QuadTree(int sizeX, int sizeY) {
@@ -199,5 +209,9 @@ public class QuadTree {
 		}
 		clone.clear(); // i hate gc
 		return i;
+	}
+	
+	public void release() {
+		root.release();
 	}
 }

@@ -174,9 +174,9 @@ public abstract class Entity extends Actor {
 	/*
 		serializeConstructor & deserializeConstructor
 	
-		Used for when a new player has entered the server
-		and the entity is created and needs to sync their current state
-		(usually for player characters)
+		Used for marshaling data for new objects
+		e.g. when a new player has entered the server
+		and needs to sync their CURRENT state (players' position at the lobby)
 	*/
 	
 	public void serializeConstructor(DataOutputStream d) throws IOException {
