@@ -31,7 +31,8 @@ public class Console {
 	
 	private HashMap<String, ConsoleCommand> commands;
 	private ArrayList<String> history;
-	private int historylook = -3; // TODO : may get removed soon
+	private int historylook = -1;
+	private String cursorStore = "";
 	
 	private boolean activating = true;
 	
@@ -150,6 +151,26 @@ public class Console {
 			exec(textInput.getString(), false);
 			textInput.setString("");
 		}
+		if (i == Input.Keys.DOWN) {
+			if (historylook == history.size()) {
+				cursorStore = textInput.getString();
+			}
+			historylook += 1;
+			if (historylook >= history.size()) historylook = history.size();
+			if (historylook == history.size()) {
+				textInput.setString(cursorStore);
+			} else {
+				textInput.setString(history.get(historylook));
+			}
+			
+		} else if (i == Input.Keys.UP) {
+			if (historylook == history.size()) {
+				cursorStore = textInput.getString();
+			}
+			historylook -= 1;
+			if (historylook < 0) historylook = 0;
+			textInput.setString(history.get(historylook));
+		}
 		return false;
 	}
 	
@@ -198,6 +219,7 @@ public class Console {
 			String print_ = "] " + l;
 			print(print_);
 			history.add(l);
+			historylook = history.size();
 		}
 		if (l.isEmpty()) return;
 		
