@@ -18,20 +18,18 @@ public class Client extends Thread {
 	private Socket socket;
 	private String address;
 	private final boolean puppet;
-	private ConnectionStatus status;
 	private String disconnectReason = "Unknown reason";
 	private boolean running = true;
 	
 	private HashMap<Integer, Player> players;
 	
-	private Player player;
+	private final Player player;
 	private Character character;
-	private Server server;
+	private final Server server;
 	
 	// Client representation in the server
 	public Client(Server server, Socket socket) {
 		puppet = true;
-		status = ConnectionStatus.CONNECTED;
 		player = new Player(1);
 		this.socket = socket;
 		this.server = server;
@@ -44,14 +42,14 @@ public class Client extends Thread {
 		if (address.isEmpty())
 			this.address = "localhost";
 		puppet = false;
-		status = ConnectionStatus.OFFLINE;
 		player = new Player();
 		this.server = server;
 		
 		int netID = server != null ? 1 : new Random().nextInt();
 		
 		if (username.isEmpty()) {
-			// use placeholder
+			// use placeholder username
+			// (server1, client89343229, client902871, client908414, ...)
 			if (server == null) {
 				username = "client" + netID; // client . . .
 			} else {
@@ -132,12 +130,10 @@ public class Client extends Thread {
 		CoreGame game = CoreGame.instance();
 		Console console = game.getConsole();
 		if (!puppet) {
-			status = ConnectionStatus.CONNECTING;
 			while (true) {
 				try {
 					console.print("Connecting to " + address + " . . .");
 					socket = Gdx.net.newClientSocket(Net.Protocol.TCP, address, CoreGame.PORT, new GameSocketHint());
-					status = ConnectionStatus.CONNECTED;
 					console.print("Connected to the server " + address + " ! Sending my info . . .");
 					game.tellConnectSuccess();
 					// the world will invoke the sendMyInfo method
@@ -162,7 +158,6 @@ public class Client extends Thread {
 		
 		// no more packets ?
 		// byebye
-		status = ConnectionStatus.OFFLINE;
 		if (puppet) {
 			server.removeClient(this);
 			

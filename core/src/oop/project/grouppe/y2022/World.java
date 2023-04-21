@@ -21,6 +21,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -41,6 +42,7 @@ public class World {
 	private Client myClient;
 	private final HashMap<Integer, Entity> entities; // < entID : Entity >
 	private final HashMap<Integer, Integer> clientCharacters; // < netID : entID >, included ourselves
+	private final ArrayList<Character> clientCharacterList;
 	private final LinkedList<Integer> entitiesRemoveLater;
 	
 	private BSPDungeonGenerator bsp = null;
@@ -111,7 +113,13 @@ public class World {
 	private final int DUNY = 48;
 	private final int DUNS = 5;
 	
+	private final boolean cameraSmooth = false;
+	
 	private boolean scoreboardVisible = false;
+	
+	private float spectatingDelay = 0.0f; // after died
+	private int spectatingIndex = 0;
+	private Character spectatingCharacter = null;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
 		public WorldRenderer(TiledMap map) {
@@ -149,6 +157,7 @@ public class World {
 		
 		entities = new HashMap<>();
 		clientCharacters = new HashMap<>();
+		clientCharacterList = new ArrayList<>();
 		entitiesRemoveLater = new LinkedList<>();
 		
 		chatText = new TextInput();
@@ -332,6 +341,7 @@ public class World {
 		ent.setupPlayer(p);
 		
 		clientCharacters.put(p.getNetID(), entID);
+		clientCharacterList.add(ent);
 		CoreGame.instance().getConsole().print("Created Player " + p.getNetID());
 		
 		Server server = CoreGame.instance().getServer();
@@ -432,7 +442,7 @@ public class World {
 				submitChat();
 				return true;
 			}
-			return false;
+			return chatText.keyDown(i);
 		}
 		
 		if (insideReadyArea) {
@@ -673,6 +683,13 @@ public class World {
 			worldRenderer.render();
 		}
 		
+		// timers
+		spectatingDelay -= delta;
+		if (spectatingDelay > 0.0f) {
+			spectate(0);
+			spectatingDelay = 0.0f;
+		}
+		
 		batch.begin();
 		
 		// texts
@@ -725,12 +742,26 @@ public class World {
 			e.getValue().updateCameraPos(camera.position.x, camera.position.y);
 		}
 		
-		if (m != null) {
-			camera.position.set(
-				new Vector3(camera.position.x, camera.position.y, 0.0f).lerp(
-					new Vector3(m.getX() + 16.0f, m.getY() + 16.0f, 0.0f)
-				, delta * 15.0f)
-			);
+		Character followCharacter;
+		if (spectatingCharacter != null) {
+			followCharacter = spectatingCharacter;
+		} else {
+			followCharacter = m;
+		}
+		
+		if (followCharacter != null) {
+			if (cameraSmooth) {
+				camera.position.set(
+					new Vector3(camera.position.x, camera.position.y, 0.0f).lerp(
+						new Vector3(followCharacter.getX() + 16.0f, followCharacter.getY() + 16.0f, 0.0f)
+					, delta * 15.0f)
+				);
+			} else {
+				camera.position.set(
+					new Vector3(followCharacter.getX() + 16.0f, followCharacter.getY() + 16.0f, 0.0f)
+				);
+			}
+			
 			camera.update();
 		}
 		
@@ -772,8 +803,10 @@ public class World {
 
 			if (insideReadyArea) {
 				drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
-			}
-			else if (insideEntranceArea) {
+			} else if (spectatingCharacter != null) {
+				final String s = "Press SPACE to cycle targets";
+				drawChatText(batch, s, s, 20, 200);
+			} else if (insideEntranceArea) {
 				String s;
 				if (collectedPaperCount >= paperCount) {
 					s = "Waiting for players";
@@ -792,8 +825,7 @@ public class World {
 			int cursorY = 0;
 			drawChatText(batch, "[PINK]PLAYERS", "PLAYERS", 600, 600 - cursorY);
 			cursorY = -32;
-			for (HashMap.Entry<Integer, Integer> e : clientCharacters.entrySet()) {
-				Character ch = (Character) entities.get(e.getValue());
+			for (Character ch : clientCharacterList) {
 				Player player = ch.getPlayer();
 				
 				// Name
@@ -882,6 +914,12 @@ public class World {
 		if (!clientCharacters.containsKey(netID)) return;
 		deleteEntityInternal(clientCharacters.get(netID));
 		clientCharacters.remove(netID);
+		for (int i = 0; i < clientCharacterList.size(); i++) {
+			if (clientCharacterList.get(i).getPlayer().getNetID() == netID) {
+				clientCharacterList.remove(i);
+				break;
+			}
+		}
 	}
 	
 	public void feedChat(int netID, String text, boolean flash) {
@@ -968,6 +1006,45 @@ public class World {
 	
 	public void dForceWin() {
 		setCollectedPaperCount(getMyClient().getCharacter(), 666);
+	}
+	
+	/////////////////////////////////
+	
+	public void tellCharacterDied(int netID) {
+		Character c = getCharacterByNetID(netID);
+		c.die();
+		
+		if (netID == getMyClient().getMyPlayer().getNetID()) {
+			// OH NO IM DED
+			spectatingDelay = 1.5f;
+		}
+	}
+	
+	private void spectate(int add) {
+		while (true) {
+			spectatingIndex += add;
+			
+			if (spectatingIndex >= clientCharacterList.size()) {
+				spectatingIndex = 0;
+			} else if (spectatingIndex < 0) {
+				spectatingIndex = clientCharacterList.size() - 1;
+			}
+			spectatingCharacter = clientCharacterList.get(spectatingIndex);
+			
+			if (spectatingCharacter != null && spectatingCharacter.isDied()) {
+				// nah
+				continue;
+			}
+			break;
+		}
+	}
+	
+	public void toggleSpectate() {
+		if (spectatingCharacter == null) {
+			spectate(0);
+		} else {
+			spectatingCharacter = null;
+		}
 	}
 	
 	/////////////////////////////////

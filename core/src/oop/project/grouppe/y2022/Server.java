@@ -12,15 +12,15 @@ import java.util.HashMap;
 
 public class Server extends Thread {
 	private ServerSocket server;
-	private int port;
-	private CoreGame game;
-	private Console console;
+	private final int port;
+	private final CoreGame game;
+	private final Console console;
 	
 	private final static int MAX_PLAYER = 8;
 	
 	private boolean running = false;
 	
-	private HashMap<Integer, Client> clients;
+	private final HashMap<Integer, Client> clients;
 	
 	public Server(int port) {
 		this.port = port;
@@ -69,19 +69,19 @@ public class Server extends Thread {
 		// send everyone to the new player
 		Packet.SSyncState P = new Packet.SSyncState();
 		client.send(P);
-		CoreGame.instance().getConsole().print("Sending a sync state " + client.getMyPlayer().getNetID());
+		console.print("Sending a sync state " + client.getMyPlayer().getNetID());
 		
 		clients.put(netID, client);
 		
 		client.getMyPlayer().putData(netID, name, i1, i2, i3, i4);
-		CoreGame.instance().getConsole().print("Registered Player " + netID);
+		console.print("Registered Player " + netID);
 		
 		// and . . . send to all players (this client too. becuz it includes an entID)
 		Packet.SNewPlayer p = new Packet.SNewPlayer();
 		p.entID = game.getWorld().allocateID();
 		p.p = client.getMyPlayer();
 		broadcast(p);
-		CoreGame.instance().getConsole().print("Broadcasting Player " + netID + " to everyone");
+		console.print("Broadcasting Player " + netID + " to everyone");
 		
 		
 	}

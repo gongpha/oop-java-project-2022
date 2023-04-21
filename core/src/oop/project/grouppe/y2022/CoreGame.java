@@ -30,6 +30,9 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	public final static int PORT = 13131;
 	public final static int NAMELENGTH = 12;
 	
+	private boolean ctrlPressed = false;
+	public boolean isCtrlPressed() { return ctrlPressed; }
+	
 	private Preferences pref;
 	public Preferences getPref() { return pref; }
 	
@@ -379,6 +382,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean keyDown(int i) {
+		if (i == 129) ctrlPressed = true;
+			
 		if (console.isActivating()) {
 			if (
 				i == Input.Keys.ESCAPE || i == Input.Keys.F7
@@ -438,6 +443,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean keyUp(int i) {
+		if (i == 129) ctrlPressed = false;
+		
 		if (world != null) {
 			if (world.keyUp(i)) return true;
 		}

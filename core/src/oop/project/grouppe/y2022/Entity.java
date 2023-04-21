@@ -1,6 +1,8 @@
 package oop.project.grouppe.y2022;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
@@ -18,6 +20,12 @@ public abstract class Entity extends Actor {
 	private World world = null;
 	private int ID;
 	
+	private boolean died = false;
+	
+	private final Vector2 lastNor = new Vector2();
+	
+	protected ShapeRenderer debugRenderer = null;
+	
 	private QuadTree.Node node;
 	public QuadTree.Node getCurrentNode() { return node; }
 	public void setCurrentNode(QuadTree.Node node) {
@@ -32,7 +40,7 @@ public abstract class Entity extends Actor {
 		noclip = !noclip;
 	}
 	
-	private int health = 100;
+	//private int health = 100;
 	
 	public void setID(int ID) {
 		this.ID = ID;
@@ -41,6 +49,7 @@ public abstract class Entity extends Actor {
 		return ID;
 	}
 	
+	/*
 	public void setHealth(int health) {
 		this.health = health;
 	}
@@ -59,10 +68,15 @@ public abstract class Entity extends Actor {
 	}
 	public void hurt(int rem) {
 		heal(-rem);
-	}
+	}*/
 	
 	public void die() {
-		// TODO
+		if (died) return;
+		died = true;
+	}
+	
+	public boolean isDied() {
+		return died;
 	}
 	
 	public void setWorld(World w) {
@@ -78,6 +92,7 @@ public abstract class Entity extends Actor {
 		collide(rel);
 		if (rel.isZero()) return; // collided ? nah
 		
+		//System.out.println(rel);
 		setPosition(
 			getX() + rel.x, getY() + rel.y
 		);
@@ -112,13 +127,16 @@ public abstract class Entity extends Actor {
 		by lookup the tile that was blocking us at our position directly
 		from the 2D array.
 	
-		but also gives us a trash result :/
+		the sliding function is a huge pain in my ass. don't give a shit
+	
+		i almost die because of this. help
 	*/
+	
 	public void collide(Vector2 rel) {
 		if (noclip) return;
 		
-		int XX = (int)(getX() + rel.x);
-		int YY = (int)(getY() + rel.y);
+		float XX = getX() + rel.x;
+		float YY = getY() + rel.y;
 		TiledMap worldMap = world.getWorldMap();
 		if (worldMap == null) return; // no map ?
 		TiledMapTileLayer l = (TiledMapTileLayer) worldMap.getLayers().get("tiles");
@@ -130,26 +148,140 @@ public abstract class Entity extends Actor {
 			{0, 1},
 			{1, 1},
 		};
+		
+		int MX = (int)XX / l.getTileWidth();
+		int MY = (int)YY / l.getTileHeight();
+		//System.out.println(MX + " " + MY);
+		
+		int hitc = 0;
+		boolean hit = false;
+		Vector2 anor = new Vector2();
 		for (int[] c : cs) {
-			int X = (int)XX / l.getTileWidth() + c[0];
-			int Y = (int)YY / l.getTileHeight() + c[1];
+			int X = MX + c[0];
+			int Y = MY + c[1];
+			
+			float BX = X * l.getTileWidth();
+			float BY = Y * l.getTileHeight();
 			Cell cell = l.getCell(X, Y);
 			if (cell != null) {
 				if (cell.getTile().getProperties().containsKey("col")) {
+					
+					// raycaast
+					Rectangle r = new Rectangle(BX, BY, 32.0f, 32.0f);
+					Vector2 nor = new Vector2();
+					Vector2 pos = new Vector2(getX() + 16.0f, getY() + 16.0f);
+					Vector2 bpos = new Vector2(BX + 16.0f, BY + 16.0f);
+					
+					boolean hitl = Physics.raycastRect(
+						pos, bpos.sub(pos).nor().add(rel.cpy().nor()).nor(), r,
+						nor
+					);
+					if (hitl) {
+						hitc += 1;
+						hit = true;
+						anor.add(nor);
+						//System.out.println(hit + " " + lastNor);
+					}
+						
+					
+					/*
+					Vector2 oldNor = lastNor.cpy();
+					lastNor.x = 0.0f;
+					lastNor.y = 0.0f;
+					if (Math.abs(Math.signum(rel.x)) == Math.abs(Math.signum(rel.y))) {
+						// move obliquely
+						boolean MXM = X != OX;
+						boolean MYM = Y != OY;
+						if (MXM && !MYM) {
+							lastNor.x = Math.signum(getX() - X * l.getTileWidth());
+						}
+						if (!MXM && MYM) {
+							lastNor.y = Math.signum(getY() - Y * l.getTileHeight());
+						}
+						if (X == OX && OX == MX) {
+							//System.out.println("@@@@@@@@@@@@@@@@@@@@");
+						}
+						//System.out.println(MXM + " " + MYM);
+					}
+					else if (rel.x != 0.0f) {
+						// move h
+						// nor : (-1, 0) (1, 0)
+						lastNor.x = Math.signum(XX - X * l.getTileWidth());
+					}
+					else if (rel.y != 0.0f) {
+						// move v
+						// nor : (0, -1) (0, 1)
+						lastNor.y = Math.signum(YY - Y * l.getTileHeight());
+					}
+					*/
+					//System.out.println(lastNor);
+					//System.out.println(rel);
+					//System.out.println(X + " " + OX + " " + MX + " : " + Y + " " + OY + " " + MY);
+					
+					
 					//System.out.println(c[0] + " " + c[1]);
 					//Vector2 n = new Vector2(0, 0);
 					///if (c[0] == 0) {
 					///	rel.x = 0.0f;
 					//}
 
-					//rel.mul(-1.0f).
-					//rel = rel.sub(n.scl(rel.dot(n))); <- SLIDE FUNCTION. BUT UNUSED
-					rel.x = 0.0f;
-					rel.y = 0.0f;
-					break;
+					//lastNor.x = -1.0f * lastNor.x;
+					//lastNor.y = -1.0f * lastNor.y;
+					//System.out.println("@@@@@@@@@");
+					//System.out.println(lastNor);
+					//System.out.println(rel);
+					
+					//System.out.println(X * l.getTileWidth() - XX);
+					//System.out.println(Y * l.getTileHeight() - YY);
+					
+					//rel.x = 0.0f;
+					//rel.y = 0.0f;
+					//System.out.println(getX() + " " + BX);
+					//System.out.println((getX() - BX));
+					//System.out.println(getY() + " " + BY);
+					//System.out.println((getY() - BY));
+					//rel.x += (getX() - XX);
+					//rel.y += (getY() - YY);
+					
+					/*
+					if (lastNor.isZero()) {
+						//System.out.println("OOO");
+						//System.out.println(oldNor);
+						//lastNor.x = oldNor.x;
+						//lastNor.y = oldNor.y;
+						System.out.println(X + " " + OX + " " + MX + " : " + Y + " " + OY + " " + MY);
+					}
+					*/
+					//if (lastNor.x != 0.0) rel.x = 0.0f;
+					//if (lastNor.y != 0.0) rel.y = 0.0f;
+					//System.out.println(lastNor);
+					//rel.x = 0.0f;
+					//rel.y = 0.0f;
+					
+					//System.out.println(rel);
+					//rel.x = 0.0f;
+					//rel.y = 0.0f;
+					//break;
 				}
 			}
 		}
+		
+		//System.out.println(hitc);
+		
+		if (hit) {
+			anor.nor();
+			if (anor.x != 0.0f) {
+				rel.x = 0.0f;
+			}
+			if (anor.y != 0.0f) {
+				rel.y = 0.0f;
+			}
+			//System.out.println(rel);
+			//rel = rel.sub(anor.cpy().scl(rel.dot(anor)));// <- SLIDE FUNCTION
+			lastNor.x = anor.x;
+			lastNor.y = anor.y;
+		}
+		//*/
 	}
 	
 	// server only
@@ -166,6 +298,41 @@ public abstract class Entity extends Actor {
 		if (node != null && world.isDrawQuadTree()) {
 			CoreGame.instance().getConsole().getFont().draw(batch, node.toString(), getX(), getY() + 64.0f);
 		}
+		/*
+		debugRenderer = new ShapeRenderer();
+		if (debugRenderer != null) {
+			batch.end();
+			Vector2 p = new Vector2(getX(), getY());
+			debugRenderer.setProjectionMatrix(getWorld().getCamera().combined);
+			debugRenderer.begin(ShapeRenderer.ShapeType.Line);
+			debugRenderer.setColor(Color.RED);
+			debugRenderer.line(p, p.cpy().add(lastNor.cpy().scl(128.0f)));
+			
+			int[][] cs = new int[][] {
+				{0, 0},
+				{1, 0},
+				{0, 1},
+				{1, 1},
+			};
+
+			float XX = getX();
+			float YY = getY();
+			int MX = (int)XX / 32;
+			int MY = (int)YY / 32;
+			//System.out.println(MX + " " + MY);
+
+			Vector2 anor = new Vector2();
+			for (int[] c : cs) {
+				int X = MX + c[0];
+				int Y = MY + c[1];
+				debugRenderer.line(X * 32.0f, Y * 32.0f, X * 32.0f + 32, Y * 32.0f + 32);
+			}
+			
+			debugRenderer.end();
+			debugRenderer = null;
+			batch.begin();
+		}
+		*/
 	}
 	
 	public void updateCameraPos(float camX, float camY) {}

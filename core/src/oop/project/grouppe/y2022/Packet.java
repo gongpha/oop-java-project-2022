@@ -48,7 +48,7 @@ public abstract class Packet {
 		regPacket(SInitGame.class);
 		regPacket(CSendChat.class);
 		regPacket(SSendChat.class);
-		regPacket(SEntUpdateHealth.class);
+		//regPacket(SEntUpdateHealth.class);
 		regPacket(SEntCreateMultiple.class);
 		regPacket(SCharacterUpdatePowerup.class);
 		regPacket(SPlayerScoreAdd.class);
@@ -438,6 +438,7 @@ public abstract class Packet {
 		}
 	}
 	
+	/*
 	public static class SEntUpdateHealth extends Packet {
 		public int header() { return 16; }
 		
@@ -452,7 +453,7 @@ public abstract class Packet {
 			Entity e = world.getEntities(s.readInt());
 			e.setHealth(s.readInt());
 		}
-	}
+	}*/
 	
 	// tell to clients to create a bunch of entities in one packet
 	// do not let the server invoke this (by calling "broadcastExceptServer")
@@ -552,6 +553,19 @@ public abstract class Packet {
 		public void read(DataInputStream s) throws IOException {
 			yes = s.readBoolean();
 			world.updateAtTheEntrance(getCSenderOrSMySelf().getMyPlayer().getNetID(), yes);
+		}
+	}
+	
+	public static class SCharacterDied extends Packet {
+		public int header() { return 21; }
+		
+		int netID = -1;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(netID);
+		}
+		public void read(DataInputStream s) throws IOException {
+			world.tellCharacterDied(s.readInt());
 		}
 	}
 }

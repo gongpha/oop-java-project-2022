@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import java.io.DataInputStream;
@@ -189,6 +190,8 @@ public class Character extends Entity {
 	
 	// only process from their machines
 	public void process(float delta) {
+		//delta *= 0.2f;
+		if (isDied()) return;
 		wishdir.x = isPressedInt(MoveDirection.RIGHT) - isPressedInt(MoveDirection.LEFT);
 		wishdir.y = isPressedInt(MoveDirection.UP) - isPressedInt(MoveDirection.DOWN);
 		
@@ -205,7 +208,9 @@ public class Character extends Entity {
 			fast *= 2.0f;
 		}
 		
-		velocity = velocity.lerp(wishdir.scl(speed * delta * fast), delta * 20.0f);
+		//velocity = wishdir;
+		//velocity.scl(8.0f);
+		velocity = velocity.lerp(wishdir.scl(speed * delta * fast), delta * 10.0f);
 		if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
 		if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
 		
@@ -322,6 +327,28 @@ public class Character extends Entity {
 			labelFont.setColor(Color.GREEN);
 			labelFont.draw(batch, username, fontX, fontY);
 		}
+		
+		/*
+		debugRenderer = new ShapeRenderer();
+		if (debugRenderer != null) {
+			batch.end();
+			Vector2 p = new Vector2(getX(), getY());
+			debugRenderer.setProjectionMatrix(getWorld().getCamera().combined);
+			debugRenderer.begin(ShapeRenderer.ShapeType.Line);
+			debugRenderer.setColor(Color.BLUE);
+			debugRenderer.line(p, p.cpy().add(velocity.cpy().scl(16.0f)));
+			debugRenderer.end();
+			debugRenderer = null;
+			batch.begin();
+		}*/
+	}
+	
+	public void die() {
+		super.die();
+		region.setRegion(
+			64, 128,
+			32, 32
+		);
 	}
 	
 	public boolean keyDown(int i) {

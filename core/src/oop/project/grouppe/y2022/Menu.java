@@ -298,7 +298,10 @@ public class Menu {
 				structure = new String[][]{{}, {}, {}};
 			else
 				structure = new String[][]{{}, {}, {}, {}};
-			if (cursor == 1) {
+			
+			if (cursor == 0) {
+				if (nameInput.keyDown(i)) return true;
+			} else if (cursor == 1) {
 				String[] sss = Character.characters;
 				if (i == Input.Keys.LEFT) {
 					selectingCharacterIndex -= 1;
@@ -319,6 +322,9 @@ public class Menu {
 						}
 					}
 				} else {
+					if (cursor == 2) {
+						if (ipInput.keyDown(i)) return true;
+					} else
 					if (cursor == 3) {
 						if (i == Input.Keys.ENTER) {
 							playSoundEnter();
@@ -328,6 +334,7 @@ public class Menu {
 					}
 				}
 			}
+			
 			break;
 		case SETTINGS:
 			structure = new String[][]{{}, {}};

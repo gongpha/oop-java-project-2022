@@ -10,9 +10,6 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -67,7 +64,9 @@ public abstract class Enemy extends Entity {
 	
 	public void collidedWith(Entity collidee) {
 		if (collidee instanceof Character) {
-			( (Character) collidee).hurt(getDamage());
+			//( (Character) collidee).hurt(getDamage());
+			// TODO : hits players
+			((Character) collidee).die();
 		}
 	}
 	

@@ -147,9 +147,11 @@ public class Console {
 	}
 	
 	public boolean keyDown(int i) {
+		if (!activating) return false;
 		if (i == Input.Keys.ENTER) {
 			exec(textInput.getString(), false);
 			textInput.setString("");
+			return true;
 		}
 		if (i == Input.Keys.DOWN) {
 			if (historylook == history.size()) {
@@ -162,7 +164,7 @@ public class Console {
 			} else {
 				textInput.setString(history.get(historylook));
 			}
-			
+			return true;
 		} else if (i == Input.Keys.UP) {
 			if (historylook == history.size()) {
 				cursorStore = textInput.getString();
@@ -170,8 +172,9 @@ public class Console {
 			historylook -= 1;
 			if (historylook < 0) historylook = 0;
 			textInput.setString(history.get(historylook));
+			return true;
 		}
-		return false;
+		return textInput.keyDown(i);
 	}
 	
 	public void hide() {
@@ -224,13 +227,14 @@ public class Console {
 		if (l.isEmpty()) return;
 		
 		
-		
+		// unused.
 		Matcher m = execPattern.matcher(l);
 		ArrayList<String> args = new ArrayList<>();
 		while (m.find()) {
 			if (m.group().isEmpty()) continue;
 			args.add(m.group());
 		}
+		
 		ConsoleCommand found = commands.get(args.get(0));
 		if (found != null) {
 			// CALLLL

@@ -160,6 +160,14 @@ public class ConsoleCommandCore {
 						w.dForceWin();
 					}
 				}
+			},
+			new ConsoleCommand("spectate") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.toggleSpectate();
+					}
+				}
 			}
 			///////////////////////////////////////
 			// ADD YOUR COMMANDS HERE
