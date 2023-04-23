@@ -249,7 +249,7 @@ public class World {
 		myClient.getServer().broadcastExceptServer(p);
 	}
 	
-	public void addEntities(Entity[] ents) {
+	public void addEntities(Entity[] ents, boolean isLevelEntities) {
 		for (int i = 0; i < ents.length; i++) {
 			int id = allocateID();
 			ents[i].setID(id);
@@ -257,6 +257,7 @@ public class World {
 		}
 		Packet.SEntCreateMultiple p = new Packet.SEntCreateMultiple();
 		p.ents = ents;
+		p.isLevelEntities = isLevelEntities;
 		myClient.getServer().broadcastExceptServer(p);
 	}
 	
@@ -303,10 +304,12 @@ public class World {
 		return lastID - 1;
 	}
 	
-	public Entity createEntityAuthorized(int ID, String className) {
+	public Entity createEntityAuthorized(int ID, String className, boolean isLevelEntities) {
 		try {
 			Entity ent = (Entity) Class.forName(className).getDeclaredConstructor().newInstance();
 			addEntityInternal(ent, ID);
+			if (isLevelEntities)
+				currentLevelEntities.add(ent);
 			return ent;
 		} catch (Exception e) {
 			CoreGame.instance().getConsole().printerr("cannot create an entity : " + e.getMessage());
@@ -336,7 +339,7 @@ public class World {
 	
 	public Character registerNewPlayer(int entID, Player p, boolean newConnect) {
 		Character ent = (Character) createEntityAuthorized(entID,
-			Character.class.getName()
+			Character.class.getName(), false
 		);
 		ent.setupPlayer(p);
 		
@@ -407,6 +410,7 @@ public class World {
 	}
 	
 	public void generateMap(long seed, int tilesetIndex, int level) {
+		atLobby = false;
 		removeOldLevelEnts();
 		
 		currentLevel = level;
@@ -601,7 +605,7 @@ public class World {
 			}*/
 		}
 
-		addEntities((Entity[]) currentLevelEntities.toArray(new Entity[currentLevelEntities.size()]));
+		addEntities((Entity[]) currentLevelEntities.toArray(new Entity[currentLevelEntities.size()]), true);
 		ghost.setupAStar();
 	}
 	
@@ -956,31 +960,33 @@ public class World {
 	
 	public void tellPosChange(Entity ent) {
 		// in tha lobby ?
-		if (atLobby) {
-			// is this the server character ?
-			if (ent == getMyClient().getCharacter()) {
-				// is it touching the ready area ?
-				Rectangle entRect = ent.getRect();
-				insideReadyArea = (serverReadyArea.getRectangle().overlaps(entRect));
+		if (ent == getMyClient().getCharacter())
+			if (atLobby) {
+				// is this the server character ?
+				if (getMyClient().isServer()) {
+					// is it touching the ready area ?
+					Rectangle entRect = ent.getRect();
+					insideReadyArea = (serverReadyArea.getRectangle().overlaps(entRect));
+				}
+			} else {
+				// playing
+				// inside the entrance radius ?
+				boolean oldV = insideEntranceArea;
+				Vector2 mapSpawnPoint = new Vector2(currentMapspawnPoint[0], currentMapspawnPoint[1]);
+				Vector2 playerPoint = new Vector2(ent.getX(), ent.getY());
+				insideEntranceArea = mapSpawnPoint.dst(playerPoint) < 64.0f;
+				if (oldV != insideEntranceArea) {
+					// lets they know !
+					Packet.CUpdateAtTheEntrance p = new Packet.CUpdateAtTheEntrance();
+					p.yes = insideEntranceArea;
+					getMyClient().send(p);
+					CoreGame.instance().getConsole().print("entr : " + insideEntranceArea);
+				}
+
 			}
-		} else {
-			// playing
-			// inside the entrance radius ?
-			boolean oldV = insideEntranceArea;
-			Vector2 mapSpawnPoint = new Vector2(currentMapspawnPoint[0], currentMapspawnPoint[1]);
-			Vector2 playerPoint = new Vector2(getMyClient().getCharacter().getX(), getMyClient().getCharacter().getY());
-			insideEntranceArea = mapSpawnPoint.dst(playerPoint) < 64.0f;
-			if (oldV != insideEntranceArea) {
-				// lets they know !
-				Packet.CUpdateAtTheEntrance p = new Packet.CUpdateAtTheEntrance();
-				p.yes = insideEntranceArea;
-				getMyClient().send(p);
-				CoreGame.instance().getConsole().print("entr : " + insideEntranceArea);
-			}
-			
-		}
 	}
 	
+	// server only
 	public void updateAtTheEntrance(int netID, boolean yes) {
 		Integer i = Integer.valueOf(netID);
 		if (yes) {

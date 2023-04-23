@@ -109,9 +109,7 @@ public abstract class Entity extends Actor {
 	
 	public void afterPosChange() {
 		// report to the world
-		if (world.getMyClient().isServer()) {
-			world.tellPosChange(this);
-		}
+		world.tellPosChange(this);
 	}
 	
 	public void teleport(float X, float Y) {

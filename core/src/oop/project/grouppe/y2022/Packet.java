@@ -255,9 +255,12 @@ public abstract class Packet {
 		// when using an object
 		Entity ent;
 		
+		boolean isLevelEntities = false;
+		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(ent.getID());
 			s.writeUTF(ent.getClass().getName());
+			s.writeBoolean(isLevelEntities);
 			
 			//ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			//DataOutputStream dos = new DataOutputStream(baos);
@@ -265,6 +268,7 @@ public abstract class Packet {
 				ent.serializeConstructor(s);
 			else
 				s.write(forwardedBytes);
+			
 			//baos.flush();
 			//byte[] bytes = baos.toByteArray();
 			
@@ -272,7 +276,7 @@ public abstract class Packet {
 			//s.write(bytes);
 		}
 		public void read(DataInputStream s) throws IOException {
-			ent = world.createEntityAuthorized(s.readInt(), s.readUTF());
+			ent = world.createEntityAuthorized(s.readInt(), s.readUTF(), s.readBoolean());
 			//int size = s.readInt();
 			ent.deserializeConstructor(s);
 		}
@@ -461,9 +465,11 @@ public abstract class Packet {
 		public int header() { return 17; }
 		
 		Entity[] ents;
+		boolean isLevelEntities = false;
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(ents.length);
+			s.writeBoolean(isLevelEntities);
 			CoreGame.instance().getConsole().print("Sending " + ents.length + " entities");
 			for (int i = 0; i < ents.length; i++) {
 				s.writeInt(ents[i].getID());
@@ -473,13 +479,14 @@ public abstract class Packet {
 		}
 		public void read(DataInputStream s) throws IOException {
 			int count = s.readInt();
+			isLevelEntities = s.readBoolean();
 			Console cs = CoreGame.instance().getConsole();
 			cs.print("Received " + count + " entities");
 			for (int i = 0; i < count; i++) {
 				int entID = s.readInt();
 				String c = s.readUTF();
 				//cs.print("    - " + c);
-				Entity ent = world.createEntityAuthorized(entID, c);
+				Entity ent = world.createEntityAuthorized(entID, c, isLevelEntities);
 				ent.deserializeConstructor(s);
 			}
 		}
