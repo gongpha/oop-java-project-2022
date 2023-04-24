@@ -70,6 +70,7 @@ public abstract class Entity extends Actor {
 		heal(-rem);
 	}*/
 	
+	// CALL world.killCharacter for killing the character remotely
 	public void die() {
 		if (died) return;
 		died = true;
@@ -77,6 +78,11 @@ public abstract class Entity extends Actor {
 	
 	public boolean isDied() {
 		return died;
+	}
+	
+	public void revive() {
+		if (!died) return;
+		died = false;
 	}
 	
 	public void setWorld(World w) {
@@ -151,7 +157,6 @@ public abstract class Entity extends Actor {
 		int MY = (int)YY / l.getTileHeight();
 		//System.out.println(MX + " " + MY);
 		
-		int hitc = 0;
 		boolean hit = false;
 		Vector2 anor = new Vector2();
 		for (int[] c : cs) {
@@ -175,7 +180,6 @@ public abstract class Entity extends Actor {
 						nor
 					);
 					if (hitl) {
-						hitc += 1;
 						hit = true;
 						anor.add(nor);
 						//System.out.println(hit + " " + lastNor);

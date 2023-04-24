@@ -6,6 +6,7 @@ package oop.project.grouppe.y2022;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
@@ -71,10 +72,14 @@ public class Menu {
 	boolean showing = false;
 	float alpha = 0.0f; // [0, 1]
 	
+	private Music bgm;
+	
 	public Menu() {
 		font = (BitmapFont) ResourceManager.instance().get("menu_font");
 		fontBig = (BitmapFont) ResourceManager.instance().get("title_font");
 		batch = CoreGame.instance().getBatch();
+		
+		bgm = (Music) ResourceManager.instance().get("m_mainmenu1");
 		
 		pref = CoreGame.instance().getPref();
 		oopBox = new Vector2();
@@ -92,6 +97,8 @@ public class Menu {
 		resetSelectingCharacter();
 		selectingCharacterTexture.setRegionWidth(128);
 		selectingCharacterTexture.setRegionHeight(32);
+		
+		showAsMainMenu();
 	}
 	
 	public void resetSelectingCharacter() {
@@ -142,11 +149,14 @@ public class Menu {
 	public void showAsPauseMenu() {
 		isPauseMenu = true;
 		showMain();
+		ResourceManager.instance().stopMusic(bgm);
 	}
 	
 	public void showAsMainMenu() {
 		isPauseMenu = false;
 		showMain();
+		bgm.setLooping(true);
+		ResourceManager.instance().playMusic(bgm);
 	}
 	
 	public void renderMainmenu() {

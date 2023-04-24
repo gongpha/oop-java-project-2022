@@ -168,6 +168,14 @@ public class ConsoleCommandCore {
 						w.toggleSpectate();
 					}
 				}
+			},
+			new ConsoleCommand("kill") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.killCharacter(w.getMyClient().getMyPlayer().getNetID());
+					}
+				}
 			}
 			///////////////////////////////////////
 			// ADD YOUR COMMANDS HERE

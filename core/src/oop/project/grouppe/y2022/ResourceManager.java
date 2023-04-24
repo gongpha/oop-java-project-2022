@@ -23,7 +23,7 @@ import java.util.HashMap;
 public class ResourceManager {
 	
 	// for debugging
-	public static boolean playMusic = false;
+	public static boolean playMusic = true;
 	
 	public void preloads() {
 		// FONTS
@@ -41,8 +41,6 @@ public class ResourceManager {
 		preloadTexture("connecting", "core/connecting.jpg");
 		preloadTexture("darkness1", "character/darkness1.png");
 		
-		preloadTexture("ghost1", "character/ghost1.png");
-		
 		preloadMap("demo1", "map/demo1.tmx");
 		
 		for (String s : Character.characters) {
@@ -53,6 +51,7 @@ public class ResourceManager {
 		}
 		
 		preloadTexture("items", "character/items.png");
+		preloadTexture("end", "core/end.jpg");
 		
 		preloadSound("s_cheat", "sound/cheat.wav");
 		preloadSound("s_protect", "sound/protect.wav");
@@ -60,12 +59,23 @@ public class ResourceManager {
 		preloadSound("s_chat", "sound/chat.wav");
 		preloadSound("s_faster", "sound/faster.wav");
 		preloadSound("s_completed", "sound/completed.wav");
+		preloadSound("s_hit", "sound/hit.wav");
 		
 		preloadSound("s_menu1", "sound/menu1.wav");
 		preloadSound("s_menu2", "sound/menu2.wav");
 		preloadSound("s_menu3", "sound/menu3.wav");
 		
-		preloadMusic("m_ghost", "sound/ghost_idle1.mp3");
+		preloadTexture("ghost1", "character/ghost1.png");
+		preloadTexture("ghost2", "character/ghost2.png");
+		preloadTexture("ghost3", "character/ghost3.png");
+		
+		preloadMusic("m_ghost1", "sound/ghost_idle1.mp3");
+		preloadMusic("m_ghost2", "sound/ghost_idle2.mp3");
+		preloadMusic("m_ghost3", "sound/ghost_idle3.mp3");
+		preloadMusic("m_game_end", "sound/game_end.mp3");
+		preloadMusic("m_lobby", "sound/lobby.mp3");
+		
+		preloadMusic("m_mainmenu1", "sound/mainmenu1.mp3");
 	}
 	
 	//////////////////////////////////////////////////////////////////
@@ -158,16 +168,18 @@ public class ResourceManager {
 	
 	/////////////////////////////////
 	
-	public void playSound(String name) {
+	public synchronized void playSound(String name) {
 		Sound s = ((Sound)ResourceManager.instance().get(name));
 		long i = s.play(CoreGame.instance().getVolumef());
+		
+		CoreGame.instance().getConsole().print("Playing sound " + name);
 		PlayingSoundMusic psm = new PlayingSoundMusic();
 		psm.sm = s;
 		psm.i = i;
 		psms.add(psm);
 	}
 	
-	public void playMusic(Music m) {
+	public synchronized void playMusic(Music m) {
 		if (!playMusic) return;
 		
 		m.setVolume(CoreGame.instance().getVolumef());
@@ -178,13 +190,14 @@ public class ResourceManager {
 			m.stop();
 		}
 		
+		CoreGame.instance().getConsole().print("Playing music " + m.toString());
 		PlayingSoundMusic psm = new PlayingSoundMusic();
 		psm.sm = m;
 		psm.i = -1L;
 		psms.add(psm);
 	}
 	
-	public void setVolume(int percent) {
+	public synchronized void setVolume(int percent) {
 		float v = percent /= 100.0f;
 		for (PlayingSoundMusic psm : psms) {
 			Object o = psm.sm;
@@ -197,7 +210,22 @@ public class ResourceManager {
 		}
 	}
 	
-	public void stopAllSoundMusic() {
+	public synchronized void stopMusic(Music music) {
+		PlayingSoundMusic remove = null;
+		for (PlayingSoundMusic psm : psms) {
+			Object o = psm.sm;
+			if (o instanceof Music && music == o) {
+				((Music) o).stop();
+				remove = psm;
+				
+				return;
+			}
+		}
+		if (remove != null)
+			psms.remove(remove);
+	}
+	
+	public synchronized void stopAllSoundMusic() {
 		for (PlayingSoundMusic psm : psms) {
 			Object o = psm.sm;
 			if (o instanceof Music) {

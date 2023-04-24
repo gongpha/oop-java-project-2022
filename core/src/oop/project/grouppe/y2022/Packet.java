@@ -53,6 +53,9 @@ public abstract class Packet {
 		regPacket(SCharacterUpdatePowerup.class);
 		regPacket(SPlayerScoreAdd.class);
 		regPacket(CUpdateAtTheEntrance.class);
+		regPacket(SCharacterDied.class);
+		regPacket(SGameEnd.class);
+		regPacket(SReturnToLobby.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -239,7 +242,7 @@ public abstract class Packet {
 			}
 			
 			if (world != null)
-				world.feedChat(-1, that.getUsername() + " left the game", false);
+				world.tellCharacterLeave(that);
 		}
 	}
 	
@@ -425,6 +428,7 @@ public abstract class Packet {
 		// -2 : cheat notify (red and sound fx)
 		// -3 : paper (green)
 		// -4 : cheerful notify (completed a level, pink)
+		// -5 : death notify (someone dies, red)
 		public int netID = -1;
 		public int flashID = -1; // neg : no flashing, 0 : EVERYONE, otherwise : specific
 		// ^^^ TODO : wat about negative-number netIDs ???
@@ -573,6 +577,24 @@ public abstract class Packet {
 		}
 		public void read(DataInputStream s) throws IOException {
 			world.tellCharacterDied(s.readInt());
+		}
+	}
+	
+	public static class SGameEnd extends Packet {
+		public int header() { return 22; }
+		
+		public void write(DataOutputStream s) throws IOException {}
+		public void read(DataInputStream s) throws IOException {
+			world.endGame();
+		}
+	}
+	
+	public static class SReturnToLobby extends Packet {
+		public int header() { return 23; }
+		
+		public void write(DataOutputStream s) throws IOException {}
+		public void read(DataInputStream s) throws IOException {
+			world.markReturnToLobby();
 		}
 	}
 }

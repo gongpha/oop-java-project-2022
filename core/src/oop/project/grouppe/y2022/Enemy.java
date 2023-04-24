@@ -4,6 +4,7 @@ package oop.project.grouppe.y2022;
 // it can hurt you
 
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -62,13 +63,7 @@ public abstract class Enemy extends Entity {
 		return new Rectangle(getX() / 32.0f, getY() / 32.0f, 1, 1);
 	}
 	
-	public void collidedWith(Entity collidee) {
-		if (collidee instanceof Character) {
-			//( (Character) collidee).hurt(getDamage());
-			// TODO : hits players
-			((Character) collidee).die();
-		}
-	}
+	public void collidedWith(Entity collidee) {}
 	
 	public void draw(Batch batch, float alpha) {
 		if (region.getTexture() == null) return; // no
@@ -118,7 +113,7 @@ public abstract class Enemy extends Entity {
 			//System.out.println("wish : " + wishdir.x + " " + wishdir.y);
 			
 			// accel
-			velocity = velocity.lerp(wishdir.scl(576.0f * delta), delta * 20.0f);
+			velocity = velocity.lerp(wishdir.scl(500.0f * delta), delta * 20.0f);
 			if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
 			if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
 
@@ -126,8 +121,13 @@ public abstract class Enemy extends Entity {
 			//System.out.println("vel : " + velocity.x + " " + velocity.y);
 			
 			// is it nearby the target (check by distance)
-			if (new Vector2(getX() + 32, getY() + 32).dst(new Vector2(walkingTo.getX() + 16, walkingTo.getY() + 16)) <= 96.0) {
-				//System.out.println("WOW");
+			if (new Vector2(getX() + 32, getY() + 32).dst(new Vector2(walkingTo.getX() + 16, walkingTo.getY() + 16)) <= 64.0) {
+				// KILL
+				if (!walkingTo.hasProtection()) {
+					getWorld().killCharacter(walkingTo.getPlayer().getNetID());
+					walkingTo = null;
+					ResourceManager.instance().playSound("s_hit");
+				}
 			}
 		}
 		if (findDelay > 0.125f) {
@@ -135,14 +135,18 @@ public abstract class Enemy extends Entity {
 			
 			Character nearest = null;
 			float nearestDist = 555555.0f;
+			Vector2 myPos = new Vector2(getX(), getY());
 			for (HashMap.Entry<Integer, Integer> e : getWorld().dumpCharactersEntID().entrySet()) {
 				Character c = (Character) getWorld().getEntities(e.getValue());
+				
+				if (c.isDied()) continue;
 
 				// check distance
 				Vector2 p = new Vector2(c.getX(), c.getY());
-				float distance = p.dst(new Vector2(getX(), getY()));
+				float distance = p.dst(myPos);
 				if (distance < nearestDist) {
 					nearest = c;
+					nearestDist = distance;
 				}
 			}
 			

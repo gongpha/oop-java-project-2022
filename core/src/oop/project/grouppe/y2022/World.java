@@ -2,6 +2,7 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -22,6 +23,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -51,12 +53,13 @@ public class World {
 	private WorldRenderer worldRenderer = null;
 	private boolean waiting = false;
 	private QuadTree mapQuadTree = null;
-	private String currentLevelName = "The Nameless City";
+	private String currentLevelName = "The Nameless City"; // TODO : remove soon
 	private char[][] mapColTiles;
 	private final LinkedList<Entity> currentLevelEntities;
 	
 	private int paperCount;
 	private int collectedPaperCount;
+	private int collectedPaperCountPrevious;
 	private int currentLevel = 0;
 	
 	// usually for servers
@@ -73,8 +76,8 @@ public class World {
 	// common
 	private boolean insideEntranceArea = false;
 	
-	
 	private final Texture overlay;
+	private final Texture endBG;
 	
 	// HUD
 	
@@ -98,7 +101,7 @@ public class World {
 	private boolean chatMode = false;
 	private boolean chatModeReady = false;
 	private TextInput chatText;
-	private Ghost ghost = null;
+	private Enemy ghost = null;
 	
 	private boolean processing = false;
 	
@@ -113,13 +116,18 @@ public class World {
 	private final int DUNY = 48;
 	private final int DUNS = 5;
 	
-	private final boolean cameraSmooth = false;
+	private final boolean cameraSmooth = true;
 	
 	private boolean scoreboardVisible = false;
 	
 	private float spectatingDelay = 0.0f; // after died
+	private boolean spectatingDelayStarting = false;
 	private int spectatingIndex = 0;
 	private Character spectatingCharacter = null;
+	
+	private boolean gameEnd = false;
+	
+	private Music worldMusic;
 	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
 		public WorldRenderer(TiledMap map) {
@@ -164,6 +172,7 @@ public class World {
 		chatText.setLimited(96);
 		
 		overlay = (Texture) ResourceManager.instance().get("darkness1");
+		endBG = (Texture) ResourceManager.instance().get("end");
 		
 		hudFont1 = (BitmapFont) ResourceManager.instance().get("hud_font");
 		hudFont2 = (BitmapFont) ResourceManager.instance().get("chat_font");
@@ -179,6 +188,12 @@ public class World {
 		/////////////////////
 		
 		//generateMap(System.nanoTime(), 0);
+	}
+	
+	public Character getSpectatingCharacter() {
+		// returns the character that the camera is currently following
+		// it never returns null !
+		return spectatingCharacter == null ? myClient.getCharacter() : spectatingCharacter;
 	}
 	
 	public void setLevelName(String name) {
@@ -223,6 +238,16 @@ public class World {
 		
 		Player p = getCharacterByNetID(netID).getPlayer();
 		p.setScore(playerCurrentPaperCount);
+		
+		// sort players by scores
+		// i lov lambdas
+		clientCharacterList.sort(new Comparator<Character>() {
+			public int compare(Character o1, Character o2) {
+				int p1 = o1.getPlayer().getScore();
+				int p2 = o2.getPlayer().getScore();
+				return (p1 < p2) ? 1 : ((p1 > p2) ? -1 : 0);
+			}
+		});
 		
 		feedChat(-3,
 			p.getUsername() + " collects a paper. (" + collectedPaperCount + "/" + paperCount + ")"
@@ -375,6 +400,8 @@ public class World {
 	}
 	
 	public void loadMap(String mapName) {
+		removeOldLevelEnts();
+		
 		TiledMap map = (TiledMap) ResourceManager.instance().get(mapName);
 		
 		if (myClient.isServer()) {
@@ -386,11 +413,16 @@ public class World {
 			// server ready area
 			serverReadyArea = (RectangleMapObject) objs.get("serverReadyArea");
 
-			// reteleport players to the spawn point
-			// usually for the server character
-			for (int id : clientCharacters.values()) {
-				entities.get(id).teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
-			}
+			
+			
+		}
+		
+		// reteleport players to the spawn point (server) and revive them (both)
+		for (int id : clientCharacters.values()) {
+			Entity e = entities.get(id);
+			e.revive();
+			if (myClient.isServer())
+				e.teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
 		}
 		
 		setMap(map);
@@ -413,6 +445,11 @@ public class World {
 		atLobby = false;
 		removeOldLevelEnts();
 		
+		if (worldMusic != null) {
+			ResourceManager.instance().stopMusic(worldMusic);
+			worldMusic = null;
+		}
+		
 		currentLevel = level;
 		
 		Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
@@ -432,6 +469,11 @@ public class World {
 	}
 	
 	public boolean keyDown(int i) {
+		if (gameEnd && getMyClient().isServer() && i == Input.Keys.SPACE) {
+			returnToLobbyRemote();
+			return true;
+		}
+		
 		if (!chatMode && i == Input.Keys.T) {
 			chatMode = !chatMode;
 			chatCaret = 0.0f;
@@ -452,7 +494,15 @@ public class World {
 		if (insideReadyArea) {
 			if (i == Input.Keys.SPACE) {
 				if (!insideReadyArea) return true;
-				commitReady();
+				newLevel();
+				insideReadyArea = false;
+				return true;
+			}
+		}
+		
+		if (spectatingCharacter != null) {
+			if (i == Input.Keys.SPACE) {
+				spectate(1);
 				return true;
 			}
 		}
@@ -511,7 +561,7 @@ public class World {
 	}
 	
 	// serverside
-	public void commitReady() {
+	public void newLevel() {
 		atLobby = false;
 		insideReadyArea = false;
 		
@@ -553,8 +603,19 @@ public class World {
 
 		// create objects
 
-		// SPAWN THE ENEMY (ghost)
-		ghost = new Ghost();
+		// SPAWN THE ENEMY (ghosts)
+		switch ((int)(Math.abs(bsp.getSeed()) % 3)) {
+			case 0:
+				ghost = new Ghost1();
+				break;
+			case 1:
+				ghost = new Ghost2();
+				break;
+			case 2:
+				ghost = new Ghost3();
+				break;
+		}
+		
 		ghost.setPosition(bsp.getEnemySpawnPointX(), bsp.getEnemySpawnPointY());
 		currentLevelEntities.add(ghost);
 
@@ -624,17 +685,89 @@ public class World {
 		bsp = null;
 	}
 	
+	private void clearProgress() {
+		// reset scores and level
+		for (Character ch : clientCharacterList) {
+			Player player = ch.getPlayer();
+			player.setScore(0);
+		}
+		currentLevel = 0;
+		collectedPaperCountPrevious = 0;
+	}
+	
+	private void returnToLobby() {
+		clearProgress();
+		atLobby = true;
+		loadMap("demo1");
+		gameEnd = false;
+		
+		if (worldMusic != null) {
+			ResourceManager.instance().stopMusic(worldMusic);
+		}
+		worldMusic = (Music) ResourceManager.instance().get("m_lobby");
+		ResourceManager.instance().playMusic(worldMusic);
+	}
+	
+	// used to call "returnToLobby" in the different threads
+	// becuz opengl sucks at it
+	private boolean markedReturnToLobby = false;
+	public void markReturnToLobby() {
+		markedReturnToLobby = true;
+	}
+	
+	// serverside
+	public void returnToLobbyRemote() {
+		Packet.SReturnToLobby p = new Packet.SReturnToLobby();
+		myClient.getServer().broadcast(p);
+	}
+	
 	public void render(float delta) {
 		if (markInit) {
-			atLobby = true;
-			loadMap("demo1");
+			returnToLobby();
 			markInit = false;
 			ready = true;
+		}
+		
+		if (markedReturnToLobby) {
+			returnToLobby();
+			markedReturnToLobby = false;
 		}
 		
 		if (!ready) return;
 		SpriteBatch batch = CoreGame.instance().getBatch();
 		
+		if (!gameEnd) {
+			pollDungeonGenerator(batch);
+			tickTimers(delta);
+			renderLevel(batch, delta);
+			processEntities(delta);
+
+			stage.act(delta);
+			stage.draw();
+			
+			cameraUpdatePos(delta);
+
+			batch.begin();
+			batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
+		} else {
+			batch.begin();
+			batch.draw(endBG, 0, 0);
+		}
+		
+		if (!scoreboardVisible || gameEnd) {
+			drawChats(batch, delta);
+			drawCornerText(batch);
+		}
+		/////////////////////
+		// draw hud
+		batch.setColor(Color.WHITE);
+		
+		drawHUD(batch);
+		
+		batch.end();
+	}
+	
+	private void pollDungeonGenerator(SpriteBatch batch) {
 		if (bsp != null) {
 			// do not render anything when generating
 			
@@ -642,6 +775,12 @@ public class World {
 			if (map != null) {
 				if (!waiting) {
 					setMap(map);
+					
+					// set our character location to the spawn point
+					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
+					currentMapspawnPoint[0] = bsp.getSpawnPointX();
+					currentMapspawnPoint[1] = bsp.getSpawnPointY();
+					
 					if (myClient.isServer()) {
 						// remove myself
 						pendingRemove(1);
@@ -650,11 +789,6 @@ public class World {
 						Packet.CGenerateDone p = new Packet.CGenerateDone();
 						myClient.send(p);
 					}
-					
-					// set our character location to the spawn point
-					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
-					currentMapspawnPoint[0] = bsp.getSpawnPointX();
-					currentMapspawnPoint[1] = bsp.getSpawnPointY();
 					
 					waiting = true;
 				} else {
@@ -681,27 +815,15 @@ public class World {
 			
 			return;
 		}
-		
+	}
+	
+	private void renderLevel(SpriteBatch batch, float delta) {
 		if (worldRenderer != null) {
 			worldRenderer.setView(camera);
 			worldRenderer.render();
 		}
 		
-		// timers
-		spectatingDelay -= delta;
-		if (spectatingDelay > 0.0f) {
-			spectate(0);
-			spectatingDelay = 0.0f;
-		}
-		
 		batch.begin();
-		
-		// texts
-		if (textTimer > 0.0) {
-			textTimer -= delta;
-		} else {
-			textsPop();
-		}
 		
 		if (drawQuadTree && mapQuadTree != null) {
 			batch.end();
@@ -713,13 +835,63 @@ public class World {
 			batch.begin();
 		}
 		
-		
-		//batch.begin();
-		
-			
-		
 		batch.end();
+	}
+	
+	private void drawChats(SpriteBatch batch, float delta) {
+		if (textTimer > 0.0) {
+			textTimer -= delta;
+		} else {
+			textsPop();
+		}
 		
+		int i = 0;
+		for (; i < texts.size(); i++) {
+			TextItem j = texts.get(i);
+			String b = texts.get(i).s;
+			String s = b;
+			String st = b;
+			if (j.author.isEmpty()) {
+				s = "[" + j.authorColor + "]" + b;
+			} else {
+				s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
+				st = "< " + j.author + " > " + b;
+			}
+
+			drawChatText(batch, s, st, 20, 690 + (-i * 40));
+		}
+		if (chatMode) {
+			chatModeReady = true;
+			String c = chatText.getString() + (
+				(chatCaret > 1.0f) ? "_" : ""
+			);
+			drawChatText(batch,
+				"[CYAN][[Chat][WHITE] : " + c,	
+				"[Chat] : " + c,	
+			20, 690 + (-i * 40));
+			chatCaret += delta * 1.5f;
+			if (chatCaret >= 2.0f) chatCaret = 0.0f;
+		}
+	}
+	
+	private void drawCornerText(SpriteBatch batch) {
+		String s = "";
+		if (insideReadyArea) {
+			drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
+		} else if (spectatingCharacter != null) {
+			s = "Spectating other players . . .\nPress SPACE to cycle targets";
+			drawChatText(batch, s, s, 20, 300);
+		} else if (insideEntranceArea) {
+			if (collectedPaperCount >= paperCount) {
+				s = "Waiting for players";
+			} else {
+				s = "Collect all papers to exit";
+			}
+			drawChatText(batch, s, s, 20, 200);
+		}
+	}
+	
+	private void processEntities(float delta) {
 		Character m = myClient.getCharacter();
 		
 		if (myClient.isServer()) {
@@ -740,11 +912,22 @@ public class World {
 				m.process(delta);
 			}
 		}
-		
-		// poll the cam position to all entites
-		for (HashMap.Entry<Integer, Entity> e : entities.entrySet()) {
-			e.getValue().updateCameraPos(camera.position.x, camera.position.y);
+	}
+	
+	private void tickTimers(float delta) {
+		// timers
+		if (spectatingDelayStarting) {
+			spectatingDelay -= delta;
+			if (spectatingDelay <= 0.0f) {
+				spectate(0);
+				spectatingDelayStarting = false;
+			}
 		}
+	}
+	
+	private void cameraUpdatePos(float delta) {
+		if (bsp != null) return; // generating. do not update
+		Character m = myClient.getCharacter();
 		
 		Character followCharacter;
 		if (spectatingCharacter != null) {
@@ -769,75 +952,39 @@ public class World {
 			camera.update();
 		}
 		
-		
-		stage.act(delta);
-		stage.draw();
-		
-		batch.begin();
-		batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
-		
-		if (!scoreboardVisible) {
-			int i = 0;
-			for (; i < texts.size(); i++) {
-				TextItem j = texts.get(i);
-				String b = texts.get(i).s;
-				String s = b;
-				String st = b;
-				if (j.author.isEmpty()) {
-					s = "[" + j.authorColor + "]" + b;
-				} else {
-					s = "[" + j.authorColor + "]< " + j.author + " >[WHITE] " + b;
-					st = "< " + j.author + " > " + b;
-				}
-
-				drawChatText(batch, s, st, 20, 690 + (-i * 40));
-			}
-			if (chatMode) {
-				chatModeReady = true;
-				String c = chatText.getString() + (
-					(chatCaret > 1.0f) ? "_" : ""
-				);
-				drawChatText(batch,
-					"[CYAN][[Chat][WHITE] : " + c,	
-					"[Chat] : " + c,	
-				20, 690 + (-i * 40));
-				chatCaret += delta * 1.5f;
-				if (chatCaret >= 2.0f) chatCaret = 0.0f;
-			}
-
-			if (insideReadyArea) {
-				drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
-			} else if (spectatingCharacter != null) {
-				final String s = "Press SPACE to cycle targets";
-				drawChatText(batch, s, s, 20, 200);
-			} else if (insideEntranceArea) {
-				String s;
-				if (collectedPaperCount >= paperCount) {
-					s = "Waiting for players";
-				} else {
-					s = "Collect all papers to exit";
-				}
-				drawChatText(batch, s, s, 20, 200);
-			}
+		// poll the cam position to all entites
+		for (HashMap.Entry<Integer, Entity> e : entities.entrySet()) {
+			e.getValue().updateCameraPos(camera.position.x, camera.position.y);
 		}
-		/////////////////////
-		// draw hud
-		batch.setColor(Color.WHITE);
+	}
+	
+	private void drawHUD(SpriteBatch batch) {
+		Character m = myClient.getCharacter();
 		
-		if (scoreboardVisible) {
+		if (scoreboardVisible || gameEnd) {
 			// show everyone's names
 			int cursorY = 0;
-			drawChatText(batch, "[PINK]PLAYERS", "PLAYERS", 600, 600 - cursorY);
+			
+			String header = "PLAYERS";
+			int headerX = 600;
+			if (gameEnd) {
+				header = collectedPaperCountPrevious + " papers have been collected.";
+				headerX -= 200;
+			}
+			
+			drawChatText(batch, "[PINK]" + header, header, headerX, 600 - cursorY);
 			cursorY = -32;
+			
 			for (Character ch : clientCharacterList) {
 				Player player = ch.getPlayer();
 				
 				// Name
-				
 				String c = "";
 				if (player.getNetID() == myClient.getMyPlayer().getNetID()) {
 					// highlight myself in green
 					c = "[YELLOW]";
+				} else if (ch.isDied() && !gameEnd) {
+					c = "[RED]"; // ded (while playing)
 				}
 				drawChatText(batch, c + player.getUsername(), player.getUsername(), 200, 500 + cursorY);
 				
@@ -847,13 +994,16 @@ public class World {
 				cursorY -= 32;
 			}
 		} else {
-			if (m != null && !atLobby) {
+			if (spectatingCharacter != null) m = spectatingCharacter; // show the spectatee's info instead
+			if (!gameEnd && m != null && !atLobby) {
 				batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f); // player status
 				hudFont1.draw(batch, "Level " + currentLevel, 550.0f, 70.0f); // level number
 			}
 		}
 		
-		batch.end();
+		if (gameEnd && getMyClient().isServer()) {
+			hudFont1.draw(batch, "Press SPACE to restart", 300.0f, 70.0f); // restart notice
+		}
 	}
 	
 	private Color[] quadTreeColors = {
@@ -928,6 +1078,7 @@ public class World {
 	
 	public void feedChat(int netID, String text, boolean flash) {
 		TextItem i = new TextItem(text, CHAT_DURATION - textTimer);
+		
 		if (netID == -1) {
 			i.authorColor = "YELLOW"; // system
 		}
@@ -936,15 +1087,22 @@ public class World {
 			ResourceManager.instance().playSound("s_cheat");
 		}
 		else if (netID == -3) {
-			i.authorColor = "GREEN"; // cheat notify
+			i.authorColor = "GREEN"; // paper collected notify
 			ResourceManager.instance().playSound("s_paper");
 		}
 		else if (netID == -4) {
 			i.authorColor = "MAGENTA"; // cheerful notify
 			ResourceManager.instance().playSound("s_completed");
 		}
+		else if (netID == -5) {
+			i.authorColor = "RED"; // death notify
+			//ResourceManager.instance().playSound("s_completed");
+		}
 		else {
-			i.author = myClient.getPlayer(netID).getUsername();
+			Character c = getCharacterByNetID(netID);
+			if (c.isDied()) i.authorColor = "RED"; // set to red (others)
+			
+			i.author = c.getPlayer().getUsername();
 			ResourceManager.instance().playSound("s_chat");
 		}
 		
@@ -986,8 +1144,15 @@ public class World {
 			}
 	}
 	
+	public void tellCharacterLeave(Player player) {
+		feedChat(-1, player.getUsername() + " left the game", false);
+		checkPlayersEntrance();
+	}
+	
 	// server only
 	public void updateAtTheEntrance(int netID, boolean yes) {
+		if (bsp != null) return; // generating
+		
 		Integer i = Integer.valueOf(netID);
 		if (yes) {
 			pendingPlayer.add(i);
@@ -995,11 +1160,20 @@ public class World {
 			pendingPlayer.remove(i);
 		}
 		
+		checkPlayersEntrance();
+	}
+	
+	private boolean checkPlayersEntrance() {
+		if (!myClient.isServer()) return false; // NOT A SERVER !!!!!1
+		
 		if (pendingPlayer.size() >= clientCharacters.size() && collectedPaperCount >= paperCount) {
 			pendingPlayer.clear();
-			commitReady(); // NEXT LEVEL
+			collectedPaperCountPrevious = collectedPaperCount;
+			newLevel(); // NEXT LEVEL
+			CoreGame.instance().getConsole().print("! NEXT !");
+			return true;
 		}
-		
+		return false;
 	}
 	
 	/////////////////////////////////
@@ -1016,17 +1190,64 @@ public class World {
 	
 	/////////////////////////////////
 	
+	// serverside
+	public void killCharacter(int netID) {
+		if (getMyClient().getServer() == null) return; // not a server
+		
+		Packet.SCharacterDied p = new Packet.SCharacterDied();
+		p.netID = netID;
+		getMyClient().getServer().broadcast(p);
+	}
+	
 	public void tellCharacterDied(int netID) {
 		Character c = getCharacterByNetID(netID);
 		c.die();
 		
+		Server s = myClient.getServer();
+		if (s != null) {
+			if (!checkPlayersEntrance() && checkAllDied()) {
+				// end game
+				Packet.SGameEnd p = new Packet.SGameEnd();
+				s.broadcast(p);
+				return;
+			}
+			pendingPlayer.add(netID); // pretending the dead players are already standing at the entrance
+		}
+		
 		if (netID == getMyClient().getMyPlayer().getNetID()) {
 			// OH NO IM DED
+			CoreGame.instance().getConsole().print("Died.");
 			spectatingDelay = 1.5f;
+			spectatingDelayStarting = true;
 		}
+		
+		feedChat(-5, c.getPlayer().getUsername() + " was killed !", false);
+	}
+	
+	private boolean checkAllDied() {
+		// TODO : is thread safe ?
+		int died = 0;
+		for (Character c : clientCharacterList) {
+			if (c.isDied()) died++;
+		}
+		return died == clientCharacterList.size();
+	}
+	
+	public void endGame() {
+		gameEnd = true;
+		spectatingDelayStarting = false; // stop the spectating timer
+		spectatingCharacter = null; // stop spectating
+		pendingPlayer.clear();
+		
+		CoreGame.instance().getConsole().print("Game ended");
+		
+		ResourceManager.instance().stopAllSoundMusic();
+		worldMusic = (Music) ResourceManager.instance().get("m_game_end");
+		ResourceManager.instance().playMusic(worldMusic);
 	}
 	
 	private void spectate(int add) {
+		int tries = 0;
 		while (true) {
 			spectatingIndex += add;
 			
@@ -1038,7 +1259,14 @@ public class World {
 			spectatingCharacter = clientCharacterList.get(spectatingIndex);
 			
 			if (spectatingCharacter != null && spectatingCharacter.isDied()) {
-				// nah
+				// nah. try the next character instead
+				if (tries >= clientCharacterList.size()) {
+					// hmmm. no one to spectate
+					spectatingCharacter = null;
+					break;
+				}
+				tries += 1;
+				if (add == 0) add = 1;
 				continue;
 			}
 			break;

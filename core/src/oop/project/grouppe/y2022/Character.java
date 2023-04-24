@@ -240,75 +240,83 @@ public class Character extends Entity {
 		return player.getNetID() == world.getMyClient().getMyPlayer().getNetID();
 	}
 	
+	public boolean isSpectatee() {
+		// returns true if i'm spectating this guy
+		return player.getNetID() == world.getSpectatingCharacter().getPlayer().getNetID();
+	}
+	
 	@Override
 	public void draw(Batch batch, float alpha) {
 		if (region.getTexture() == null) return; // no
 		
-		float delta = Gdx.graphics.getDeltaTime(); // 3x faster
-		
-		if (world.getMyClient().isServer()) {
-			for (Power p : new ArrayList<>(powers)) {
-				p.timer -= delta;
-				if (!p.aboutToEnd && p.timer < POWER_DURATION_END) {
-					p.aboutToEnd = true;
-					Packet.SCharacterUpdatePowerup packet = new Packet.SCharacterUpdatePowerup();
-					packet.target = this;
-					packet.powerup = p.powerup;
-					packet.tell = 1;
-					world.getMyClient().send(packet);
-				}
-				if (p.timer <= 0.0f) {
-					Packet.SCharacterUpdatePowerup packet = new Packet.SCharacterUpdatePowerup();
-					packet.target = this;
-					packet.powerup = p.powerup;
-					packet.tell = 2;
-					
-					// reset to default face
-					packet.x = 128;
-					packet.y = 0;
-					
-					powers.remove(p);
-					if (p.powerup == (char)0) {
-						protection = false;
-					}
-					
-					// set the status to the latest power
-					if (!powers.isEmpty()) {
-						Power po = powers.get(powers.size() - 1);
-						packet.x = po.regionX;
-						packet.y = po.regionY;
-					}
-					
-					world.getMyClient().send(packet);
-				}
-			}
-		}
+		boolean flipH = false;
+				
+		if (!isDied()) {
+			float delta = Gdx.graphics.getDeltaTime(); // 3x faster
 
-		int[] aniDir = animationsDir[direction];
-		int[][] aniSeq = animations[aniDir[0]];
-		if (isMySelf()) {
-			if (animating) {
-				animationIndex += delta * 3.0f;
-				if (animationIndex >= 3) animationIndex = 0.0f; // reset
-			} else {
-				animationIndex = 0.0f;
+			if (world.getMyClient().isServer()) {
+				for (Power p : new ArrayList<>(powers)) {
+					p.timer -= delta;
+					if (!p.aboutToEnd && p.timer < POWER_DURATION_END) {
+						p.aboutToEnd = true;
+						Packet.SCharacterUpdatePowerup packet = new Packet.SCharacterUpdatePowerup();
+						packet.target = this;
+						packet.powerup = p.powerup;
+						packet.tell = 1;
+						world.getMyClient().getServer().broadcast(packet);
+					}
+					if (p.timer <= 0.0f) {
+						Packet.SCharacterUpdatePowerup packet = new Packet.SCharacterUpdatePowerup();
+						packet.target = this;
+						packet.powerup = p.powerup;
+						packet.tell = 2;
+
+						// reset to default face
+						packet.x = 128;
+						packet.y = 0;
+
+						powers.remove(p);
+						if (p.powerup == (char)0) {
+							protection = false;
+						}
+
+						// set the status to the latest power
+						if (!powers.isEmpty()) {
+							Power po = powers.get(powers.size() - 1);
+							packet.x = po.regionX;
+							packet.y = po.regionY;
+						}
+
+						world.getMyClient().getServer().broadcast(packet);
+					}
+				}
 			}
-			
+
+			int[] aniDir = animationsDir[direction];
+			int[][] aniSeq = animations[aniDir[0]];
+			if (isMySelf()) {
+				if (animating) {
+					animationIndex += delta * 3.0f;
+					if (animationIndex >= 3) animationIndex = 0.0f; // reset
+				} else {
+					animationIndex = 0.0f;
+				}
+
+			}
+
+			int[] aniCoord = aniSeq[(int)animationIndex]; // 0 1 2
+			flipH = aniDir[1] == 1;
+			region.setRegion(
+				aniCoord[0],
+				aniCoord[1],
+				32, 32
+			);
+
+			if (isMySelf()) {
+				animationIndex += delta;
+				if (animationIndex >= 3) animationIndex = 0.0f; // reset
+			}
 		}
-		
-		int[] aniCoord = aniSeq[(int)animationIndex]; // 0 1 2
-		boolean flipH = aniDir[1] == 1;
-		region.setRegion(
-			aniCoord[0],
-			aniCoord[1],
-			32, 32
-		);
-		
-		if (isMySelf()) {
-			animationIndex += delta;
-			if (animationIndex >= 3) animationIndex = 0.0f; // reset
-		}
-		
 		
 		
 		batch.setColor(Color.WHITE);
@@ -324,7 +332,7 @@ public class Character extends Entity {
 			float fontY = getY() + 48.0f;
 			labelFont.setColor(Color.BLACK);
 			labelFont.draw(batch, username, fontX + 1, fontY - 1);
-			labelFont.setColor(Color.GREEN);
+			labelFont.setColor(isDied() ? Color.RED : Color.GREEN);
 			labelFont.draw(batch, username, fontX, fontY);
 		}
 		
@@ -349,6 +357,12 @@ public class Character extends Entity {
 			64, 128,
 			32, 32
 		);
+		regionIcon.setRegion(224, 0, 32, 32);
+	}
+	
+	public void revive() {
+		super.revive();
+		regionIcon.setRegion(128, 0, 32, 32);
 	}
 	
 	public boolean keyDown(int i) {
@@ -439,13 +453,14 @@ public class Character extends Entity {
 		p.powerup = powerup;
 		p.tell = 0;
 		
-		world.getMyClient().send(p);
+		world.getMyClient().getServer().broadcast(p);
 	}
 	
 	// called from the server
 	public void updatePowerup(char powerup, char tell, int x, int y) {
+		if (!isSpectatee()) return; // not a guy i follow
 		
-		CoreGame.instance().getConsole().print("!P " + (int)powerup + " " + (int)tell + " " + x + " " + y);
+		//CoreGame.instance().getConsole().print("!P " + (int)powerup + " " + (int)tell + " " + x + " " + y);
 		
 		switch (tell) {
 			case 0 : powerBegin(powerup); break;
@@ -457,17 +472,19 @@ public class Character extends Entity {
 	}
 	
 	private void powerBegin(char powerup) {
-		if (!isMySelf()) return; // not my self. dont care
+		String who = "You";
+		if (!isMySelf())
+			who = "They";
 		
 		// set icon
 		String c = "??? begin ???";
 		switch (powerup) {
 			case 0 : // protecc
-				c = "You got the protection !";
+				c = who + " got the protection !";
 				ResourceManager.instance().playSound("s_protect");
 				break;
 			case 1 : // faster
-				c = "You move faster !";
+				c = who + " move faster !";
 				ResourceManager.instance().playSound("s_faster");
 				faster = true;
 				
@@ -477,7 +494,7 @@ public class Character extends Entity {
 	}
 	
 	private void powerAboutToEnd(char powerup) {
-		if (!isMySelf()) return; // not my self. dont care
+		//if (!isSpectatee()) return; // not a guy i follow
 		
 		String c = "??? expire ???";
 		switch (powerup) {

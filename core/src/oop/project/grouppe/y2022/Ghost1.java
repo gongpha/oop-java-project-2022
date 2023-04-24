@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 
-public class Ghost extends Enemy {
+public class Ghost1 extends Enemy {
 	public TextureRegion getTexture() {
 		return new TextureRegion(
 			(Texture) ResourceManager.instance().get("ghost1"),
@@ -14,6 +14,6 @@ public class Ghost extends Enemy {
 	}
 	
 	public Music getMusic() {
-		return (Music) ResourceManager.instance().get("m_ghost");
+		return (Music) ResourceManager.instance().get("m_ghost1");
 	}
 }
