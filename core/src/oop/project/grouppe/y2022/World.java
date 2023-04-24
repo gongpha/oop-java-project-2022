@@ -639,12 +639,18 @@ public class World {
 		rand.setSeed(bsp.getSeed());
 		for (Vector2 v : spawns) {
 			Item m = null;
-			switch (rand.nextInt() % 2) {
+			switch (rand.nextInt() % 4) {
 			case 0 :
 				m = new Protection();
 				break;
 			case 1 :
 				m = new Faster();
+				break;
+			case 2 :
+				m = new Invisible();
+				break;
+			case 3 :
+				m = new Angel();
 				break;
 			}
 			if (m == null) continue;

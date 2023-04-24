@@ -108,6 +108,12 @@ public class Character extends Entity {
 	private boolean protection = false;
 	public boolean hasProtection() { return protection; }
 	
+	private boolean invisible = false;
+	public boolean isInvisible() { return invisible; }
+	
+	private boolean reviving = false;
+	public boolean canRevive() { return reviving; }
+	
 	private class Power {
 		char powerup;
 		float timer = POWER_DURATION;
@@ -279,6 +285,12 @@ public class Character extends Entity {
 						if (p.powerup == (char)0) {
 							protection = false;
 						}
+						else if (p.powerup == (char)2) {
+							invisible = false;
+						}
+						else if (p.powerup == (char)3) {
+							reviving = false;
+						}
 
 						// set the status to the latest power
 						if (!powers.isEmpty()) {
@@ -444,6 +456,16 @@ public class Character extends Entity {
 			p.x = 32;
 			p.y = 224;
 			break;
+		case 2 :
+			p.x = 64;
+			p.y = 224;
+			invisible = true;
+			break;
+		case 3 :
+			p.x = 96;
+			p.y = 224;
+			reviving = true;
+			break;
 		}
 		
 		po.regionX = p.x;
@@ -489,6 +511,16 @@ public class Character extends Entity {
 				faster = true;
 				
 				break;
+			case 2 : // invisible
+				c = who + " make ghosts invisible to them !";
+				ResourceManager.instance().playSound("s_invisible");
+				
+				break;
+			case 3 : // angel
+				c = who + " can revive players !";
+				ResourceManager.instance().playSound("s_revive");
+				
+				break;
 		}
 		world.feedChat(-1, c, true);
 	}
@@ -503,6 +535,12 @@ public class Character extends Entity {
 				break;
 			case 1 : // faster
 				c = "Faster is about to expire !";
+				break;
+			case 2 : // invisible
+				c = "Invisibility is about to expire !";
+				break;
+			case 3 : // angel
+				c = "Reviving is about to expire !";
 				break;
 		}
 		world.feedChat(-1, c, true);

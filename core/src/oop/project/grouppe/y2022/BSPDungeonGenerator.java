@@ -250,16 +250,16 @@ public class BSPDungeonGenerator extends Thread {
 			}
 			
 			if (sizeX > 2 && sizeY > 2) {
-				// place paper in the room (chance 80%)
-				if (rand.nextFloat() <= 0.8) {
+				// place paper in the room (chance 90%)
+				if (rand.nextFloat() <= 0.9) {
 					papers.add(new Vector2(
 						randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
 						randomRange(rand, Y, sizeY + Y - 2) * layerRoom.getTileWidth() * scale
 					));
 				}
 
-				// place power spawn point in the room (chance 10%)
-				if (rand.nextFloat() <= 0.1) {
+				// place power spawn point in the room (chance 30%)
+				if (rand.nextFloat() <= 0.3) {
 					powers.add(new Vector2(
 						randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
 						randomRange(rand, Y, sizeY + Y - 2) * layerRoom.getTileWidth() * scale
