@@ -15,7 +15,9 @@ import java.util.Random;
 // a dungeon generator powered by binary space partitioning (may be related to dsa)
 // i feel stupido
 
-public class BSPDungeonGenerator extends Thread {
+// deprecated.
+
+public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 	private final long seed;
 	private final int sizeX;
 	private final int sizeY;
@@ -38,8 +40,8 @@ public class BSPDungeonGenerator extends Thread {
 	private Room topRoom; // for placing the enemy
 	private int topRoomY;
 	
-	private char[][] tiles;
-	private char[][] colTiles;
+	private byte[][] tiles;
+	private byte[][] colTiles;
 	private boolean done = false;
 	
 	private float spawnPointX;
@@ -79,8 +81,8 @@ public class BSPDungeonGenerator extends Thread {
 		CwallTop.setTile(wallTop);
 		Cfloor.setTile(floor);
 		
-		tiles = new char[sizeX][sizeY];
-		colTiles = new char[sizeX * scale][sizeY * scale];
+		tiles = new byte[sizeX][sizeY];
+		colTiles = new byte[sizeX * scale][sizeY * scale];
 		for (int i = 0; i < sizeX * scale; i++)
 			for (int j = 0; j < sizeY * scale; j++)
 				colTiles[i][j] = (char)0;
@@ -143,10 +145,7 @@ public class BSPDungeonGenerator extends Thread {
 	public float getEnemySpawnPointY() {
 		return spawnPointEnemyY;
 	}
-	public char[][] getTiles2DArray() {
-		return tiles;
-	}
-	public char[][] getColTiles2DArray() {
+	public byte[][] getColTiles2DArray() {
 		return colTiles;
 	}
 	

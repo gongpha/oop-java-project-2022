@@ -14,7 +14,7 @@ public class Invisible extends Item {
 
 	public boolean playerObtained(Character ch) {
 		// give an effect
-		if (ch.hasProtection()) return false;
+		if (ch.isInvisible()) return false;
 		ch.givePower((char)2);
 
 		return true;

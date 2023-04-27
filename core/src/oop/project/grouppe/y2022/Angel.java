@@ -14,7 +14,7 @@ public class Angel extends Item {
 
 	public boolean playerObtained(Character ch) {
 		// give an effect
-		if (ch.hasProtection()) return false;
+		if (ch.canRevive()) return false;
 		ch.givePower((char)3);
 
 		return true;

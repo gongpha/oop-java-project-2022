@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import java.io.DataInputStream;
@@ -282,14 +281,16 @@ public class Character extends Entity {
 						packet.y = 0;
 
 						powers.remove(p);
-						if (p.powerup == (char)0) {
+						switch (p.powerup) {
+						case 0:
 							protection = false;
-						}
-						else if (p.powerup == (char)2) {
+							break;
+						case 2:
 							invisible = false;
-						}
-						else if (p.powerup == (char)3) {
+							break;
+						case 3:
 							reviving = false;
+							break;
 						}
 
 						// set the status to the latest power
@@ -365,6 +366,16 @@ public class Character extends Entity {
 	
 	public void die() {
 		super.die();
+		
+		// clear all powers
+		if (world.getMyClient().isServer()) {
+			powers.clear();
+			protection = false;
+			invisible = false;
+			reviving = false;
+		}
+		faster = false;
+		
 		region.setRegion(
 			64, 128,
 			32, 32

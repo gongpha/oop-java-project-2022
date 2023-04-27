@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 class AStar {
-	private char[][] mapTiles;
-	public AStar(char[][] mapTiles) {
+	private byte[][] mapTiles;
+	public AStar(byte[][] mapTiles) {
 		this.mapTiles = mapTiles;
 	}
 	
@@ -50,19 +50,20 @@ class AStar {
 		LinkedList<Point> list = new LinkedList<>();
 		list.add(new Point(x, y));
 		
-		char[][] looked = new char[mapTiles.length][mapTiles[0].length];
+		byte[][] looked = new byte[mapTiles.length][mapTiles[0].length];
 		
 		while (!list.isEmpty()) {
 			Point curr = list.pollFirst();
 			for (int i = 0; i < neighbors.length; i++) {
 				int nx = curr.x + neighbors[i][0];
 				int ny = curr.y + neighbors[i][1];
-				if (looked[nx][ny] == 1) continue;
 				
 				if (
 					nx < 0 || ny < 0 ||
-					nx >= mapTiles.length || ny >= mapTiles.length
+					nx >= mapTiles.length || ny >= mapTiles[0].length
 				) continue;
+				
+				if (looked[nx][ny] == 1) continue;
 				
 				if (
 					mapTiles[nx][ny] == 0
@@ -82,6 +83,11 @@ class AStar {
 		PriorityQueue<Point> queue = new PriorityQueue<>(1, new prioCom());
 		Point first = new Point(x, y);
 		Point goal = new Point(gx, gy);
+		
+		if (
+			x < 0 || y < 0 ||
+			x >= mapTiles.length || y >= mapTiles[0].length
+		) return null;
 		
 		if (
 			mapTiles[x][y] != 0
@@ -119,7 +125,7 @@ class AStar {
 				int ny = curr.y + neighbors[i][1];
 				if (
 					nx < 0 || ny < 0 ||
-					nx >= mapTiles.length || ny >= mapTiles.length
+					nx >= mapTiles.length || ny >= mapTiles[0].length
 				) continue;
 				if (
 					mapTiles[nx][ny] != 0

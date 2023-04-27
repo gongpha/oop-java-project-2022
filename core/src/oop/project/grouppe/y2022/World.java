@@ -47,14 +47,14 @@ public class World {
 	private final ArrayList<Character> clientCharacterList;
 	private final LinkedList<Integer> entitiesRemoveLater;
 	
-	private BSPDungeonGenerator bsp = null;
+	private DungeonGenerator generator = null;
 	private TextureRegion bspBackgroundTexture = null;
 	private TiledMap worldMap = null;
 	private WorldRenderer worldRenderer = null;
 	private boolean waiting = false;
 	private QuadTree mapQuadTree = null;
 	private String currentLevelName = "The Nameless City"; // TODO : remove soon
-	private char[][] mapColTiles;
+	private byte[][] mapColTiles;
 	private final LinkedList<Entity> currentLevelEntities;
 	
 	private int paperCount;
@@ -350,7 +350,7 @@ public class World {
 		return mapQuadTree;
 	}
 	
-	public char[][] getColMapTiles() {
+	public byte[][] getColMapTiles() {
 		return mapColTiles;
 	}
 	
@@ -452,13 +452,15 @@ public class World {
 		
 		currentLevel = level;
 		
-		Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
+		//Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
+		Texture texture = (Texture) ResourceManager.instance().get("connecting");
 		bspBackgroundTexture = new TextureRegion();
 		bspBackgroundTexture.setTexture(texture);
 		bspBackgroundTexture.setRegion(0, 0, 32, 32);
 		
-		bsp = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
-		bsp.startGenerate();
+		//generator = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
+		generator = new PrefabDungeonGenerator(seed, 500);
+		generator.startGenerate();
 	}
 	
 	/////////////////////
@@ -591,7 +593,7 @@ public class World {
 	
 	// serverside
 	private void initGame() {
-		mapColTiles = bsp.getColTiles2DArray();
+		mapColTiles = generator.getColTiles2DArray();
 		
 		// setup a quadtree
 		if (mapQuadTree != null) {
@@ -604,7 +606,7 @@ public class World {
 		// create objects
 
 		// SPAWN THE ENEMY (ghosts)
-		switch ((int)(Math.abs(bsp.getSeed()) % 3)) {
+		switch ((int)(Math.abs(generator.getSeed()) % 3)) {
 			case 0:
 				ghost = new Ghost1();
 				break;
@@ -616,14 +618,14 @@ public class World {
 				break;
 		}
 		
-		ghost.setPosition(bsp.getEnemySpawnPointX(), bsp.getEnemySpawnPointY());
+		ghost.setPosition(generator.getEnemySpawnPointX(), generator.getEnemySpawnPointY());
 		currentLevelEntities.add(ghost);
 
 		// items
 		LinkedList<Item> items = new LinkedList<>();
 
 		// papers
-		Vector2[] spawns = bsp.getPaperSpawns();
+		Vector2[] spawns = generator.getPaperSpawns();
 		for (Vector2 v : spawns) {
 			Paper m = new Paper();
 			m.setPosition(v.x, v.y);
@@ -634,9 +636,9 @@ public class World {
 		collectedPaperCount = 0;
 
 		// powers
-		spawns = bsp.getPowerSpawns();
+		spawns = generator.getPowerSpawns();
 		Random rand = new Random();
-		rand.setSeed(bsp.getSeed());
+		rand.setSeed(generator.getSeed());
 		for (Vector2 v : spawns) {
 			Item m = null;
 			switch (rand.nextInt() % 4) {
@@ -688,7 +690,7 @@ public class World {
 	// clientside
 	public void initGamePuppet(int maxPaperCount) {
 		paperCount = maxPaperCount;
-		bsp = null;
+		generator = null;
 	}
 	
 	private void clearProgress() {
@@ -774,18 +776,18 @@ public class World {
 	}
 	
 	private void pollDungeonGenerator(SpriteBatch batch) {
-		if (bsp != null) {
+		if (generator != null) {
 			// do not render anything when generating
 			
-			TiledMap map = bsp.getMap();
+			TiledMap map = generator.getMap();
 			if (map != null) {
 				if (!waiting) {
 					setMap(map);
 					
 					// set our character location to the spawn point
-					myClient.getCharacter().teleport(bsp.getSpawnPointX(), bsp.getSpawnPointY());
-					currentMapspawnPoint[0] = bsp.getSpawnPointX();
-					currentMapspawnPoint[1] = bsp.getSpawnPointY();
+					myClient.getCharacter().teleport(generator.getSpawnPointX(), generator.getSpawnPointY());
+					currentMapspawnPoint[0] = generator.getSpawnPointX();
+					currentMapspawnPoint[1] = generator.getSpawnPointY();
 					
 					if (myClient.isServer()) {
 						// remove myself
@@ -807,7 +809,7 @@ public class World {
 						Packet.SInitGame p = new Packet.SInitGame();
 						p.maxPaperCount = paperCount;
 						getMyClient().getServer().broadcastExceptServer(p);
-						bsp = null;
+						generator = null;
 					}
 				}
 			}
@@ -932,7 +934,7 @@ public class World {
 	}
 	
 	private void cameraUpdatePos(float delta) {
-		if (bsp != null) return; // generating. do not update
+		if (generator != null) return; // generating. do not update
 		Character m = myClient.getCharacter();
 		
 		Character followCharacter;
@@ -974,7 +976,7 @@ public class World {
 			String header = "PLAYERS";
 			int headerX = 600;
 			if (gameEnd) {
-				header = collectedPaperCountPrevious + " papers have been collected.";
+				header = (collectedPaperCountPrevious + collectedPaperCount) + " papers have been collected.";
 				headerX -= 200;
 			}
 			
@@ -1157,7 +1159,7 @@ public class World {
 	
 	// server only
 	public void updateAtTheEntrance(int netID, boolean yes) {
-		if (bsp != null) return; // generating
+		if (generator != null) return; // generating
 		
 		Integer i = Integer.valueOf(netID);
 		if (yes) {

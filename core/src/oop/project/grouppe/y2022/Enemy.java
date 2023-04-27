@@ -127,8 +127,8 @@ public abstract class Enemy extends Entity {
 				if (new Vector2(getX() + 32, getY() + 32).dst(new Vector2(walkingTo.getX() + 16, walkingTo.getY() + 16)) <= 64.0) {
 					// KILL
 					if (!walkingTo.hasProtection()) {
-						getWorld().killCharacter(walkingTo.getPlayer().getNetID());
-						walkingTo = null;
+						//getWorld().killCharacter(walkingTo.getPlayer().getNetID());
+						//walkingTo = null;
 						ResourceManager.instance().playSound("s_hit");
 					}
 				}

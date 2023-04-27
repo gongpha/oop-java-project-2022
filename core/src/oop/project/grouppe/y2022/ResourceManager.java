@@ -46,8 +46,11 @@ public class ResourceManager {
 		for (String s : Character.characters) {
 			preloadTexture("character__" + s, "character/" + s + ".png");
 		}
-		for (String s : BSPDungeonGenerator.tilesets) {
-			preloadTexture("tileset__" + s, "tileset/" + s + ".png");
+		//for (String s : BSPDungeonGenerator.tilesets) {
+		//	preloadTexture("tileset__" + s, "tileset/" + s + ".png");
+		//}
+		for (String s : PrefabDungeonGenerator.prefabs) {
+			preloadMap("prefab__" + s, "room/" + s + ".tmx");
 		}
 		
 		preloadTexture("items", "character/items.png");

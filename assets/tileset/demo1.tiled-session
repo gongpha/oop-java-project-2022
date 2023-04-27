@@ -3,43 +3,175 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx",
+    "activeFile": "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
     "expandedProjectPaths": [
-        "."
+        ".",
+        "D:/Repos/oop-java-project-2022/assets/room"
     ],
     "fileStates": {
         "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx": {
-            "scale": 4,
+            "scale": 0.5,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 541.5,
-                "y": 530.25
+                "x": 799,
+                "y": 799
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/_entrance.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 397.33333333333326,
+                "y": 420
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 1,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 347,
+                "y": 291
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/corner1.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 86.75,
+                "y": 127
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/corner2.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 86.5,
+                "y": 125
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/corner3.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 85.5,
+                "y": 124
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/corner4.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 87,
+                "y": 125.5
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 160,
+                "y": 171
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/hallwayhorizontal.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 155.5,
+                "y": 142
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/leftroom.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 126.5,
+                "y": 126.5
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/rightroom.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 1,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 275,
+                "y": 294
             }
         },
         "demo1.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 1
+        },
+        "prefab1.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 5.5
         }
     },
     "last.imagePath": "D:/Repos/oop-java-project-2022/assets/tileset",
-    "map.fixedSize": true,
-    "map.height": 100,
+    "map.fixedSize": false,
+    "map.height": 8,
     "map.lastUsedFormat": "tmx",
-    "map.tileHeight": 16,
-    "map.tileWidth": 16,
-    "map.width": 100,
+    "map.tileHeight": 32,
+    "map.tileWidth": 32,
+    "map.width": 64,
     "openFiles": [
-        "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx"
+        "D:/Repos/oop-java-project-2022/assets/room/_entrance.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner4.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/rightroom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/leftroom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner3.tmx"
     ],
     "project": "demo1.tiled-project",
-    "property.type": "object",
+    "property.type": "int",
     "recentFiles": [
+        "D:/Repos/oop-java-project-2022/assets/room/rightroom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/leftroom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/_entrance.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner4.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner3.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner2.tmx",
         "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx",
+        "prefab1.tsx",
         "demo1.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
-        "height": 16,
-        "width": 16
+        "height": 32,
+        "width": 32
     }
 }

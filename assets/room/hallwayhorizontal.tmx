@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.0" orientation="orthogonal" renderorder="right-down" width="8" height="8" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="3">
+ <tileset firstgid="1" source="../tileset/prefab1.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="8" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+2,2,2,2,2,2,2,2,
+10,10,10,10,10,10,10,10,
+10,10,10,10,10,10,10,10,
+10,10,10,10,10,10,10,10,
+10,10,10,10,10,10,10,10,
+18,18,18,18,18,18,18,18,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="2" name="HINT">
+  <object id="1" x="0" y="64">
+   <properties>
+    <property name="for" value="LEFT"/>
+    <property name="size" type="int" value="4"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="2" x="256" y="64">
+   <properties>
+    <property name="for" value="RIGHT"/>
+    <property name="size" type="int" value="4"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+</map>

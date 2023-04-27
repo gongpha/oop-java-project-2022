@@ -140,10 +140,8 @@ public abstract class Entity extends Actor {
 		
 		float XX = getX() + rel.x;
 		float YY = getY() + rel.y;
-		TiledMap worldMap = world.getWorldMap();
-		if (worldMap == null) return; // no map ?
-		TiledMapTileLayer l = (TiledMapTileLayer) worldMap.getLayers().get("tiles");
-		if (l == null) return; // not in the generated tiles
+		byte[][] colTiles = world.getColMapTiles();
+		if (colTiles == null) return; // no map ?
 			
 		int[][] cs = new int[][] {
 			{0, 0},
@@ -152,8 +150,8 @@ public abstract class Entity extends Actor {
 			{1, 1},
 		};
 		
-		int MX = (int)XX / l.getTileWidth();
-		int MY = (int)YY / l.getTileHeight();
+		int MX = (int)XX / 32;
+		int MY = (int)YY / 32;
 		//System.out.println(MX + " " + MY);
 		
 		boolean hit = false;
@@ -162,108 +160,106 @@ public abstract class Entity extends Actor {
 			int X = MX + c[0];
 			int Y = MY + c[1];
 			
-			float BX = X * l.getTileWidth();
-			float BY = Y * l.getTileHeight();
-			Cell cell = l.getCell(X, Y);
-			if (cell != null) {
-				if (cell.getTile().getProperties().containsKey("col")) {
-					
-					// raycaast
-					Rectangle r = new Rectangle(BX, BY, 32.0f, 32.0f);
-					Vector2 nor = new Vector2();
-					Vector2 pos = new Vector2(getX() + 16.0f, getY() + 16.0f);
-					Vector2 bpos = new Vector2(BX + 16.0f, BY + 16.0f);
-					
-					boolean hitl = Physics.raycastRect(
-						pos, bpos.sub(pos).nor().add(rel.cpy().nor()).nor(), r,
-						nor
-					);
-					if (hitl) {
-						hit = true;
-						anor.add(nor);
-						//System.out.println(hit + " " + lastNor);
-					}
-						
-					
-					/*
-					Vector2 oldNor = lastNor.cpy();
-					lastNor.x = 0.0f;
-					lastNor.y = 0.0f;
-					if (Math.abs(Math.signum(rel.x)) == Math.abs(Math.signum(rel.y))) {
-						// move obliquely
-						boolean MXM = X != OX;
-						boolean MYM = Y != OY;
-						if (MXM && !MYM) {
-							lastNor.x = Math.signum(getX() - X * l.getTileWidth());
-						}
-						if (!MXM && MYM) {
-							lastNor.y = Math.signum(getY() - Y * l.getTileHeight());
-						}
-						if (X == OX && OX == MX) {
-							//System.out.println("@@@@@@@@@@@@@@@@@@@@");
-						}
-						//System.out.println(MXM + " " + MYM);
-					}
-					else if (rel.x != 0.0f) {
-						// move h
-						// nor : (-1, 0) (1, 0)
-						lastNor.x = Math.signum(XX - X * l.getTileWidth());
-					}
-					else if (rel.y != 0.0f) {
-						// move v
-						// nor : (0, -1) (0, 1)
-						lastNor.y = Math.signum(YY - Y * l.getTileHeight());
-					}
-					*/
-					//System.out.println(lastNor);
-					//System.out.println(rel);
-					//System.out.println(X + " " + OX + " " + MX + " : " + Y + " " + OY + " " + MY);
-					
-					
-					//System.out.println(c[0] + " " + c[1]);
-					//Vector2 n = new Vector2(0, 0);
-					///if (c[0] == 0) {
-					///	rel.x = 0.0f;
-					//}
+			float BX = X * 32;
+			float BY = Y * 32;
+			if (X < 0 || Y < 0 || X >= colTiles.length || Y >= colTiles[0].length) continue;
+			
+			if (colTiles[X][Y] == 1) {
+				// raycaast
+				Rectangle r = new Rectangle(BX, BY, 32.0f, 32.0f);
+				Vector2 nor = new Vector2();
+				Vector2 pos = new Vector2(getX() + 16.0f, getY() + 16.0f);
+				Vector2 bpos = new Vector2(BX + 16.0f, BY + 16.0f);
 
-					//lastNor.x = -1.0f * lastNor.x;
-					//lastNor.y = -1.0f * lastNor.y;
-					//System.out.println("@@@@@@@@@");
-					//System.out.println(lastNor);
-					//System.out.println(rel);
-					
-					//System.out.println(X * l.getTileWidth() - XX);
-					//System.out.println(Y * l.getTileHeight() - YY);
-					
-					//rel.x = 0.0f;
-					//rel.y = 0.0f;
-					//System.out.println(getX() + " " + BX);
-					//System.out.println((getX() - BX));
-					//System.out.println(getY() + " " + BY);
-					//System.out.println((getY() - BY));
-					//rel.x += (getX() - XX);
-					//rel.y += (getY() - YY);
-					
-					/*
-					if (lastNor.isZero()) {
-						//System.out.println("OOO");
-						//System.out.println(oldNor);
-						//lastNor.x = oldNor.x;
-						//lastNor.y = oldNor.y;
-						System.out.println(X + " " + OX + " " + MX + " : " + Y + " " + OY + " " + MY);
-					}
-					*/
-					//if (lastNor.x != 0.0) rel.x = 0.0f;
-					//if (lastNor.y != 0.0) rel.y = 0.0f;
-					//System.out.println(lastNor);
-					//rel.x = 0.0f;
-					//rel.y = 0.0f;
-					
-					//System.out.println(rel);
-					//rel.x = 0.0f;
-					//rel.y = 0.0f;
-					//break;
+				boolean hitl = Physics.raycastRect(
+					pos, bpos.sub(pos).nor().add(rel.cpy().nor()).nor(), r,
+					nor
+				);
+				if (hitl) {
+					hit = true;
+					anor.add(nor);
+					//System.out.println(hit + " " + lastNor);
 				}
+
+
+				/*
+				Vector2 oldNor = lastNor.cpy();
+				lastNor.x = 0.0f;
+				lastNor.y = 0.0f;
+				if (Math.abs(Math.signum(rel.x)) == Math.abs(Math.signum(rel.y))) {
+					// move obliquely
+					boolean MXM = X != OX;
+					boolean MYM = Y != OY;
+					if (MXM && !MYM) {
+						lastNor.x = Math.signum(getX() - X * l.getTileWidth());
+					}
+					if (!MXM && MYM) {
+						lastNor.y = Math.signum(getY() - Y * l.getTileHeight());
+					}
+					if (X == OX && OX == MX) {
+						//System.out.println("@@@@@@@@@@@@@@@@@@@@");
+					}
+					//System.out.println(MXM + " " + MYM);
+				}
+				else if (rel.x != 0.0f) {
+					// move h
+					// nor : (-1, 0) (1, 0)
+					lastNor.x = Math.signum(XX - X * l.getTileWidth());
+				}
+				else if (rel.y != 0.0f) {
+					// move v
+					// nor : (0, -1) (0, 1)
+					lastNor.y = Math.signum(YY - Y * l.getTileHeight());
+				}
+				*/
+				//System.out.println(lastNor);
+				//System.out.println(rel);
+				//System.out.println(X + " " + OX + " " + MX + " : " + Y + " " + OY + " " + MY);
+
+
+				//System.out.println(c[0] + " " + c[1]);
+				//Vector2 n = new Vector2(0, 0);
+				///if (c[0] == 0) {
+				///	rel.x = 0.0f;
+				//}
+
+				//lastNor.x = -1.0f * lastNor.x;
+				//lastNor.y = -1.0f * lastNor.y;
+				//System.out.println("@@@@@@@@@");
+				//System.out.println(lastNor);
+				//System.out.println(rel);
+
+				//System.out.println(X * l.getTileWidth() - XX);
+				//System.out.println(Y * l.getTileHeight() - YY);
+
+				//rel.x = 0.0f;
+				//rel.y = 0.0f;
+				//System.out.println(getX() + " " + BX);
+				//System.out.println((getX() - BX));
+				//System.out.println(getY() + " " + BY);
+				//System.out.println((getY() - BY));
+				//rel.x += (getX() - XX);
+				//rel.y += (getY() - YY);
+
+				/*
+				if (lastNor.isZero()) {
+					//System.out.println("OOO");
+					//System.out.println(oldNor);
+					//lastNor.x = oldNor.x;
+					//lastNor.y = oldNor.y;
+					System.out.println(X + " " + OX + " " + MX + " : " + Y + " " + OY + " " + MY);
+				}
+				*/
+				//if (lastNor.x != 0.0) rel.x = 0.0f;
+				//if (lastNor.y != 0.0) rel.y = 0.0f;
+				//System.out.println(lastNor);
+				//rel.x = 0.0f;
+				//rel.y = 0.0f;
+
+				//System.out.println(rel);
+				//rel.x = 0.0f;
+				//rel.y = 0.0f;
+				//break;
 			}
 		}
 		
