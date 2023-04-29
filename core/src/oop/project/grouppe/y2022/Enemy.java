@@ -128,8 +128,8 @@ public abstract class Enemy extends Entity {
 					// KILL
 					if (!walkingTo.hasProtection()) {
 						//getWorld().killCharacter(walkingTo.getPlayer().getNetID());
-						//walkingTo = null;
-						ResourceManager.instance().playSound("s_hit");
+						walkingTo = null;
+						//ResourceManager.instance().playSound("s_hit");
 					}
 				}
 			} else {

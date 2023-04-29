@@ -199,10 +199,10 @@ public class Console {
 	
 	////////////////////////////
 	
-	public void print(String s) {
+	public synchronized void print(String s) {
 		print(s, Color.WHITE);
 	}
-	public void print(String s, Color color) {
+	public synchronized void print(String s, Color color) {
 		while (s.length() > 80) {
 			String l = s.substring(0, 80);
 			s = s.substring(80);
@@ -210,14 +210,14 @@ public class Console {
 		}
 		lines.add(new Line(s, color));
 	}
-	public void printSep() {
+	public synchronized void printSep() {
 		lines.add(new Line());
 	}
-	public void printerr(String s) {
+	public synchronized void printerr(String s) {
 		print(s, Color.RED);
 	}
 	
-	public void exec(String l, boolean silent) {
+	public synchronized void exec(String l, boolean silent) {
 		if (!silent) {
 			String print_ = "] " + l;
 			print(print_);
@@ -244,7 +244,7 @@ public class Console {
 		}
 		
 	}
-	public void exec(String s) {
+	public synchronized void exec(String s) {
 		exec(s, false);
 	}
 	

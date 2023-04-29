@@ -74,6 +74,7 @@ public class World {
 	private boolean insideReadyArea = false;
 	
 	// common
+	private RectangleMapObject entranceArea;
 	private boolean insideEntranceArea = false;
 	
 	private final Texture overlay;
@@ -412,10 +413,9 @@ public class World {
 
 			// server ready area
 			serverReadyArea = (RectangleMapObject) objs.get("serverReadyArea");
-
-			
-			
 		}
+		
+		mapColTiles = null;
 		
 		// reteleport players to the spawn point (server) and revive them (both)
 		for (int id : clientCharacters.values()) {
@@ -593,15 +593,14 @@ public class World {
 	
 	// serverside
 	private void initGame() {
-		mapColTiles = generator.getColTiles2DArray();
-		
 		// setup a quadtree
 		if (mapQuadTree != null) {
 			// delete the old tree
 			mapQuadTree.release();
 			mapQuadTree = null;
 		}
-		mapQuadTree = new QuadTree(DUNX * DUNS, DUNY * DUNS);
+		
+		mapQuadTree = new QuadTree(mapColTiles.length, mapColTiles[0].length);
 
 		// create objects
 
@@ -618,7 +617,23 @@ public class World {
 				break;
 		}
 		
-		ghost.setPosition(generator.getEnemySpawnPointX(), generator.getEnemySpawnPointY());
+		Random rand = new Random();
+		rand.setSeed(generator.getSeed());
+		
+		Vector2[] enemySpawnpoints = generator.getEnemySpawnPoints();
+		// choose the furthest enemy spawn point
+		Vector2 p = new Vector2(entranceArea.getRectangle().x, entranceArea.getRectangle().y);
+		float furthest = 0.0f;
+		Vector2 enemySpawnpoint = new Vector2(0, 0);
+		for (int i = 0; i < enemySpawnpoints.length; i++) {
+			Vector2 v = enemySpawnpoints[i];
+			float dst = v.dst(p);
+			if (dst > furthest) {
+				furthest = dst;
+				enemySpawnpoint = v;
+			}
+		}
+		ghost.setPosition(enemySpawnpoint.x, enemySpawnpoint.y);
 		currentLevelEntities.add(ghost);
 
 		// items
@@ -637,8 +652,7 @@ public class World {
 
 		// powers
 		spawns = generator.getPowerSpawns();
-		Random rand = new Random();
-		rand.setSeed(generator.getSeed());
+		
 		for (Vector2 v : spawns) {
 			Item m = null;
 			switch (rand.nextInt() % 4) {
@@ -784,10 +798,21 @@ public class World {
 				if (!waiting) {
 					setMap(map);
 					
-					// set our character location to the spawn point
-					myClient.getCharacter().teleport(generator.getSpawnPointX(), generator.getSpawnPointY());
-					currentMapspawnPoint[0] = generator.getSpawnPointX();
-					currentMapspawnPoint[1] = generator.getSpawnPointY();
+					// set our character location to the spawn points
+					// randomized. can be overlapped
+					Random rand = new Random();
+					rand.setSeed(generator.getSeed());
+					Vector2[] spawnpoints = generator.getSpawnPoints();
+					Vector2 spawnpoint;
+					if (spawnpoints.length == 0) {
+						// empty ?
+						spawnpoint = new Vector2(0, 0);
+					} else {
+						spawnpoint = spawnpoints[Math.abs(rand.nextInt()) % spawnpoints.length];
+					}
+					myClient.getCharacter().teleport(spawnpoint.x, spawnpoint.y);
+					mapColTiles = generator.getColTiles2DArray();
+					entranceArea = generator.getEntranceRect();
 					
 					if (myClient.isServer()) {
 						// remove myself
@@ -1138,9 +1163,11 @@ public class World {
 				// playing
 				// inside the entrance radius ?
 				boolean oldV = insideEntranceArea;
-				Vector2 mapSpawnPoint = new Vector2(currentMapspawnPoint[0], currentMapspawnPoint[1]);
-				Vector2 playerPoint = new Vector2(ent.getX(), ent.getY());
-				insideEntranceArea = mapSpawnPoint.dst(playerPoint) < 64.0f;
+				Vector2 playerPoint = new Vector2(ent.getX() + 16, ent.getY() + 16);
+				
+				if (entranceArea == null) return;
+				
+				insideEntranceArea = entranceArea.getRectangle().contains(playerPoint);
 				if (oldV != insideEntranceArea) {
 					// lets they know !
 					Packet.CUpdateAtTheEntrance p = new Packet.CUpdateAtTheEntrance();

@@ -3,6 +3,7 @@ package oop.project.grouppe.y2022;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
@@ -133,18 +134,18 @@ public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 	public Vector2[] getPaperSpawns() { return (Vector2[]) papers.toArray(new Vector2[papers.size()]); }
 	public Vector2[] getPowerSpawns() { return (Vector2[]) powers.toArray(new Vector2[powers.size()]); }
 	
-	public float getSpawnPointX() {
-		return spawnPointX;
+	public Vector2[] getSpawnPoints() {
+		return new Vector2[]{
+			new Vector2(spawnPointX, spawnPointY)
+		};
 	}
-	public float getSpawnPointY() {
-		return spawnPointY;
+	
+	public Vector2[] getEnemySpawnPoints() {
+		return new Vector2[]{
+			new Vector2(spawnPointEnemyX, spawnPointEnemyY)
+		};
 	}
-	public float getEnemySpawnPointX() {
-		return spawnPointEnemyX;
-	}
-	public float getEnemySpawnPointY() {
-		return spawnPointEnemyY;
-	}
+	
 	public byte[][] getColTiles2DArray() {
 		return colTiles;
 	}
@@ -201,6 +202,10 @@ public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 				///////////
 			}	
 		}
+	}
+
+	public RectangleMapObject getEntranceRect() {
+		return new RectangleMapObject(-64, -64, 256, 256);
 	}
 	
 	public class Room {
