@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 public class QuadTree {
 	public final int MAX_OBJECTS = 8;
-	public final int MAX_RECURSION = 4;
+	public final int MAX_RECURSION = 2;
 	private Node root;
 	public Node getRoot() { return root; }
 	

@@ -3,18 +3,34 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "D:/Repos/oop-java-project-2022/assets/room/_entrance.tmx",
+    "activeFile": "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
     "expandedProjectPaths": [
-        "D:/Repos/oop-java-project-2022/assets/room",
-        "."
+        ".",
+        "D:/Repos/oop-java-project-2022/assets/room"
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx": {
-            "scale": 0.5,
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 1,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 799,
-                "y": 799
+                "x": 580,
+                "y": 538
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/__lobby.tmx": {
+            "expandedObjectLayers": [
+                3,
+                4
+            ],
+            "scale": 1.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 584,
+                "y": 484
             }
         },
         "D:/Repos/oop-java-project-2022/assets/room/_enemyspawn.tmx": {
@@ -45,16 +61,16 @@
         },
         "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx": {
             "expandedObjectLayers": [
-                3,
                 4,
-                2,
-                5
+                5,
+                3,
+                2
             ],
             "scale": 1,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 250,
-                "y": 251
+                "x": 247,
+                "y": 248
             }
         },
         "D:/Repos/oop-java-project-2022/assets/room/corner1.tmx": {
@@ -110,10 +126,10 @@
                 2
             ],
             "scale": 2,
-            "selectedLayer": 3,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 126.5,
-                "y": 127
+                "x": 126,
+                "y": 126.5
             }
         },
         "D:/Repos/oop-java-project-2022/assets/room/hallwayhorizontal.tmx": {
@@ -166,7 +182,7 @@
         },
         "demo1.tsx": {
             "scaleInDock": 1,
-            "scaleInEditor": 1
+            "scaleInEditor": 2
         },
         "prefab1.tsx": {
             "scaleInDock": 1,
@@ -181,29 +197,25 @@
     "map.tileWidth": 32,
     "map.width": 8,
     "openFiles": [
-        "D:/Repos/oop-java-project-2022/assets/room/_entrance.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner4.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner3.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner2.tmx"
+        "demo1.tsx",
+        "D:/Repos/oop-java-project-2022/assets/room/__lobby.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx"
     ],
     "project": "demo1.tiled-project",
-    "property.type": "int",
+    "property.type": "bool",
     "recentFiles": [
+        "demo1.tsx",
+        "D:/Repos/oop-java-project-2022/assets/room/__lobby.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx",
+        "prefab1.tsx",
+        "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx",
         "D:/Repos/oop-java-project-2022/assets/room/_entrance.tmx",
         "D:/Repos/oop-java-project-2022/assets/room/hallwayvertical.tmx",
         "D:/Repos/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
         "D:/Repos/oop-java-project-2022/assets/room/corner4.tmx",
         "D:/Repos/oop-java-project-2022/assets/room/corner3.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/rightroom.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/leftroom.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner2.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner1.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/_enemyspawn.tmx"
+        "D:/Repos/oop-java-project-2022/assets/room/rightroom.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

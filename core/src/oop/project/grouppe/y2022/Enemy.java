@@ -69,7 +69,7 @@ public abstract class Enemy extends Entity {
 		if (region.getTexture() == null) return; // no
 		
 		//batch.setColor(Color.WHITE);
-		batch.draw(region, getX(), getY(), 64.0f, 64.0f);
+		batch.draw(region, getX() - 16, getY() - 16, 64.0f, 64.0f);
 		
 		if (getWorld().isDrawPathEnabled()) {
 			batch.end();

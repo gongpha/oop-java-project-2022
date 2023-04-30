@@ -24,6 +24,8 @@ import java.util.Random;
 
 public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 	public static final String[] prefabs = new String[] {
+		"__lobby",
+		
 		"_entrance",
 		"leftroom", "centerroom", "rightroom",
 		"hallwayhorizontal", "hallwayvertical",
@@ -170,6 +172,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		}
 	}
 	
+	private final boolean isLobby;
 	private final long seed;
 	private final int maxRoomCount;
 	private final HashMap<String, RoomPrefab> loadedTiledMaps;
@@ -192,7 +195,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 	private final ArrayList<Vector2> powersSpawnpoints;
 	private RectangleMapObject entranceArea;
 	
-	public PrefabDungeonGenerator(long seed, int maxRoomCount) {
+	public PrefabDungeonGenerator(long seed, int maxRoomCount, boolean isLobby) {
 		this.seed = seed;
 		this.maxRoomCount = maxRoomCount;
 		
@@ -211,12 +214,26 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		enemySpawnpoints = new ArrayList<>();
 		papersSpawnpoints = new ArrayList<>();
 		powersSpawnpoints = new ArrayList<>();
+		this.isLobby = isLobby;
+	}
+	
+	public PrefabDungeonGenerator(long seed, int maxRoomCount) {
+		this(seed, maxRoomCount, false);
+	}
+	
+	// starts as lobby
+	public PrefabDungeonGenerator() {
+		this(0, 1, true);
 	}
 	
 	public long getSeed() { return seed; }
 	
 	public void startGenerate() {
 		start();
+	}
+	
+	public void startGenerateInstant() {
+		run();
 	}
 	
 	private int getDirection(String dir) {
@@ -244,9 +261,11 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		ResourceManager rm = ResourceManager.instance();
 		for (String name : prefabs) {
 			TiledMap m = (TiledMap) rm.get("prefab__" + name);
-			
 			RoomPrefab pre = new RoomPrefab();
 			MapProperties rprops = m.getProperties();
+			
+			
+			if (isLobby != name.equals("__lobby")) continue;
 			
 			pre.tiledMap = m;
 			pre.sizeX = rprops.get("width", Integer.class);
@@ -266,11 +285,15 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 			
 			MapLayer ml = layers.get("ENTRANCE");
 			MapObjects layerObjects = null;
+			
 			if (ml != null) {
 				layerObjects = ml.getObjects();
 				for (MapObject o : layerObjects) {
 					if (o instanceof RectangleMapObject) {
-						entranceArea = (RectangleMapObject) o;
+						Rectangle r = ((RectangleMapObject) o).getRectangle();
+						entranceArea = new RectangleMapObject(
+							r.x, r.y, r.width, r.height
+						);
 						break;
 					}
 				}
@@ -283,39 +306,42 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 			
 			
 			// get all connections
-			layerObjects = layers.get("HINT").getObjects();
-			for (MapObject o : layerObjects) {
-				MapProperties props = o.getProperties();
-				int direction = getDirection(props.get("for", "", String.class));
-				
-				RoomDoor door = new RoomDoor();
-				door.from = pre;
-				door.poslocalX = (int)((Float)props.get("x")).floatValue() / 32;
-				door.poslocalY = (int)((Float)props.get("y")).floatValue() / 32;
-				door.thickness = props.get("size", 0, Integer.class);
-				door.direction = direction;
-				
-				ArrayList<RoomDoor> subdoors;
-				if (doorsByDirection.containsKey(direction)) {
-					subdoors = doorsByDirection.get(direction);
-				} else {
-					subdoors = new ArrayList<>();
-					doorsByDirection.put(direction, subdoors);
+			ml = layers.get("HINT");
+			if (ml != null) {
+				layerObjects = ml.getObjects();
+				for (MapObject o : layerObjects) {
+					MapProperties props = o.getProperties();
+					int direction = getDirection(props.get("for", "", String.class));
+
+					RoomDoor door = new RoomDoor();
+					door.from = pre;
+					door.poslocalX = (int)((Float)props.get("x")).floatValue() / 32;
+					door.poslocalY = (int)((Float)props.get("y")).floatValue() / 32;
+					door.thickness = props.get("size", 0, Integer.class);
+					door.direction = direction;
+
+					ArrayList<RoomDoor> subdoors;
+					if (doorsByDirection.containsKey(direction)) {
+						subdoors = doorsByDirection.get(direction);
+					} else {
+						subdoors = new ArrayList<>();
+						doorsByDirection.put(direction, subdoors);
+					}
+					subdoors.add(door);
+
+					if (doorsByPrefab.containsKey(pre)) {
+						subdoors = doorsByPrefab.get(pre);
+					} else {
+						subdoors = new ArrayList<>();
+						doorsByPrefab.put(pre, subdoors);
+					}
+					subdoors.add(door);
 				}
-				subdoors.add(door);
-				
-				if (doorsByPrefab.containsKey(pre)) {
-					subdoors = doorsByPrefab.get(pre);
-				} else {
-					subdoors = new ArrayList<>();
-					doorsByPrefab.put(pre, subdoors);
-				}
-				subdoors.add(door);
 			}
 		}
 		
 		Random r = new Random(seed);
-		Room root = placeNewRoom(loadRoom("_entrance"), r);
+		Room root = placeNewRoom(loadRoom(isLobby ? "__lobby" : "_entrance"), r);
 		
 		LinkedList<RoomDoor> pendingDoors = new LinkedList<>();
 		LinkedList<RoomDoor> toPutBarriers = new LinkedList<>();
@@ -411,41 +437,44 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 			}
 		}
 		
-		// deadend hallways
-		TiledMapTileLayer barrierLayer = new TiledMapTileLayer(boundX, boundY, 32, 32);
-		Cell bVert = new Cell();
-		bVert.setTile(barrierVert);
-		Cell bHori = new Cell();
-		bHori.setTile(barrierHori);
+		map.getLayers().add(newLayer);
 		
-		for (RoomDoor barrier : toPutBarriers) {
-			for (int i = 0; i < barrier.thickness; i++) {
-				int posX, posY;
-				Cell toPlace;
-				if (barrier.isHorizontal()) {
-					posX = barrier.posX;
-					posY = barrier.posY - i;
-					toPlace = bVert;
-					if (!barrier.isDirectionNegativeAxis()) {
-						posX -= 1;
+		if (!toPutBarriers.isEmpty()) {
+			// deadend hallways
+			TiledMapTileLayer barrierLayer = new TiledMapTileLayer(boundX, boundY, 32, 32);
+			Cell bVert = new Cell();
+			bVert.setTile(barrierVert);
+			Cell bHori = new Cell();
+			bHori.setTile(barrierHori);
+
+			for (RoomDoor barrier : toPutBarriers) {
+				for (int i = 0; i < barrier.thickness; i++) {
+					int posX, posY;
+					Cell toPlace;
+					if (barrier.isHorizontal()) {
+						posX = barrier.posX;
+						posY = barrier.posY - i;
+						toPlace = bVert;
+						if (!barrier.isDirectionNegativeAxis()) {
+							posX -= 1;
+						}
+					} else {
+						posX = barrier.posX + i;
+						posY = barrier.posY;
+						toPlace = bHori;
+						if (barrier.isDirectionNegativeAxis()) {
+							posY += 1;
+						}
 					}
-				} else {
-					posX = barrier.posX + i;
-					posY = barrier.posY;
-					toPlace = bHori;
-					if (barrier.isDirectionNegativeAxis()) {
-						posY += 1;
-					}
+					posX -= (int)dungeonBound.x;
+					posY -= (int)dungeonBound.y + 1;
+					barrierLayer.setCell(posX, posY, toPlace);
+					coltiles[posX][posY] = 1;
 				}
-				posX -= (int)dungeonBound.x;
-				posY -= (int)dungeonBound.y + 1;
-				barrierLayer.setCell(posX, posY, toPlace);
-				coltiles[posX][posY] = 1;
 			}
+			map.getLayers().add(barrierLayer);
 		}
 		
-		map.getLayers().add(newLayer);
-		map.getLayers().add(barrierLayer);
 		
 		done = true;
 	}
@@ -496,6 +525,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		
 		public void readDoors(LinkedList<RoomDoor> pendingDoors, RoomDoor targetDoor) {
 			ArrayList<RoomDoor> list = doorsByPrefab.get(roomPrefab);
+			if (list == null) return;
 			for (RoomDoor d : list) {
 				if (targetDoor != null) {
 					if (targetDoor.equals(d)) {

@@ -48,7 +48,7 @@ public class World {
 	private final LinkedList<Integer> entitiesRemoveLater;
 	
 	private DungeonGenerator generator = null;
-	private TextureRegion bspBackgroundTexture = null;
+	private Texture bspBackgroundTexture = null;
 	private TiledMap worldMap = null;
 	private WorldRenderer worldRenderer = null;
 	private boolean waiting = false;
@@ -400,34 +400,6 @@ public class World {
 		return myClient;
 	}
 	
-	public void loadMap(String mapName) {
-		removeOldLevelEnts();
-		
-		TiledMap map = (TiledMap) ResourceManager.instance().get(mapName);
-		
-		if (myClient.isServer()) {
-			MapObjects objs = map.getLayers().get("OBJECT").getObjects();
-			MapProperties prop = objs.get("spawnPoint").getProperties();
-			currentMapspawnPoint[0] = ((Float)prop.get("x")).floatValue();
-			currentMapspawnPoint[1] = ((Float)prop.get("y")).floatValue();
-
-			// server ready area
-			serverReadyArea = (RectangleMapObject) objs.get("serverReadyArea");
-		}
-		
-		mapColTiles = null;
-		
-		// reteleport players to the spawn point (server) and revive them (both)
-		for (int id : clientCharacters.values()) {
-			Entity e = entities.get(id);
-			e.revive();
-			if (myClient.isServer())
-				e.teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
-		}
-		
-		setMap(map);
-	}
-	
 	public void markReady() {
 		markInit = true;
 	}
@@ -439,6 +411,31 @@ public class World {
 			worldRenderer.dispose();
 		worldMap = map;
 		worldRenderer = new WorldRenderer(map);
+	}
+	
+	public void instantiateLobby() {
+		removeOldLevelEnts();
+		
+		generator = new PrefabDungeonGenerator();
+		generator.startGenerateInstant();
+		
+		if (myClient.isServer()) {
+			currentMapspawnPoint[0] = generator.getSpawnPoints()[0].x;
+			currentMapspawnPoint[1] = generator.getSpawnPoints()[0].y;
+			serverReadyArea = generator.getEntranceRect();
+		}
+		mapColTiles = generator.getColTiles2DArray();
+		
+		// reteleport players to the spawn point (server) and revive them (both)
+		for (int id : clientCharacters.values()) {
+			Entity e = entities.get(id);
+			e.revive();
+			if (myClient.isServer())
+				e.teleport(currentMapspawnPoint[0], currentMapspawnPoint[1]);
+		}
+		
+		setMap(generator.getMap());
+		generator = null; // instant gc
 	}
 	
 	public void generateMap(long seed, int tilesetIndex, int level) {
@@ -454,13 +451,11 @@ public class World {
 		
 		//Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
 		Texture texture = (Texture) ResourceManager.instance().get("connecting");
-		bspBackgroundTexture = new TextureRegion();
-		bspBackgroundTexture.setTexture(texture);
-		bspBackgroundTexture.setRegion(0, 0, 32, 32);
+		bspBackgroundTexture = texture;
 		
 		//generator = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
 		generator = new PrefabDungeonGenerator(seed, 500);
-		generator.startGenerate();
+		generator.startGenerateInstant();
 	}
 	
 	/////////////////////
@@ -720,7 +715,7 @@ public class World {
 	private void returnToLobby() {
 		clearProgress();
 		atLobby = true;
-		loadMap("demo1");
+		instantiateLobby();
 		gameEnd = false;
 		
 		if (worldMusic != null) {

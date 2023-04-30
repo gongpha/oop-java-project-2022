@@ -41,8 +41,6 @@ public class ResourceManager {
 		preloadTexture("connecting", "core/connecting.jpg");
 		preloadTexture("darkness1", "character/darkness1.png");
 		
-		preloadMap("demo1", "map/demo1.tmx");
-		
 		for (String s : Character.characters) {
 			preloadTexture("character__" + s, "character/" + s + ".png");
 		}

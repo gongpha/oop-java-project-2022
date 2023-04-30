@@ -88,6 +88,10 @@ class AStar {
 			x < 0 || y < 0 ||
 			x >= mapTiles.length || y >= mapTiles[0].length
 		) return null;
+		if (
+			gx < 0 || gy < 0 ||
+			gx >= mapTiles.length || gy >= mapTiles[0].length
+		) return null;
 		
 		if (
 			mapTiles[x][y] != 0

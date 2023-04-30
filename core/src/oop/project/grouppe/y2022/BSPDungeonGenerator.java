@@ -110,6 +110,10 @@ public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 		start();
 	}
 	
+	public void startGenerateInstant() {
+		run();
+	}
+	
 	public void run() {
 		Room root = new Room(1, 1, sizeX - 2, sizeY - 2);
 		Random r = new Random(seed);

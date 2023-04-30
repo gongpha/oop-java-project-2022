@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.Vector2;
 public interface DungeonGenerator {
 	public long getSeed();
 	public void startGenerate();
+	public void startGenerateInstant();
 	public TiledMap getMap();
 	
 	public Vector2[] getPaperSpawns();
