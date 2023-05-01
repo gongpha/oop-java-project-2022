@@ -445,6 +445,13 @@ public class Character extends Entity {
 	public void collidedWith(Entity collidee) {
 		if (collidee instanceof Item) {
 			if (( (Item) collidee).playerObtained(this)) collidee.deleteMe();
+		} else if (collidee instanceof Character) {
+			Character collideeCharacter = (Character) collidee;
+			if (reviving && collideeCharacter.isDied()) {
+				// REVIVES THAT DUDE
+				world.reviveCharacter(collideeCharacter.getPlayer().getNetID(), getPlayer().getNetID());
+				world.addRevingBonus(this);
+			}
 		}
 	}
 	

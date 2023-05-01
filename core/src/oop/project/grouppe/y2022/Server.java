@@ -167,16 +167,21 @@ public class Server extends Thread {
 		
 		while (running) {
 			// Looking for new clients
-			Socket socket = server.accept(new GameSocketHint());
-			console.print("+CLIENT " + socket.getRemoteAddress());
-			welcomeNewClient(socket);
+			try {
+				Socket socket = server.accept(new GameSocketHint());
+				console.print("+CLIENT " + socket.getRemoteAddress());
+				welcomeNewClient(socket);
+			} catch (com.badlogic.gdx.utils.GdxRuntimeException e) {
+				// closed
+				break;
+			}
+			
 		}
 		
 		if (server != null) {
 			server.dispose();
 		}
-		console.print("Closing Server . . .");
-		game.tellDisconnected("Cannot create the server");
+		game.tellDisconnected("Server closed by user");
 	}
 	
 	public void pumpPackets() {

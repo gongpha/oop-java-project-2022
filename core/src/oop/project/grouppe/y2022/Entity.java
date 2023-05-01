@@ -84,6 +84,7 @@ public abstract class Entity extends Actor {
 		return died;
 	}
 	
+	// CALL world.reviveCharacter for reviving the character remotely
 	public void revive() {
 		if (!died) return;
 		died = false;

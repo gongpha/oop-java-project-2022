@@ -193,7 +193,6 @@ public class Client extends Thread {
 		} else {
 			game.tellDisconnected(disconnectReason);
 		}
-		if (socket != null) socket.dispose();
 	}
 	
 	public void sendMyInfo() {
@@ -207,17 +206,18 @@ public class Client extends Thread {
 		Console console = game.getConsole();
 		DataInputStream dis = new DataInputStream(socket.getInputStream());
 		
-		while (running) {
+		while (running) {	
 			int res = -1;
 			try {
 				res = dis.read();
+				
 				// read the header first
 				if (res == -1)  {
 					if (puppet)
 						kill("Failed to reach the client");
 					else
 						kill("Failed to reach the server");
-					continue;
+					break;
 				}
 				// read the size of the packet
 				int size = dis.readInt();
@@ -234,6 +234,10 @@ public class Client extends Thread {
 				
 				game.tellReceivedPacket();
 				
+			} catch (java.net.SocketException e) {
+				// closed BYEBYE
+				running = false;
+				break;
 			} catch (Exception e) {
 				// OOF
 				StackTraceElement[] s = e.getStackTrace();
@@ -266,8 +270,10 @@ public class Client extends Thread {
 	}
 	
 	public void kill(String reason) {
+		//pumpPackets(); // pump all packets before it closes (must be in the main thread)
 		disconnectReason = reason;
 		running = false;
+		if (socket != null) socket.dispose();
 	}
 	
 	public void disconnectMe() {

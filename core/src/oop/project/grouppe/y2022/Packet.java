@@ -66,7 +66,7 @@ public abstract class Packet {
 		regPacket(SCharacterUpdatePowerup.class);
 		regPacket(SPlayerScoreAdd.class);
 		regPacket(CUpdateAtTheEntrance.class);
-		regPacket(SCharacterDied.class);
+		regPacket(SCharacterDiedRevive.class);
 		regPacket(SGameEnd.class);
 		regPacket(SReturnToLobby.class);
 	}
@@ -444,6 +444,7 @@ public abstract class Packet {
 		// -3 : paper (green)
 		// -4 : cheerful notify (completed a level, pink)
 		// -5 : death notify (someone dies, red)
+		// -6 : revive notify (someone has been revived, cyan)
 		public int netID = -1;
 		public int flashID = -1; // neg : no flashing, 0 : EVERYONE, otherwise : specific
 		// ^^^ TODO : wat about negative-number netIDs ???
@@ -553,7 +554,7 @@ public abstract class Packet {
 		
 		Character ch;
 		int playerCurrentPaperCount = -1;
-		int currentPaperCount = -1;
+		int currentPaperCount = -1; // -1 means no changes
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(ch.getPlayer().getNetID());
@@ -582,16 +583,25 @@ public abstract class Packet {
 		}
 	}
 	
-	public static class SCharacterDied extends Packet {
+	public static class SCharacterDiedRevive extends Packet {
 		public int header() { return 21; }
 		
 		int netID = -1;
+		boolean isRevive = false; // false : ded, true : reviv
+		int reviver = -1; // for revive packet. telling who was healing this dude
 		
 		public void write(DataOutputStream s) throws IOException {
+			s.writeBoolean(isRevive);
 			s.writeInt(netID);
+			if (isRevive)
+				s.writeInt(reviver);
 		}
 		public void read(DataInputStream s) throws IOException {
-			world.tellCharacterDied(s.readInt());
+			if (s.readBoolean()) {
+				world.tellCharacterRevive(s.readInt(), s.readInt());
+			}
+			else
+				world.tellCharacterDied(s.readInt());
 		}
 	}
 	

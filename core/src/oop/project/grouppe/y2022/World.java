@@ -230,9 +230,21 @@ public class World {
 		s.broadcast(pa);
 	}
 	
+	// serverside, PUNYA of Workpoint's BONUS (reviving)
+	public void addRevingBonus(Character ch) {
+		Server s = getMyClient().getServer();
+		Player p = ch.getPlayer();
+		
+		Packet.SPlayerScoreAdd pa = new Packet.SPlayerScoreAdd();
+		pa.ch = ch;
+		pa.playerCurrentPaperCount = p.getScore() + 50;
+		s.broadcast(pa);
+	}
+	
 	// clientside
 	public void addCollectedPaperCountPuppet(int netID, int playerCurrentPaperCount, int currentPaperCount) {
-		collectedPaperCount = currentPaperCount;
+		if (currentPaperCount != -1)
+			collectedPaperCount = currentPaperCount;
 		
 		Player p = getCharacterByNetID(netID).getPlayer();
 		p.setScore(playerCurrentPaperCount);
@@ -898,7 +910,7 @@ public class World {
 	}
 	
 	private void drawCornerText(SpriteBatch batch) {
-		String s = "";
+		String s;
 		if (insideReadyArea) {
 			String col;
 			if (getMyClient().isServer()) {
@@ -1131,6 +1143,10 @@ public class World {
 			i.authorColor = "RED"; // death notify
 			//ResourceManager.instance().playSound("s_completed");
 		}
+		else if (netID == -6) {
+			i.authorColor = "CYAN"; // revive notify
+			ResourceManager.instance().playSound("s_revived");
+		}
 		else {
 			Character c = getCharacterByNetID(netID);
 			if (c.isDied()) i.authorColor = "RED"; // set to red (others)
@@ -1226,8 +1242,20 @@ public class World {
 	public void killCharacter(int netID) {
 		if (getMyClient().getServer() == null) return; // not a server
 		
-		Packet.SCharacterDied p = new Packet.SCharacterDied();
+		Packet.SCharacterDiedRevive p = new Packet.SCharacterDiedRevive();
 		p.netID = netID;
+		p.isRevive = false;
+		getMyClient().getServer().broadcast(p);
+	}
+	
+	// serverside
+	public void reviveCharacter(int netID, int reviverID) {
+		if (getMyClient().getServer() == null) return; // not a server
+		
+		Packet.SCharacterDiedRevive p = new Packet.SCharacterDiedRevive();
+		p.netID = netID;
+		p.isRevive = true;
+		p.reviver = reviverID;
 		getMyClient().getServer().broadcast(p);
 	}
 	
@@ -1256,8 +1284,28 @@ public class World {
 		feedChat(-5, c.getPlayer().getUsername() + " was killed !", false);
 	}
 	
+	public void tellCharacterRevive(int netID, int reviverNetID) {
+		if (gameEnd) return; // TOO LATE LMAO
+		Character c = getCharacterByNetID(netID);
+		Character r = getCharacterByNetID(reviverNetID);
+		c.revive();
+		
+		Server s = myClient.getServer();
+		if (s != null) {
+			pendingPlayer.remove(netID); // pretending the revived players aren't already standing at the entrance. need recheck
+		}
+		
+		if (netID == getMyClient().getMyPlayer().getNetID()) {
+			// OH MY GOODNESS U ALIVE
+			CoreGame.instance().getConsole().print("I'M ALIVE.");
+			spectatingCharacter = null; // stop spectating
+		}
+		
+		feedChat(-6, c.getPlayer().getUsername() + " has been revived by " + r.getPlayer().getUsername() + " !", false);
+	}
+	
 	private boolean checkAllDied() {
-		// TODO : is thread safe ?
+		// TODO : is this thread safe ?
 		int died = 0;
 		for (Character c : clientCharacterList) {
 			if (c.isDied()) died++;

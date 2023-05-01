@@ -66,6 +66,7 @@ public class ResourceManager {
 		preloadSound("s_hit", "sound/hit.wav");
 		preloadSound("s_invisible", "sound/invisible.wav");
 		preloadSound("s_revive", "sound/revive.wav");
+		preloadSound("s_revived", "sound/revived.wav");
 		
 		preloadSound("s_menu1", "sound/menu1.wav");
 		preloadSound("s_menu2", "sound/menu2.wav");
