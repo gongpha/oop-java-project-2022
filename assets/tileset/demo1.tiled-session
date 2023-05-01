@@ -3,13 +3,110 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
+    "activeFile": "dungeon_tiles.tsx",
     "expandedProjectPaths": [
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room",
         ".",
         "D:/Repos/oop-java-project-2022/assets/room"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/__lobby.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1313.6363636363637,
+                "y": 663.6363636363636
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/_entrance.tmx": {
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 416.25,
+                "y": 453
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/centerroom.tmx": {
+            "scale": 1.655078125,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 256.4833608685391,
+                "y": 189.11493981590752
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner1.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 134.33333333333334,
+                "y": 195.33333333333334
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner2.tmx": {
+            "scale": 3.31015625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 128.24168043426954,
+                "y": 128.09063016285108
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner3.tmx": {
+            "scale": 3.31015625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 127.93957989143261,
+                "y": 127.78852962001417
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner4.tmx": {
+            "scale": 3.31015625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 127.93957989143261,
+                "y": 127.78852962001417
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner5.tmx": {
+            "scale": 3.31015625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 127.93957989143261,
+                "y": 127.78852962001417
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/hallwayhorizontal.tmx": {
+            "scale": 3.31015625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 127.93957989143261,
+                "y": 127.78852962001417
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/hallwayvertical.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 204.3333333333333,
+                "y": 169.33333333333334
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/leftroom.tmx": {
+            "scale": 4,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 208.625,
+                "y": 86
+            }
+        },
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/rightroom.tmx": {
+            "scale": 3.31015625,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 131.86688694831247,
+                "y": 127.78852962001417
+            }
+        },
         "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx": {
             "expandedObjectLayers": [
                 3
@@ -184,12 +281,16 @@
             "scaleInDock": 1,
             "scaleInEditor": 2
         },
+        "dungeon_tiles.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3
+        },
         "prefab1.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 5.5
         }
     },
-    "last.imagePath": "D:/Repos/oop-java-project-2022/assets/tileset",
+    "last.imagePath": "C:/Users/gunku/Downloads",
     "map.fixedSize": true,
     "map.height": 8,
     "map.lastUsedFormat": "tmx",
@@ -198,24 +299,23 @@
     "map.width": 8,
     "openFiles": [
         "demo1.tsx",
-        "D:/Repos/oop-java-project-2022/assets/room/__lobby.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx"
+        "dungeon_tiles.tsx"
     ],
     "project": "demo1.tiled-project",
     "property.type": "bool",
     "recentFiles": [
+        "dungeon_tiles.tsx",
         "demo1.tsx",
-        "D:/Repos/oop-java-project-2022/assets/room/__lobby.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner5.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx",
         "prefab1.tsx",
-        "D:/Repos/oop-java-project-2022/assets/map/demo1.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/_entrance.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/hallwayvertical.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner4.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/corner3.tmx",
-        "D:/Repos/oop-java-project-2022/assets/room/rightroom.tmx"
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/leftroom.tmx",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner3.tmx",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner4.tmx",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner5.tmx",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/hallwayvertical.tmx",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/corner1.tmx",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room/__lobby.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/__lobby.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
