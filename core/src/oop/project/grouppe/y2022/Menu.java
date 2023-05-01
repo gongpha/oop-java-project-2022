@@ -202,8 +202,12 @@ public class Menu {
 	
 	public void renderSettings() {		
 		font.draw(batch, (
-			"Volume : " + CoreGame.instance().getVolume() + "%" + (cursor == 0 ? " <<" : "")
+			"Master Volume : " + CoreGame.instance().getVolume() + "%" + (cursor == 0 ? " <<" : "")
 		), 200, 600);
+		
+		font.draw(batch, (
+			"Music Volume : " + CoreGame.instance().getMusicVolume() + "%" + (cursor == 1 ? " <<" : "")
+		), 200, 550);
 	}
 	
 	public void renderCredits() {
@@ -349,23 +353,31 @@ public class Menu {
 		case SETTINGS:
 			structure = new String[][]{{}, {}};
 			
-			if (cursor == 0) {
-				int volume = pref.getInteger("volume", 100);
-				if (i == Input.Keys.LEFT) {
-					volume -= 10;
-					volume = Math.max(0, Math.min(100, volume));
-					pref.putInteger("volume", volume);
-					CoreGame.instance().setVolume(volume);
-					pref.flush();
-					playSoundAdjust();
-				} else if (i == Input.Keys.RIGHT) {
-					volume += 10;
-					volume = Math.max(0, Math.min(100, volume));
-					pref.putInteger("volume", volume);
-					CoreGame.instance().setVolume(volume);
-					pref.flush();
-					playSoundAdjust();
-				}
+			String property;
+			if (cursor == 0)
+				property = "volume";
+			else
+				property = "musicVolume";
+			
+			int sourceVolume = pref.getInteger(property, 100);
+			boolean pressed = false;
+			
+			if (i == Input.Keys.LEFT) {
+				sourceVolume -= 10;
+				pressed = true;
+			} else if (i == Input.Keys.RIGHT) {
+				sourceVolume += 10;
+				pressed = true;
+			}
+			if (pressed) {
+				sourceVolume = Math.max(0, Math.min(100, sourceVolume));
+				pref.putInteger(property, sourceVolume);
+				pref.flush();
+				playSoundAdjust();
+				if (cursor == 0)
+					CoreGame.instance().setVolume(sourceVolume);
+				else
+					CoreGame.instance().setMusicVolume(sourceVolume);
 			}
 			
 			break;

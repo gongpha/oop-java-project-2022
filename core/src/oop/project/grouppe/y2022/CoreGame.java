@@ -62,6 +62,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private ShapeRenderer graphShapeRenderer;
 	
 	private int volume = 0;
+	private int musicVolume = 0;
 	
 	private enum Status {
 		PRELOADING,
@@ -93,6 +94,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		
 		pref = Gdx.app.getPreferences("oop.proj.2022.settings");
 		volume = pref.getInteger("volume");
+		musicVolume = pref.getInteger("musicVolume");
 		
 		Gdx.input.setInputProcessor(this);
 		////////////////////////////////
@@ -261,6 +263,15 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 				exitWorld();
 				disconnected = false;
 			}
+			
+			// invoke all pending packets in the main thread (synchronized)
+			if (server != null) {
+				server.pumpPackets();
+			}
+			if (client != null) {
+				client.pumpPackets();
+			}
+			
 			renderBatch();
 			break;
 		case CONNECTING:
@@ -352,12 +363,21 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	////////////////////////////////////////////
 	
+	/* MASTER */
 	public void setVolume(int v) {
 		volume = v;
 		ResourceManager.instance().setVolume(v);
 	}
 	public int getVolume() { return volume; }
 	public float getVolumef() { return volume / 100.0f; }
+	
+	/* MUSIC */
+	public void setMusicVolume(int v) {
+		musicVolume = v;
+		ResourceManager.instance().setMusicVolume(v);
+	}
+	public int getMusicVolume() { return musicVolume; }
+	public float getMusicVolumef() { return musicVolume / 100.0f; }
 	
 	////////////////////////////////////////////
 	

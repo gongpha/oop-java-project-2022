@@ -126,6 +126,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		public boolean isHorizontal() {
 			// 0, 1, 2, 3
 			// L, T, R, B
+			// H  V  H  V
 			return direction % 2 == 0;
 		}
 		
@@ -357,20 +358,13 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 			boolean placed = false;
 			
 			while (tryCount < list.size()) {
-				/*
-				System.out.println((index));
-				System.out.println((tryCount));
-				System.out.println((index + tryCount));
-				System.out.println((index + tryCount) % list.size());
-				System.out.println("##########################");*/
 				tryCount += 1;
 				RoomDoor targetDoor = list.get((index + tryCount) % list.size());
 				if (targetDoor.from == door.from) continue; // must be different
 				if (targetDoor.thickness != door.thickness) continue;
-				if (targetDoor.from.special) continue; // special room. ignore
+				if (targetDoor.from.special) continue; // special room. ignored
 				
 				RoomPrefab owner = targetDoor.from;
-				//MapProperties props = owner.getProperties();
 				Rectangle rect = door.getRectangleOfNeighborDoor(targetDoor);
 				
 				// check overlaps
@@ -426,9 +420,6 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 							if (c == null) continue;
 							newLayer.setCell(posX, posY, c);
 							if (!c.getTile().getProperties().containsKey("free")) {
-								//System.out.println(posX);
-								//System.out.println(posY);
-								//System.out.println("##############");
 								coltiles[posX][posY] = 1;
 							}
 						}

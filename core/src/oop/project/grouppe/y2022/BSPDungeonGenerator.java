@@ -16,7 +16,7 @@ import java.util.Random;
 // a dungeon generator powered by binary space partitioning (may be related to dsa)
 // i feel stupido
 
-// deprecated.
+// deprecated. BUT I TOOK 3 DAYS TO WRITE THIS. SO DONT TOSS IT AWAY
 
 public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 	private final long seed;

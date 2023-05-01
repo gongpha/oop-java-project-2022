@@ -161,11 +161,19 @@ public class ConsoleCommandCore {
 					}
 				}
 			},
-			new ConsoleCommand("spectate") {
+			new ConsoleCommand("forcewin") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
-						w.toggleSpectate();
+						w.dForceWin();
+					}
+				}
+			},
+			new ConsoleCommand("forcenext") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.newLevel();
 					}
 				}
 			},

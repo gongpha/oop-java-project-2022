@@ -8,11 +8,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.MapObject;
-import com.badlogic.gdx.maps.MapObjects;
-import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -95,8 +92,8 @@ public class World {
 		}
 	}
 	private LinkedList<TextItem> texts;
-	private float CHAT_DURATION = 8.0f;
-	private int CHAT_MAX = 10;
+	private final float CHAT_DURATION = 8.0f;
+	private int CHAT_MAX = 6;
 	private float textTimer = CHAT_DURATION;
 	private float chatCaret = 0.0f;
 	private boolean chatMode = false;
@@ -113,9 +110,9 @@ public class World {
 	
 	private boolean drawPath = false;
 
-	private final int DUNX = 48;
-	private final int DUNY = 48;
-	private final int DUNS = 5;
+	//private final int DUNX = 48;
+	//private final int DUNY = 48;
+	//private final int DUNS = 5;
 	
 	private final boolean cameraSmooth = true;
 	
@@ -442,11 +439,6 @@ public class World {
 		atLobby = false;
 		removeOldLevelEnts();
 		
-		if (worldMusic != null) {
-			ResourceManager.instance().stopMusic(worldMusic);
-			worldMusic = null;
-		}
-		
 		currentLevel = level;
 		
 		//Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
@@ -488,7 +480,7 @@ public class World {
 			return chatText.keyDown(i);
 		}
 		
-		if (insideReadyArea) {
+		if (getMyClient().isServer() && insideReadyArea) {
 			if (i == Input.Keys.SPACE) {
 				if (!insideReadyArea) return true;
 				newLevel();
@@ -694,6 +686,9 @@ public class World {
 			deleteEntityInternal(e.getID());
 		}
 		currentLevelEntities.clear();
+		
+		ResourceManager.instance().stopAllSoundMusic();
+		worldMusic = null;
 	}
 	
 	// clientside
@@ -905,7 +900,15 @@ public class World {
 	private void drawCornerText(SpriteBatch batch) {
 		String s = "";
 		if (insideReadyArea) {
-			drawChatText(batch, "[GREEN]Press SPACE to enter the dungeon !", "Press SPACE to enter the dungeon !", 20, 200);
+			String col;
+			if (getMyClient().isServer()) {
+				col = "[GREEN]";
+				s = "Press SPACE to enter the dungeon !";
+			} else {
+				col = "";
+				s = "Wait for the host to start the game !";
+			}
+			drawChatText(batch, col + s, s, 20, 200);
 		} else if (spectatingCharacter != null) {
 			s = "Spectating other players . . .\nPress SPACE to cycle targets";
 			drawChatText(batch, s, s, 20, 300);
@@ -926,7 +929,9 @@ public class World {
 			// process entities (server)
 			processing = true;
 			for (HashMap.Entry<Integer, Entity> e : entities.entrySet()) {
-				e.getValue().process(delta);
+				Entity ent = e.getValue();
+				if (ent.isDeleted()) continue;
+				ent.process(delta);
 			}
 			processing = false;
 			
@@ -980,7 +985,7 @@ public class World {
 			camera.update();
 		}
 		
-		// poll the cam position to all entites
+		// poll the cam position to all entities
 		for (HashMap.Entry<Integer, Entity> e : entities.entrySet()) {
 			e.getValue().updateCameraPos(camera.position.x, camera.position.y);
 		}
@@ -1148,12 +1153,9 @@ public class World {
 		// in tha lobby ?
 		if (ent == getMyClient().getCharacter())
 			if (atLobby) {
-				// is this the server character ?
-				if (getMyClient().isServer()) {
-					// is it touching the ready area ?
-					Rectangle entRect = ent.getRect();
-					insideReadyArea = (serverReadyArea.getRectangle().overlaps(entRect));
-				}
+				// is it touching the ready area ?
+				Rectangle entRect = ent.getRect();
+				insideReadyArea = (serverReadyArea.getRectangle().overlaps(entRect));
 			} else {
 				// playing
 				// inside the entrance radius ?

@@ -4,12 +4,16 @@ package oop.project.grouppe.y2022;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Net;
 import com.badlogic.gdx.net.Socket;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Random;
 
 // yo client
@@ -27,8 +31,13 @@ public class Client extends Thread {
 	private Character character;
 	private final Server server;
 	
+	// incoming packets
+	// pump and invoke by the main thread's frames. NOT THE SOCKET THREAD
+	private LinkedList<Packet> pump;
+	
 	// Client representation in the server
 	public Client(Server server, Socket socket) {
+		this.pump = new LinkedList<>();
 		puppet = true;
 		player = new Player(1);
 		this.socket = socket;
@@ -38,6 +47,7 @@ public class Client extends Thread {
 	
 	// REAL CLIENT FOR CLIENTS
 	public Client(String address, String username, int[] idents, Server server) {
+		this.pump = new LinkedList<>();
 		this.address = address;
 		if (address.isEmpty())
 			this.address = "localhost";
@@ -99,13 +109,25 @@ public class Client extends Thread {
 	public synchronized void send(Packet packet) {
 		try {
 			// write the packet for sending
+			// HEADER(byte) + SIZEOFDATA(int) + DATA(sizeof(SIZEOFDATA))
 			
 			OutputStream o = socket.getOutputStream();
-			DataOutputStream dos = new DataOutputStream(o);
-			dos.writeByte(packet.header());
+			
+			ByteArrayOutputStream ba = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(ba);
+			
+			
 			packet.setCServer(server);
 			packet.setCSenderOrSMySelf(this);
 			packet.write(dos);
+			dos.flush();
+			
+			DataOutputStream doso = new DataOutputStream(o);
+			doso.writeByte(packet.header());
+			doso.writeInt(ba.size());
+			doso.write(ba.toByteArray());
+			
+			
 			o.flush();
 		} catch (Exception e) {
 			// nooooooooo
@@ -129,7 +151,7 @@ public class Client extends Thread {
 		int retries = 0;
 		CoreGame game = CoreGame.instance();
 		Console console = game.getConsole();
-		if (!puppet) {
+		if (!puppet) { // their own client
 			while (true) {
 				try {
 					console.print("Connecting to " + address + " . . .");
@@ -189,6 +211,7 @@ public class Client extends Thread {
 			int res = -1;
 			try {
 				res = dis.read();
+				// read the header first
 				if (res == -1)  {
 					if (puppet)
 						kill("Failed to reach the client");
@@ -196,12 +219,18 @@ public class Client extends Thread {
 						kill("Failed to reach the server");
 					continue;
 				}
+				// read the size of the packet
+				int size = dis.readInt();
+				// read the body
+				byte[] bytes = dis.readNBytes(size);
 				
+				// instantiate and add to pump
 				Class packetClass = Packet.getPacketFromHeader(res);
 				Packet packet = (Packet) packetClass.getDeclaredConstructor().newInstance();
-				packet.setCSenderOrSMySelf(this);
-				if (puppet) packet.setCServer(server);
-				packet.read(dis);
+				packet.putDeferredData(bytes);
+				pump.add(packet);
+				
+				/* INVOKE LATER BY EVENT PUMP */
 				
 				game.tellReceivedPacket();
 				
@@ -220,8 +249,20 @@ public class Client extends Thread {
 				interrupt();
 			}
 		}
-		
-		
+	}
+	
+	// called by the main thread's frame
+	public void pumpPackets() {
+		while (!pump.isEmpty()) {
+			Packet p = pump.pollFirst();
+			try {
+				p.setCSenderOrSMySelf(this);
+				if (puppet) p.setCServer(server);
+				p.invoke();
+			} catch (IOException e) {
+				CoreGame.instance().getConsole().printerr("Cannot invoke packet (" + p.header() + ")" + e.getMessage());
+			}
+		}
 	}
 	
 	public void kill(String reason) {
@@ -250,7 +291,7 @@ public class Client extends Thread {
 	public void updateEntPos(Entity ent) {
 		Packet.SEntPos p = new Packet.SEntPos();
 		p.ent = ent;
-		server.broadcast(p);
+		server.broadcastExceptServer(p);
 	}
 	
 	// used by clients (and the server's client)

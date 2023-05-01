@@ -19,6 +19,11 @@ public abstract class Entity extends Actor {
 	private World world = null;
 	private int ID;
 	
+	private boolean deleted = false; // deleted. no need to process it further
+	public boolean isDeleted() {
+		return deleted;
+	}
+	
 	private boolean died = false;
 	
 	private final Vector2 lastNor = new Vector2();
@@ -288,6 +293,7 @@ public abstract class Entity extends Actor {
 			node.entities.remove(this);
 			node = null;
 		}
+		deleted = true;
 		world.deleteEntity(this);
 	}
 	

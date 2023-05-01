@@ -25,6 +25,9 @@ public class ResourceManager {
 	// for debugging
 	public static boolean playMusic = true;
 	
+	private float volume = 1.0f;
+	private float musicVolume = 1.0f;
+	
 	public void preloads() {
 		// FONTS
 		preloadFont("plat", "font/plat.ttf", 32);
@@ -201,14 +204,24 @@ public class ResourceManager {
 	}
 	
 	public synchronized void setVolume(int percent) {
-		float v = percent /= 100.0f;
+		volume = percent / 100.0f;
 		for (PlayingSoundMusic psm : psms) {
 			Object o = psm.sm;
 			if (o instanceof Music) {
-				((Music) o).setVolume(v);
+				((Music) o).setVolume(volume * musicVolume);
 			}
 			if (o instanceof Sound) {
-				((Sound) o).setVolume(psm.i, v);
+				((Sound) o).setVolume(psm.i, volume);
+			}
+		}
+	}
+	
+	public synchronized void setMusicVolume(int percent) {
+		musicVolume = percent / 100.0f;
+		for (PlayingSoundMusic psm : psms) {
+			Object o = psm.sm;
+			if (o instanceof Music) {
+				((Music) o).setVolume(volume * musicVolume);
 			}
 		}
 	}

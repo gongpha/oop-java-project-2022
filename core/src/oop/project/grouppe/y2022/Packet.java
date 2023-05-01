@@ -1,5 +1,6 @@
 package oop.project.grouppe.y2022;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -12,12 +13,24 @@ public abstract class Packet {
 	public int header() { return 0; }
 	public abstract void write(DataOutputStream s) throws IOException;
 	public abstract void read(DataInputStream s) throws IOException;
-	private static HashMap<Integer, Class> packetList = new HashMap<>();
+	private static final HashMap<Integer, Class> packetList = new HashMap<>();
 	
 	static World world;
 	
 	private Server server;
 	private Client client;
+	
+	private byte[] deferredBuffer;
+	
+	public void invoke() throws IOException {
+		ByteArrayInputStream bais = new ByteArrayInputStream(deferredBuffer);
+		DataInputStream bdis = new DataInputStream(bais);
+		read(bdis);
+	}
+	
+	public void putDeferredData(byte[] buffer) {
+		deferredBuffer = buffer;
+	}
 	
 	public void setCSenderOrSMySelf(Client client) {
 		this.client = client;
@@ -402,6 +415,8 @@ public abstract class Packet {
 		}
 	}
 	
+	/* chat message */
+	// it should be ForwardablePacket rather than the regular packet. but it was too late. eiei
 	public static class CSendChat extends Packet {
 		public int header() { return 14; }
 		

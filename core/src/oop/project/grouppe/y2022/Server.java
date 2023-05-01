@@ -5,7 +5,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Net;
 import com.badlogic.gdx.net.ServerSocket;
 import com.badlogic.gdx.net.ServerSocketHints;
-import com.badlogic.gdx.net.Socket;
+import com.badlogic.gdx.net.Socket; // it's just a regular Socket class.
+import java.util.ArrayList;
 import java.util.HashMap;
 
 // yo server
@@ -20,7 +21,8 @@ public class Server extends Thread {
 	
 	private boolean running = false;
 	
-	private final HashMap<Integer, Client> clients;
+	private final ArrayList<Client> createdClients; // created clients (include pending and connected)
+	private final HashMap<Integer, Client> clients; // connected clients
 	
 	public Server(int port) {
 		this.port = port;
@@ -28,6 +30,7 @@ public class Server extends Thread {
 		game = CoreGame.instance();
 		console = game.getConsole();
 		
+		createdClients = new ArrayList<Client>();
 		clients = new HashMap<>();
 	}
 	
@@ -47,7 +50,7 @@ public class Server extends Thread {
 			return;
 		}
 		
-		
+		createdClients.add(client);
 		client.start();
 		
 		// wait for the client to send their info (CMyInfo)
@@ -176,6 +179,12 @@ public class Server extends Thread {
 		game.tellDisconnected("Cannot create the server");
 	}
 	
+	public void pumpPackets() {
+		for (int i = 0; i < createdClients.size(); i++) {
+			createdClients.get(i).pumpPackets();
+		}
+	}
+	
 	public void kill() {
 		if (server == null) return;
 		
@@ -186,10 +195,11 @@ public class Server extends Thread {
 		broadcast(p);
 		
 		running = false;
-		for (HashMap.Entry<Integer, Client> e : clients.entrySet()) {
-			e.getValue().kill("Server closed");
+		for (Client c : createdClients) {
+			c.kill("Server closed");
 		}
 		clients.clear();
+		createdClients.clear();
 		if (server != null) {
 			server.dispose();
 			server = null;
