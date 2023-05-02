@@ -184,6 +184,14 @@ public class ConsoleCommandCore {
 						w.killCharacter(w.getMyClient().getMyPlayer().getNetID());
 					}
 				}
+			},
+			new ConsoleCommand("record") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.markRecord();
+					}
+				}
 			}
 			///////////////////////////////////////
 			// ADD YOUR COMMANDS HERE

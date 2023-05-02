@@ -27,7 +27,7 @@ public class Client extends Thread {
 	
 	private HashMap<Integer, Player> players;
 	
-	private final Player player;
+	private Player player;
 	private Character character;
 	private final Server server;
 	
@@ -78,6 +78,15 @@ public class Client extends Thread {
 		players = new HashMap<>();
 	}
 	
+	// fake client for demo playing
+	public Client() {
+		socket = null;
+		player = null;
+		server = null;
+		puppet = false;
+		players = new HashMap<>();
+	}
+	
 	public boolean isPuppet() {
 		return puppet;
 	}
@@ -96,6 +105,9 @@ public class Client extends Thread {
 	public Player getPlayer(int netID) {
 		return players.get(netID);
 	}
+	public void setPlayer(Player player) {
+		this.player = player;
+	}
 	
 	public void newPlayer(Player player) {
 		players.put(player.getNetID(), player);
@@ -107,6 +119,7 @@ public class Client extends Thread {
 	public Character getCharacter() { return character; }
 	
 	public synchronized void send(Packet packet) {
+		if (socket == null) return;
 		try {
 			// write the packet for sending
 			// HEADER(byte) + SIZEOFDATA(int) + DATA(sizeof(SIZEOFDATA))
@@ -240,7 +253,6 @@ public class Client extends Thread {
 				break;
 			} catch (Exception e) {
 				// OOF
-				StackTraceElement[] s = e.getStackTrace();
 				console.printerr("buffer reading failed (" + res + ") : " + e.getMessage());
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);

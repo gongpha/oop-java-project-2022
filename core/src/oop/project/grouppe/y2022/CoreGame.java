@@ -76,6 +76,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private String connectingIP = "?localhost?";
 	
 	private Texture connectingTexture;
+	private Texture mainmenuTexture;
 	
 	@Override
 	public void create() {
@@ -124,12 +125,11 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	private void startGame() {
 		connectingTexture = (Texture) rman.get("connecting");
+		mainmenuTexture = (Texture) rman.get("mainmenu");
 		
 		menu = new Menu();
-		//console.exec("map");
 		
-		// PROTOTYPE
-		status = Status.PLAYING_DEMO;
+		playMainmenuDemo();
 	}
 	
 	// WONT CALL IF NOT PLAYING (status)
@@ -183,6 +183,9 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	}
 	
 	public void enterWorld() {
+		if (world != null) {
+			world.dispose();
+		}
 		world = new World();
 		Packet.world = world;
 		world.setMyClient(client);
@@ -209,10 +212,23 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		}
 		ResourceManager.instance().stopAllSoundMusic();
 		menu.showAsMainMenu();
-		status = Status.PLAYING_DEMO;
+		
 		if (!menu.isShowing()) menu.toggle(); // show the menu
 		
 		console.print("Exited the world (" + disconnectedReason + ")");
+		
+		playMainmenuDemo();
+	}
+	
+	private void playMainmenuDemo() {
+		status = Status.PLAYING_DEMO;
+		world = new World("mainmenu.oopdemo");
+		world.initializeDemo();
+		if (!world.initializeDemoOK()) {
+			// cant play ?
+			world.dispose();
+			world = null;
+		}
 	}
 	
 	public void flashScreen() {
@@ -244,7 +260,15 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		
 		switch (status) {
 		case PRELOADING:
-			boolean done = rman.poll();
+			boolean done = false;
+			
+			// loads 8 times per frame
+			
+			for (int i = 0; i < 8; i++) {
+				done = rman.poll();
+				if (done) break;
+			}
+			
 			float p = rman.getProgress();
 			if (p >= 0.0)
 				console.print("Loading . . . (" + (int)(p * 100.0) + "%)");
@@ -258,6 +282,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			
 			break;
 		case PLAYING_DEMO:
+			if (world == null) // no rendering world, show the mainmenu bg
+				batch.draw(mainmenuTexture, 0, 0);
+			renderBatch();
+			break;
 		case PLAYING:
 			if (disconnected) {
 				exitWorld();
@@ -359,6 +387,13 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	public void tellReceivedPacket() {
 		if (!drawShowinfo) return;
 		graphFrame += 1;
+	}
+	
+	public void tellFinishedPlayingDemo() {
+		if (world != null) {
+			world.dispose();
+			world = null;
+		}
 	}
 	
 	////////////////////////////////////////////

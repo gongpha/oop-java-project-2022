@@ -4,13 +4,15 @@ package oop.project.grouppe.y2022;
 // it can hurt you
 
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -129,7 +131,7 @@ public abstract class Enemy extends Entity {
 					if (!walkingTo.hasProtection()) {
 						//getWorld().killCharacter(walkingTo.getPlayer().getNetID());
 						walkingTo = null;
-						//ResourceManager.instance().playSound("s_hit");
+						getWorld().playSound("s_hit");
 					}
 				}
 			} else {
@@ -182,6 +184,15 @@ public abstract class Enemy extends Entity {
 		} else {
 			findDelay += delta;
 		}
+	}
+	
+	public boolean serializeRecord(DataOutputStream d) throws IOException {
+		serializeConstructor(d);
+		return true;
+	}
+	
+	public void deserializeRecord(DataInputStream d) throws IOException {
+		deserializeConstructor(d);
 	}
 	
 	///////////////////////

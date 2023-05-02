@@ -426,13 +426,29 @@ public class Character extends Entity {
 		super.serializeConstructor(d);
 	}
 	public void deserializeConstructor(DataInputStream d) throws IOException {
-		setupPlayer(world.getMyClient().getPlayer(d.readInt()));
+		if (world.initializedForDemoPlaying()) {
+			// ignore putting a player info.
+			// because we already did it
+			d.readInt();
+		}
+		else {
+			setupPlayer(world.getMyClient().getPlayer(d.readInt()));
+		}
 		
 		setAnimationIndex(d.readFloat());
 		setDirection(d.readByte());
 		setAnimating(d.readBoolean());
 		
 		super.deserializeConstructor(d);
+	}
+	
+	public boolean serializeRecord(DataOutputStream d) throws IOException {
+		serializeConstructor(d);
+		return true;
+	}
+	
+	public void deserializeRecord(DataInputStream d) throws IOException {
+		deserializeConstructor(d);
 	}
 	
 	public Rectangle getRect() {
@@ -521,22 +537,22 @@ public class Character extends Entity {
 		switch (powerup) {
 			case 0 : // protecc
 				c = who + " got the protection !";
-				ResourceManager.instance().playSound("s_protect");
+				getWorld().playSound("s_protect");
 				break;
 			case 1 : // faster
 				c = who + " move faster !";
-				ResourceManager.instance().playSound("s_faster");
+				getWorld().playSound("s_faster");
 				faster = true;
 				
 				break;
 			case 2 : // invisible
 				c = who + " make ghosts invisible to them !";
-				ResourceManager.instance().playSound("s_invisible");
+				getWorld().playSound("s_invisible");
 				
 				break;
 			case 3 : // angel
 				c = who + " can revive players !";
-				ResourceManager.instance().playSound("s_revive");
+				getWorld().playSound("s_revive");
 				
 				break;
 		}

@@ -362,6 +362,15 @@ public abstract class Entity extends Actor {
 		setY(y);
 	}
 	
+	/* for recording */
+	
+	public boolean serializeRecord(DataOutputStream d) throws IOException {
+		return false;
+	}
+	
+	public void deserializeRecord(DataInputStream d) throws IOException {
+	}
+	
 	public abstract Rectangle getRect();
 	public abstract Rectangle getRectInTile();
 	public abstract void collidedWith(Entity collidee);

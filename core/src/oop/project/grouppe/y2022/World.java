@@ -19,6 +19,15 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -45,6 +54,7 @@ public class World {
 	private final LinkedList<Integer> entitiesRemoveLater;
 	
 	private DungeonGenerator generator = null;
+	private long generateSeed;
 	private Texture bspBackgroundTexture = null;
 	private TiledMap worldMap = null;
 	private WorldRenderer worldRenderer = null;
@@ -127,6 +137,20 @@ public class World {
 	
 	private Music worldMusic;
 	
+	private int frameProcessed = 0;
+	private boolean gameStarting = false;
+	private boolean recording = false;
+	private String demoFileName = null;
+	private File demoFile;
+	private DataOutputStream demoFileWriter = null;
+	
+	private static final int DEMOMAGIC1 = 1330597956;
+	private static final int DEMOMAGIC2 = 1162694449;
+	
+	private boolean playingDemo = false;
+	private DataInputStream demoFileReader = null;
+	private int waitingFrame = -1;
+	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
 		public WorldRenderer(TiledMap map) {
 			super(map);
@@ -186,6 +210,107 @@ public class World {
 		/////////////////////
 		
 		//generateMap(System.nanoTime(), 0);
+	}
+	
+	// playing the demo file instead of playing
+	public World(String demoFileName) {
+		this();
+		this.demoFileName = demoFileName;
+	}
+	
+	public void initializeDemo() {
+		if (demoFileName == null) {
+			CoreGame.instance().getConsole().printerr("Not initialized yet.");
+			return;
+		}
+		demoFile = new File(demoFileName);
+		if (!demoFile.exists()) {
+			CoreGame.instance().getConsole().printerr("File " + demoFileName + " doesn't exist.");
+			return;
+		}
+
+		try {
+			demoFileReader = new DataInputStream(new FileInputStream(demoFile));
+		} catch (FileNotFoundException e) {
+			return;
+		}
+		
+		try {
+			int magic = demoFileReader.readInt();
+			if (magic != DEMOMAGIC1) {
+				CoreGame.instance().getConsole().printerr("DEMO BAD MAGIC 1");
+				return;
+			}
+			magic = demoFileReader.readInt();
+			if (magic != DEMOMAGIC2) {
+				CoreGame.instance().getConsole().printerr("DEMO BAD MAGIC 2");
+				return;
+			}
+			
+			generateSeed = demoFileReader.readLong();
+			
+			// read all entities
+			int count = demoFileReader.readInt();
+			for (int i = 0; i < count; i++) {
+				int entID = demoFileReader.readInt();
+				String entClass = demoFileReader.readUTF();
+				try {
+					Entity ent = (Entity) Class.forName(entClass).getDeclaredConstructor().newInstance();
+					addEntityInternal(ent, entID);
+					ent.deserializeConstructor(demoFileReader);
+				} catch (Exception e) {
+					CoreGame.instance().getConsole().printerr("Cannot create an entity : " + e.getMessage());
+				}
+			}
+			
+			// CREATE a fake client
+			myClient = new Client();
+			
+			// read all player infos
+			count = demoFileReader.readInt();
+			for (int i = 0; i < count; i++) {
+				int netID = demoFileReader.readInt();
+				int entID = demoFileReader.readInt();
+				
+				Entity ent = entities.get(entID);
+				if (ent == null) {
+					CoreGame.instance().getConsole().printerr("Cannot get an entity " + entID + " for " + netID);
+					return;
+				}
+				
+				// create a fake player
+				Player p = new Player();
+				p.readStream(demoFileReader);
+				if (ent instanceof Character) {
+					((Character) ent).setupPlayer(p);
+				}
+				myClient.newPlayer(p);
+				clientCharacters.put(p.getNetID(), ent.getID());
+			}
+			
+			int myNetID = demoFileReader.readInt();
+			Character myEntity = getCharacterByNetID(myNetID);
+			spectatingCharacter = (Character) myEntity;
+			myClient.setPlayer(spectatingCharacter.getPlayer());
+			myClient.setCharacter(spectatingCharacter);
+			
+			playingDemo = true;
+			frameProcessed = 0;
+			
+			// OK !
+			generateMap(generateSeed, 0, 0); // tileindex 0, level 0. xd
+			
+			// play the music
+			worldMusic = (Music) ResourceManager.instance().get("m_mainmenu1");
+			ResourceManager.instance().playMusic(worldMusic);
+			
+		} catch (IOException e) {
+			CoreGame.instance().getConsole().printerr("Cannot read " + demoFileName + " : " + e.getMessage());
+		}
+	}
+	
+	public boolean initializeDemoOK() {
+		return playingDemo;
 	}
 	
 	public Character getSpectatingCharacter() {
@@ -290,6 +415,9 @@ public class World {
 			ents[i].setID(id);
 			addEntityInternal(ents[i], id);
 		}
+		
+		if (initializedForDemoPlaying()) return;
+		
 		Packet.SEntCreateMultiple p = new Packet.SEntCreateMultiple();
 		p.ents = ents;
 		p.isLevelEntities = isLevelEntities;
@@ -297,10 +425,11 @@ public class World {
 	}
 	
 	public void deleteEntity(Entity ent) {
-		Packet.SEntDelete p = new Packet.SEntDelete();
-		p.ent = ent;
-		myClient.getServer().broadcastExceptServer(p);
-		
+		if (!initializedForDemoPlaying()) {
+			Packet.SEntDelete p = new Packet.SEntDelete();
+			p.ent = ent;
+			myClient.getServer().broadcastExceptServer(p);
+		}
 		deleteEntityInternal(ent.getID());
 	}
 	
@@ -322,6 +451,10 @@ public class World {
 			entitiesRemoveLater.add(ID);
 		} else {
 			entities.remove(ID);
+		}
+		
+		if (isRecording()) {
+			processRecordEntityDelete(ID);
 		}
 	}
 	
@@ -458,8 +591,9 @@ public class World {
 		bspBackgroundTexture = texture;
 		
 		//generator = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
-		generator = new PrefabDungeonGenerator(seed, 500);
+		generator = new PrefabDungeonGenerator(seed, 200);
 		generator.startGenerateInstant();
+		generateSeed = seed;
 	}
 	
 	/////////////////////
@@ -565,6 +699,10 @@ public class World {
 	public void newLevel() {
 		atLobby = false;
 		insideReadyArea = false;
+		
+		if (isRecording()) {
+			recordingFinish();
+		}
 		
 		Packet.SGenLevel p = new Packet.SGenLevel();
 		p.mapName = currentLevelName;
@@ -689,6 +827,8 @@ public class World {
 
 		addEntities((Entity[]) currentLevelEntities.toArray(new Entity[currentLevelEntities.size()]), true);
 		ghost.setupAStar();
+		
+		InitGamePost();
 	}
 	
 	// locally delete all entities that are associated with this level
@@ -707,6 +847,35 @@ public class World {
 	public void initGamePuppet(int maxPaperCount) {
 		paperCount = maxPaperCount;
 		generator = null;
+		InitGamePost();
+	}
+	
+	private void InitGamePost() {
+		frameProcessed = 0;
+		gameStarting = true;
+		
+		if (isRecording()) {
+			// 
+			try {
+				demoFile = new File("demo" + generateSeed + ".oopdemo");
+				demoFile.createNewFile();
+				demoFileWriter = new DataOutputStream(new FileOutputStream(demoFile));
+				
+				// magic numbers "OOPDEMO1"
+				demoFileWriter.writeInt(DEMOMAGIC1); // OOPD
+				demoFileWriter.writeInt(DEMOMAGIC2); // EMO1
+				
+				// seed
+				demoFileWriter.writeLong(generateSeed);
+				
+				demoWriteAllEntityInfos();
+				demoWritePlayerInfos();
+				
+			} catch (IOException e) {
+				CoreGame.instance().getConsole().printerr("Cannot recording : " + e.getMessage());
+			}
+			
+		}
 	}
 	
 	private void clearProgress() {
@@ -724,6 +893,7 @@ public class World {
 		atLobby = true;
 		instantiateLobby();
 		gameEnd = false;
+		gameStarting = false;
 		
 		if (worldMusic != null) {
 			ResourceManager.instance().stopMusic(worldMusic);
@@ -746,25 +916,41 @@ public class World {
 	}
 	
 	public void render(float delta) {
-		if (markInit) {
-			returnToLobby();
-			markInit = false;
-			ready = true;
+		process(delta);
+		frameProcessed += 1;
+	}
+	
+	private void process(float delta) {
+		if (!playingDemo) {
+			if (markInit) {
+				returnToLobby();
+				markInit = false;
+				ready = true;
+			}
+
+			if (markedReturnToLobby) {
+				returnToLobby();
+				markedReturnToLobby = false;
+			}
+			
+			if (!ready) return;
+		} else {
+			if (demoReadFrame()) {
+				// PLAYING FINISHED
+				return;
+			}
 		}
 		
-		if (markedReturnToLobby) {
-			returnToLobby();
-			markedReturnToLobby = false;
-		}
-		
-		if (!ready) return;
 		SpriteBatch batch = CoreGame.instance().getBatch();
 		
 		if (!gameEnd) {
 			pollDungeonGenerator(batch);
-			tickTimers(delta);
+			if (!playingDemo) {
+				tickTimers(delta);
+				processEntities(delta);
+			}
+			
 			renderLevel(batch, delta);
-			processEntities(delta);
 
 			stage.act(delta);
 			stage.draw();
@@ -778,7 +964,7 @@ public class World {
 			batch.draw(endBG, 0, 0);
 		}
 		
-		if (!scoreboardVisible || gameEnd) {
+		if (playingDemo || !scoreboardVisible || gameEnd) {
 			drawChats(batch, delta);
 			drawCornerText(batch);
 		}
@@ -816,26 +1002,29 @@ public class World {
 					mapColTiles = generator.getColTiles2DArray();
 					entranceArea = generator.getEntranceRect();
 					
-					if (myClient.isServer()) {
-						// remove myself
-						pendingRemove(1);
-					} else {
-						// tell the server
-						Packet.CGenerateDone p = new Packet.CGenerateDone();
-						myClient.send(p);
+					if (!initializedForDemoPlaying()) {
+						if (myClient.isServer()) {
+							// remove myself
+							pendingRemove(1);
+						} else {
+							// tell the server
+							Packet.CGenerateDone p = new Packet.CGenerateDone();
+							myClient.send(p);
+						}
 					}
 					
 					waiting = true;
 				} else {
 					// await (for server)
 					waiting = false;
-					if (myClient.isServer() && pendingPlayer.isEmpty()) {
+					if (initializedForDemoPlaying() || (myClient.isServer() && pendingPlayer.isEmpty())) {
 						// ALRIGHT LETS GO
-						initGame();
-
-						Packet.SInitGame p = new Packet.SInitGame();
-						p.maxPaperCount = paperCount;
-						getMyClient().getServer().broadcastExceptServer(p);
+						if (!initializedForDemoPlaying()) {
+							initGame();
+							Packet.SInitGame p = new Packet.SInitGame();
+							p.maxPaperCount = paperCount;
+							getMyClient().getServer().broadcastExceptServer(p);
+						}
 						generator = null;
 					}
 				}
@@ -911,6 +1100,12 @@ public class World {
 	
 	private void drawCornerText(SpriteBatch batch) {
 		String s;
+		if (initializedForDemoPlaying()) {
+			// WE ARE PLAYING THE DEMO
+			// dont show anything that unrelated
+			return;
+		}
+		
 		if (insideReadyArea) {
 			String col;
 			if (getMyClient().isServer()) {
@@ -944,6 +1139,10 @@ public class World {
 				Entity ent = e.getValue();
 				if (ent.isDeleted()) continue;
 				ent.process(delta);
+				
+				if (isRecording()) {
+					processRecordEntityProcess(ent);
+				}
 			}
 			processing = false;
 			
@@ -1006,7 +1205,7 @@ public class World {
 	private void drawHUD(SpriteBatch batch) {
 		Character m = myClient.getCharacter();
 		
-		if (scoreboardVisible || gameEnd) {
+		if (!playingDemo && (scoreboardVisible || gameEnd)) {
 			// show everyone's names
 			int cursorY = 0;
 			
@@ -1040,7 +1239,7 @@ public class World {
 			}
 		} else {
 			if (spectatingCharacter != null) m = spectatingCharacter; // show the spectatee's info instead
-			if (!gameEnd && m != null && !atLobby) {
+			if (!playingDemo && !gameEnd && m != null && !atLobby) {
 				batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f); // player status
 				hudFont1.draw(batch, "Level " + currentLevel, 550.0f, 70.0f); // level number
 			}
@@ -1048,6 +1247,10 @@ public class World {
 		
 		if (gameEnd && getMyClient().isServer()) {
 			hudFont1.draw(batch, "Press SPACE to restart", 300.0f, 70.0f); // restart notice
+		}
+		
+		if (isRecording()) {
+			drawChatText(batch, "[RED]RECORDING . . .", "RECORDING . . .", 1000, 70);
 		}
 	}
 	
@@ -1129,15 +1332,15 @@ public class World {
 		}
 		else if (netID == -2) {
 			i.authorColor = "RED"; // cheat notify
-			ResourceManager.instance().playSound("s_cheat");
+			playSound("s_cheat");
 		}
 		else if (netID == -3) {
 			i.authorColor = "GREEN"; // paper collected notify
-			ResourceManager.instance().playSound("s_paper");
+			playSound("s_paper");
 		}
 		else if (netID == -4) {
 			i.authorColor = "MAGENTA"; // cheerful notify
-			ResourceManager.instance().playSound("s_completed");
+			playSound("s_completed");
 		}
 		else if (netID == -5) {
 			i.authorColor = "RED"; // death notify
@@ -1145,14 +1348,14 @@ public class World {
 		}
 		else if (netID == -6) {
 			i.authorColor = "CYAN"; // revive notify
-			ResourceManager.instance().playSound("s_revived");
+			playSound("s_revived");
 		}
 		else {
 			Character c = getCharacterByNetID(netID);
 			if (c.isDied()) i.authorColor = "RED"; // set to red (others)
 			
 			i.author = c.getPlayer().getUsername();
-			ResourceManager.instance().playSound("s_chat");
+			playSound("s_chat");
 		}
 		
 		if (netID == myClient.getMyPlayer().getNetID())
@@ -1161,6 +1364,17 @@ public class World {
 		
 		if (flash)
 			CoreGame.instance().flashScreen();
+		
+		if (isRecording()) {
+			processRecordChat(i, flash);
+		}
+	}
+	
+	public void playSound(String sndName) {
+		ResourceManager.instance().playSound(sndName);
+		if (isRecording()) {
+			processRecordSoundEmit(sndName);
+		}
 	}
 	
 	/////////////////////////////////
@@ -1314,6 +1528,9 @@ public class World {
 	}
 	
 	public void endGame() {
+		if (isRecording()) {
+			recordingFinish();
+		}
 		gameEnd = true;
 		spectatingDelayStarting = false; // stop the spectating timer
 		spectatingCharacter = null; // stop spectating
@@ -1361,9 +1578,248 @@ public class World {
 		}
 	}
 	
+	/* DEMO REPLAY RECORDING */
+	
+	public void markRecord() {
+		Console c = CoreGame.instance().getConsole();
+		if (playingDemo) {
+			c.print("Cannot record during playback.");
+			return;
+		}
+		if (!atLobby) {
+			c.print("Cannot record during a game session.");
+			return;
+		}
+		
+		recording = !recording;
+		if (recording) {
+			c.print("A recording will start in a game session.");
+		} else {
+			c.print("A recording was canceled.");
+		}
+	}
+	
+	private void demoWriteAllEntityInfos() {
+		try {
+			demoFileWriter.writeInt(entities.size());
+			for (HashMap.Entry<Integer, Entity> e : entities.entrySet()) {
+				Entity ent = e.getValue();
+				demoFileWriter.writeInt(e.getKey());
+				demoFileWriter.writeUTF(ent.getClass().getName());
+				ent.serializeConstructor(demoFileWriter);
+			}
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+		
+	}
+	
+	private void demoWritePlayerInfos() {
+		// yourself
+		Character c = getSpectatingCharacter();
+		try {
+			demoFileWriter.writeInt(clientCharacters.size());
+			for (HashMap.Entry<Integer, Integer> e : clientCharacters.entrySet()) {
+				demoFileWriter.writeInt(e.getKey());
+				demoFileWriter.writeInt(e.getValue());
+				myClient.getPlayer(e.getKey()).writeStream(demoFileWriter);
+			}
+			demoFileWriter.writeInt(c.getPlayer().getNetID());
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+		
+	}
+	
+	private void processRecordEntityProcess(Entity ent) {
+		try {
+			ByteArrayOutputStream ba = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(ba);
+			
+			if (ent.serializeRecord(dos)) {
+				demoFileWriter.writeInt(frameProcessed);
+				demoFileWriter.writeByte(0x01);
+
+				demoFileWriter.writeInt(ent.getID());
+				dos.flush();
+				demoFileWriter.write(ba.toByteArray());
+			}
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+		
+	}
+	
+	private void readProcessRecordEntityProcess() throws IOException {
+		int entID = demoFileReader.readInt();
+		Entity ent = entities.get(entID);
+		if (ent == null) {
+			demoPlaybackFailure("Entity " + entID + " is not found");
+			return;
+		}
+		ent.deserializeRecord(demoFileReader);
+	}
+	
+	private void processRecordChat(TextItem t, boolean flash) {
+		try {
+			demoFileWriter.writeInt(frameProcessed);
+			demoFileWriter.writeByte(0x02);
+			
+			demoFileWriter.writeBoolean(flash);
+			demoFileWriter.writeUTF(t.s);
+			demoFileWriter.writeUTF(t.author);
+			demoFileWriter.writeUTF(t.authorColor);
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+		
+	}
+	
+	private void readProcessRecordChat() throws IOException {
+		boolean flash = demoFileReader.readBoolean();
+		String msg = demoFileReader.readUTF();
+		String author = demoFileReader.readUTF();
+		String authorColor = demoFileReader.readUTF();
+		
+		TextItem i = new TextItem(msg, CHAT_DURATION - textTimer);
+		i.author = author;
+		i.authorColor = authorColor;
+		
+		feedTextItem(i);
+		
+		if (flash)
+			CoreGame.instance().flashScreen();
+	}
+	
+	private void processRecordSoundEmit(String sndName) {
+		try {
+			demoFileWriter.writeInt(frameProcessed);
+			demoFileWriter.writeByte(0x03);
+			
+			demoFileWriter.writeUTF(sndName);
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+		
+	}
+	
+	private void readProcessRecordSoundEmit() throws IOException {
+		String sndName = demoFileReader.readUTF();
+		ResourceManager.instance().playSound(sndName);
+	}
+	
+	private void processRecordEntityDelete(int entID) {
+		try {
+			demoFileWriter.writeInt(frameProcessed);
+			demoFileWriter.writeByte(0x04);
+			
+			demoFileWriter.writeInt(entID);
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+	}
+	
+	private void readProcessRecordEntityDelete() throws IOException {
+		int entID = demoFileReader.readInt();
+		deleteEntityInternal(entID);
+	}
+	
+	private void demoWritingFailure(IOException e) {
+		CoreGame.instance().getConsole().printerr("Demo writing failure : " + e.getMessage());
+		demoFile.delete();
+		demoFileWriter = null;
+		demoFile = null;
+		recording = false;
+	}
+	
+	public boolean isRecording() {
+		return recording && gameStarting;
+	}
+	
+	public boolean initializedForDemoPlaying() {
+		return demoFileName != null;
+	}
+	
+	private void recordingFinish() {
+		if (!recording) return;
+		try {
+			demoFileWriter.flush();
+			demoFileWriter.close();
+			CoreGame.instance().getConsole().print("Finished recording. (" + demoFile.getPath() + ")");
+		} catch (IOException e) {
+			CoreGame.instance().getConsole().printerr("Cannot finish writing the demo file.");
+		} finally {
+			demoFileWriter = null;
+			demoFile = null;
+			recording = false;
+		}
+	}
+	
+	private boolean demoReadFrame() {
+		// PLAYBACK !!!
+		while (true) {
+			try {
+				if (waitingFrame != -1) {
+					if (frameProcessed < waitingFrame) {
+						// stay waiting
+						return false;
+					}
+					// okay synchronized :>
+					waitingFrame = -1;
+				} else {
+					int keyframeFrame = demoFileReader.readInt();
+					if (frameProcessed < keyframeFrame) {
+						// ooh, wait for syncing the frame
+						waitingFrame = keyframeFrame;
+						return false;
+					}
+				}
+
+				byte frameType = demoFileReader.readByte();
+				switch (frameType) {
+				case 1:
+					readProcessRecordEntityProcess();
+					break;
+				case 2:
+					readProcessRecordChat();
+					break;
+				case 3:
+					readProcessRecordSoundEmit();
+					break;
+				case 4:
+					readProcessRecordEntityDelete();
+					break;
+				default:
+					// what ?
+					demoPlaybackFailure("Invalid frame type : " + (int)frameType);
+				}
+
+			} catch (EOFException e) {
+				demoEndPlayback();
+				return true; // finished
+			} catch (IOException e) {
+				demoPlaybackFailure("Cannot read the frame : " + e.getMessage());
+				return true;
+			}
+		}
+	}
+	
+	private void demoPlaybackFailure(String reason) {
+		CoreGame.instance().getConsole().print(reason);
+		playingDemo = false;
+		demoEndPlayback();
+	}
+	
+	private void demoEndPlayback() {
+		playingDemo = false;
+		CoreGame.instance().tellFinishedPlayingDemo();
+	}
+	
 	/////////////////////////////////
 	
 	public void dispose() {
+		recordingFinish();
+			
 		if (worldMap != null)
 			worldMap.dispose();
 		if (worldRenderer != null)
