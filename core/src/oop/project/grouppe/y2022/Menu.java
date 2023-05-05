@@ -16,8 +16,10 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
 public class Menu {
+	private BitmapFont fontDef;
 	private BitmapFont font;
 	private BitmapFont fontBig;
+	private Texture logo;
 	private SpriteBatch batch;
 	private ShapeRenderer shapeRenderer;
 	
@@ -74,8 +76,10 @@ public class Menu {
 	//private Music bgm;
 	
 	public Menu() {
+		fontDef = (BitmapFont) ResourceManager.instance().get("default_font");
 		font = (BitmapFont) ResourceManager.instance().get("menu_font");
 		fontBig = (BitmapFont) ResourceManager.instance().get("title_font");
+		logo = (Texture) ResourceManager.instance().get("mainmenu_logo");
 		batch = CoreGame.instance().getBatch();
 		
 		//bgm = (Music) ResourceManager.instance().get("m_mainmenu1");
@@ -141,6 +145,14 @@ public class Menu {
 					renderCredits();
 					break;
 				}
+				
+				// footer
+				fontDef.draw(batch, (
+					"ARROWS : Navigate"
+				), 32, 32);
+				fontDef.draw(batch, (
+					"ENTER/ESCAPE : Confirm/Back"
+				), 800, 32);
 			}
 		} else {
 			if (!isPauseMenu) {
@@ -169,8 +181,10 @@ public class Menu {
 		for (int i = 0; i < structure.length; i++) {
 			font.draw(batch, (
 				(i == cursor ? ">> " : "") + structure[i][0]
-			), 200, 400 + (-48 * i));
+			), 500, 400 + (-48 * i));
 		}
+		
+		batch.draw(logo, 240, 500);
 	}
 	
 	public void renderCustomize() {

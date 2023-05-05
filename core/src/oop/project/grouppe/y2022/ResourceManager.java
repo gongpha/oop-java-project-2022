@@ -43,6 +43,7 @@ public class ResourceManager {
 		preloadTexture("oop", "core/oop.png");
 		preloadTexture("mainmenu", "core/mainmenu.jpg");
 		preloadTexture("connecting", "core/connecting.jpg");
+		preloadTexture("mainmenu_logo", "core/mainmenu_logo.png");
 		preloadTexture("darkness1", "character/darkness1.png");
 		
 		for (String s : Character.characters) {

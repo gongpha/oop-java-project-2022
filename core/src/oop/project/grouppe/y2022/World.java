@@ -29,10 +29,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 // game world
@@ -63,6 +66,7 @@ public class World {
 	private String currentLevelName = "The Nameless City"; // TODO : remove soon
 	private byte[][] mapColTiles;
 	private final LinkedList<Entity> currentLevelEntities;
+	private static final int PAPERS_LIMIT = 100;
 	
 	private int paperCount;
 	private int collectedPaperCount;
@@ -778,13 +782,20 @@ public class World {
 
 		// papers
 		Vector2[] spawns = generator.getPaperSpawns();
-		for (Vector2 v : spawns) {
+		ArrayList<Vector2> spawns_list = new ArrayList<Vector2>(Arrays.asList(spawns));
+		Collections.shuffle(spawns_list, rand);
+		List<Vector2> spawns_list_sub;
+		if (spawns_list.size() < 100)
+			spawns_list_sub = spawns_list;
+		else
+			spawns_list_sub = spawns_list.subList(0, PAPERS_LIMIT);
+		for (Vector2 v : spawns_list_sub) {
 			Paper m = new Paper();
 			m.setPosition(v.x, v.y);
 			currentLevelEntities.add(m);
 			items.add(m);
 		}
-		paperCount = spawns.length;
+		paperCount = spawns_list_sub.size();
 		collectedPaperCount = 0;
 
 		// powers
@@ -1217,6 +1228,8 @@ public class World {
 			}
 			
 			drawChatText(batch, "[PINK]" + header, header, headerX, 600 - cursorY);
+			header = collectedPaperCount + " papers collected";;
+			drawChatText(batch, header, header, headerX - 100, 550 - cursorY);
 			cursorY = -32;
 			
 			for (Character ch : clientCharacterList) {
