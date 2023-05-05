@@ -21,7 +21,7 @@ public class Server extends Thread {
 	
 	private boolean running = false;
 	
-	private final ArrayList<Client> createdClients; // created clients (include pending and connected)
+	private final ArrayList<Client> createdClients; // created PUPPET clients (include pending and connected)
 	private final HashMap<Integer, Client> clients; // connected clients
 	
 	public Server(int port) {
@@ -34,7 +34,7 @@ public class Server extends Thread {
 		clients = new HashMap<>();
 	}
 	
-	public void welcomeNewClient(Socket socket) {
+	private void welcomeNewClient(Socket socket) {
 		Client client = new Client(this, socket);
 		
 		World world = Packet.world;

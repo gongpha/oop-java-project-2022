@@ -175,12 +175,15 @@ public class Client extends Thread {
 					break;
 				} catch (Exception e) {
 					retries += 1;
-					console.print("Connecting failed (" + retries + ") : " + e.getMessage());
+					//console.print("Connecting failed (" + retries + ") : " + e.getMessage());
+					console.print("Connecting failed : " + e.getMessage());
+					break;
+					/*
 					if (retries >= 4) {
 						console.print("Can't connect after 4 retries");
 						kill("Can't connect after 4 retries");
 						break;
-					}
+					}*/
 				}
 			}
 		}

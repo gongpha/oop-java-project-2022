@@ -29,13 +29,13 @@ class AStar {
 		//{-1, -1}, {1, 1}, {-1, 1}, {1, -1},
 	};
 	
-	public float estCost(Point a, Point b) {
+	private float estCost(Point a, Point b) {
 		return (float) ( // the euclidean distance of two points
 			Math.sqrt((b.y - a.y) * (b.y - a.y) + (b.x - a.x) * (b.x - a.x))
 		);
 	}
 	
-	public float heu(Point a, Point b) { // heuristic, "should i walk to this point ?"
+	private float heu(Point a, Point b) { // heuristic, "should i walk to this point ?"
 		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y); // simply the manhattan distance
 	}
 	

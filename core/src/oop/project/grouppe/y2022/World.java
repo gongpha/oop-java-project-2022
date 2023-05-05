@@ -95,6 +95,7 @@ public class World {
 	
 	private BitmapFont hudFont1;
 	private BitmapFont hudFont2;
+	private BitmapFont hudFont3;
 	private class TextItem {
 		String s;
 		String author = "";
@@ -155,6 +156,8 @@ public class World {
 	private DataInputStream demoFileReader = null;
 	private int waitingFrame = -1;
 	
+	private ArrayList<String[]> ipList;
+	
 	public class WorldRenderer extends OrthogonalTiledMapRenderer {
 		public WorldRenderer(TiledMap map) {
 			super(map);
@@ -202,6 +205,7 @@ public class World {
 		
 		hudFont1 = (BitmapFont) ResourceManager.instance().get("hud_font");
 		hudFont2 = (BitmapFont) ResourceManager.instance().get("chat_font");
+		hudFont3 = (BitmapFont) ResourceManager.instance().get("character_name_font");
 		hudFont2.getData().markupEnabled = true;
 		
 		pendingPlayer = new HashSet<>();
@@ -212,6 +216,7 @@ public class World {
 		camera.update();
 		
 		/////////////////////
+		ipList = new ArrayList<String[]>();
 		
 		//generateMap(System.nanoTime(), 0);
 	}
@@ -596,7 +601,7 @@ public class World {
 		
 		//generator = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
 		generator = new PrefabDungeonGenerator(seed, 200);
-		generator.startGenerateInstant();
+		generator.startGenerate();
 		generateSeed = seed;
 	}
 	
@@ -911,6 +916,9 @@ public class World {
 		}
 		worldMusic = (Music) ResourceManager.instance().get("m_lobby");
 		ResourceManager.instance().playMusic(worldMusic);
+		
+		ipList.clear();
+		Utils.getLocalIP(ipList);
 	}
 	
 	// used to call "returnToLobby" in the different threads
@@ -1264,6 +1272,17 @@ public class World {
 		
 		if (isRecording()) {
 			drawChatText(batch, "[RED]RECORDING . . .", "RECORDING . . .", 1000, 70);
+		}
+		
+		if (atLobby && !ipList.isEmpty()) {
+			int i = 0;
+			hudFont3.setColor(Color.YELLOW);
+			hudFont3.draw(batch, "My Local Addresses", 1000.0f, 700.0f); // restart notice
+			for (String[] s : ipList) {
+				hudFont3.setColor(Color.WHITE);
+				hudFont3.draw(batch, s[1], 1000.0f, 670.0f + (20 * -i)); // restart notice
+				i++;
+			}
 		}
 	}
 	
