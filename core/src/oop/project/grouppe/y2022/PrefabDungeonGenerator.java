@@ -23,18 +23,6 @@ import java.util.Random;
 // for room creation, I have written all instructions in the discord chat.
 
 public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
-	public static final String[] prefabs = new String[] {
-		"__lobby",
-		
-		"_entrance",
-		"leftroom", "centerroom", "rightroom",
-		"hallwayhorizontal", "hallwayvertical",
-		"corner1", "corner2", "corner3", "corner4",
-		"corner5"
-			
-		/* INSERT YOUR ROOM NAMES HERE */
-	};
-
 	public TiledMap getMap() {
 		if (done) return map;
 		return null;
@@ -260,7 +248,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 	
 	public void run() {
 		ResourceManager rm = ResourceManager.instance();
-		for (String name : prefabs) {
+		for (String name : Customization.ROOMS) {
 			TiledMap m = (TiledMap) rm.get("prefab__" + name);
 			RoomPrefab pre = new RoomPrefab();
 			MapProperties rprops = m.getProperties();

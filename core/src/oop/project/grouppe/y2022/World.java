@@ -114,7 +114,7 @@ public class World {
 	private boolean chatMode = false;
 	private boolean chatModeReady = false;
 	private TextInput chatText;
-	private Enemy ghost = null;
+	private Nextbot ghost = null;
 	
 	private boolean processing = false;
 	
@@ -394,7 +394,7 @@ public class World {
 		});
 		
 		feedChat(-3,
-			p.getUsername() + " collects a paper. (" + collectedPaperCount + "/" + paperCount + ")"
+			p.getUsername() + " collected a gold. (" + collectedPaperCount + "/" + paperCount + ")"
 		, netID == getMyClient().getMyPlayer().getNetID());
 		
 		checkPaperCount();
@@ -403,7 +403,7 @@ public class World {
 	public void checkPaperCount() {
 		if (getMyClient().isServer()) {
 			if (collectedPaperCount >= paperCount) {
-				getMyClient().getServer().sendChat(-4, "All papers have been collected ! Come back to the entrance", -1);
+				getMyClient().getServer().sendChat(-4, "All golds have been collected ! Come back to the entrance", -1);
 			}
 		}
 	}
@@ -751,17 +751,8 @@ public class World {
 		// create objects
 
 		// SPAWN THE ENEMY (ghosts)
-		switch ((int)(Math.abs(generator.getSeed()) % 3)) {
-			case 0:
-				ghost = new Ghost1();
-				break;
-			case 1:
-				ghost = new Ghost2();
-				break;
-			case 2:
-				ghost = new Ghost3();
-				break;
-		}
+		int ghostIndex = (int)(Math.abs(generator.getSeed()) % Customization.GHOSTS.length);
+		ghost = new Nextbot(ghostIndex);
 		
 		Random rand = new Random();
 		rand.setSeed(generator.getSeed());
@@ -785,7 +776,7 @@ public class World {
 		// items
 		LinkedList<Item> items = new LinkedList<>();
 
-		// papers
+		// papers (golds)
 		Vector2[] spawns = generator.getPaperSpawns();
 		ArrayList<Vector2> spawns_list = new ArrayList<Vector2>(Arrays.asList(spawns));
 		Collections.shuffle(spawns_list, rand);
@@ -1101,7 +1092,7 @@ public class World {
 				st = "< " + j.author + " > " + b;
 			}
 
-			drawChatText(batch, s, st, 20, 690 + (-i * 40));
+			drawChatText(batch, s, st, 20, 690 + (-i * 32));
 		}
 		if (chatMode) {
 			chatModeReady = true;
@@ -1111,7 +1102,7 @@ public class World {
 			drawChatText(batch,
 				"[CYAN][[Chat][WHITE] : " + c,	
 				"[Chat] : " + c,	
-			20, 690 + (-i * 40));
+			20, 690 + (-i * 32));
 			chatCaret += delta * 1.5f;
 			if (chatCaret >= 2.0f) chatCaret = 0.0f;
 		}
@@ -1142,7 +1133,7 @@ public class World {
 			if (collectedPaperCount >= paperCount) {
 				s = "Waiting for players";
 			} else {
-				s = "Collect all papers to exit";
+				s = "Collect all golds to exit";
 			}
 			drawChatText(batch, s, s, 20, 200);
 		}
@@ -1231,13 +1222,15 @@ public class World {
 			String header = "PLAYERS";
 			int headerX = 600;
 			if (gameEnd) {
-				header = (collectedPaperCountPrevious + collectedPaperCount) + " papers have been collected.";
+				header = (collectedPaperCountPrevious + collectedPaperCount) + " golds were collected.";
 				headerX -= 200;
 			}
 			
 			drawChatText(batch, "[PINK]" + header, header, headerX, 600 - cursorY);
-			header = collectedPaperCount + " papers collected";;
-			drawChatText(batch, header, header, headerX - 100, 550 - cursorY);
+			if (!gameEnd) {
+				header = collectedPaperCount + " golds were collected from " + paperCount + " golds";
+				drawChatText(batch, header, header, headerX - 230, 550 - cursorY);
+			}
 			cursorY = -32;
 			
 			for (Character ch : clientCharacterList) {

@@ -3,6 +3,7 @@ package oop.project.grouppe.y2022;
 
 // a singleton class that provides you with resources
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
@@ -17,6 +18,8 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader.FreeTypeFontLoaderParameter;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -37,7 +40,7 @@ public class ResourceManager {
 		preloadFont("menu_font", "font/JLX_Pixel.ttf", 48);
 		preloadFont("hud_font", "font/JLX_Pixel.ttf", 60);
 		
-		preloadFont("chat_font", "font/JLX_Pixel.ttf", 32);
+		preloadFont("chat_font", "font/JLX_Pixel.ttf", 30);
 		preloadFont("character_name_font", "font/JLX_Pixel.ttf", 24);
 		
 		preloadTexture("oop", "core/oop.png");
@@ -46,13 +49,13 @@ public class ResourceManager {
 		preloadTexture("mainmenu_logo", "core/mainmenu_logo.png");
 		preloadTexture("darkness1", "character/darkness1.png");
 		
-		for (String s : Character.characters) {
+		for (String s : Customization.CHARACTERS) {
 			preloadTexture("character__" + s, "character/" + s + ".png");
 		}
 		//for (String s : BSPDungeonGenerator.tilesets) {
 		//	preloadTexture("tileset__" + s, "tileset/" + s + ".png");
 		//}
-		for (String s : PrefabDungeonGenerator.prefabs) {
+		for (String s : Customization.ROOMS) {
 			preloadMap("prefab__" + s, "room/" + s + ".tmx");
 		}
 		
@@ -98,22 +101,24 @@ public class ResourceManager {
 		return singleton;
 	}
 	
-	private AssetManager manager;
+	private final AssetManager manager;
 	private HashMap<String, String> map; // < Name : Path >
-	private HashMap<String, Object> loaded; // < Name : Object >
+	private final HashMap<String, Object> loaded; // < Name : Object >
+	private final ArrayList<String> loadedLater; // via load* methods
 	
 	private class PlayingSoundMusic {
-		Object sm;
+		Disposable sm;
 		long i;
 	}
-	private ArrayList<PlayingSoundMusic> psms;
+	private final ArrayList<PlayingSoundMusic> psms;
 	
 	private float lastProgress = -1.0f;
 	
 	public ResourceManager() {
-		map = new HashMap<String, String>();
-		loaded = new HashMap<String, Object>();
+		map = new HashMap<>();
+		loaded = new HashMap<>();
 		manager = new AssetManager();
+		loadedLater = new ArrayList<>();
 		
 		psms = new ArrayList<>();
 		
@@ -139,12 +144,26 @@ public class ResourceManager {
 	
 	/////////////////////////////////
 	
-	public void preloadTexture(String name, String path) {
+	private void preloadTexture(String name, String path) {
 		map.put(name, path);
 		manager.load(path, Texture.class);
 	}
 	
-	public void preloadFont(String name, String path, int size) {
+	public Texture loadTexture(String path) {
+		final String name = path;
+		if (loaded.containsKey(name)) return (Texture) get(name);
+		loadedLater.add(name);
+		try {
+			Texture t = new Texture(path);
+			loaded.put(name, t);
+			return t;
+		} catch (GdxRuntimeException e) {
+			CoreGame.instance().getConsole().printerr(e.getMessage());
+			return null;
+		}
+	}
+	
+	private void preloadFont(String name, String path, int size) {
 		map.put(name, name + ".ttf");
 		FreeTypeFontLoaderParameter param = new FreeTypeFontLoaderParameter();
 		param.fontFileName = path;
@@ -153,24 +172,44 @@ public class ResourceManager {
 		//manager.load(path, BitmapFont.class, param);
 	}
 	
-	public void preloadMap(String name, String path) {
+	private void preloadMap(String name, String path) {
 		map.put(name, path);
 		manager.load(path, TiledMap.class);
 	}
 	
-	public void preloadSound(String name, String path) {
+	private void preloadSound(String name, String path) {
 		map.put(name, path);
 		manager.load(path, Sound.class);
 	}
 	
-	public void preloadMusic(String name, String path) {
+	private void preloadMusic(String name, String path) {
 		map.put(name, path);
 		manager.load(path, Music.class);
 	}
 	
+	public Music loadMusic(String path) {
+		final String name = path;
+		if (loaded.containsKey(name)) return (Music) get(name);
+		loadedLater.add(name);
+		try {
+			Music m = Gdx.audio.newMusic(Gdx.files.internal(path));
+			loaded.put(name, m);
+			return m;
+		} catch (GdxRuntimeException e) {
+			CoreGame.instance().getConsole().printerr(e.getMessage());
+			return null;
+		}
+	}
+	
 	public Object get(String name) {
 		if (!loaded.containsKey(name)) {
-			loaded.put(name, manager.get(map.get(name)));
+			try {
+				loaded.put(name, manager.get(map.get(name)));
+			} catch (GdxRuntimeException e) {
+				CoreGame.instance().getConsole().printerr(e.getMessage());
+				return null;
+			}
+			
 		}
 		return loaded.get(name);
 	}
@@ -260,6 +299,11 @@ public class ResourceManager {
 	/////////////////////////////////
 	
 	public void dispose() {
+		for (String s : loadedLater) {
+			((Disposable) loaded.get(s)).dispose();
+		}
+		loadedLater.clear();
+		manager.dispose();
 		manager.clear();
 	}
 }

@@ -16,12 +16,12 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
 public class Menu {
-	private BitmapFont fontDef;
-	private BitmapFont font;
-	private BitmapFont fontBig;
-	private Texture logo;
-	private SpriteBatch batch;
-	private ShapeRenderer shapeRenderer;
+	private final BitmapFont fontDef;
+	private final BitmapFont font;
+	private final BitmapFont fontBig;
+	private final Texture logo;
+	private final SpriteBatch batch;
+	private final ShapeRenderer shapeRenderer;
 	
 	private enum Mode {
 		MAINMENU,
@@ -53,22 +53,22 @@ public class Menu {
 		return isPauseMenu ? pauseMenuStructure : mainMenuStructure;
 	}
 	
-	private TextInput nameInput;
+	private final TextInput nameInput;
 	public String getUsername() { return nameInput.getString(); }
-	private TextInput ipInput;
+	private final TextInput ipInput;
 	public String getIP() { return ipInput.getString(); }
 	private float caret = 0.0f;
 	
-	private TextureRegion selectingCharacterTexture;
+	private final TextureRegion selectingCharacterTexture;
 	private int selectingCharacterIndex = 0;
 	public int getIdent1() { return selectingCharacterIndex; }
 	
-	private Preferences pref;
+	private final Preferences pref;
 	
 	// funni box
 	private Vector2 oopBox;
-	private Vector2 oopBoxVec;
-	private Texture oopBoxTexture;
+	private final Vector2 oopBoxVec;
+	private final Texture oopBoxTexture;
 	
 	boolean showing = false;
 	float alpha = 0.0f; // [0, 1]
@@ -104,9 +104,9 @@ public class Menu {
 		showAsMainMenu();
 	}
 	
-	public void resetSelectingCharacter() {
+	private void resetSelectingCharacter() {
 		Texture t = (Texture) ResourceManager.instance().get(
-			"character__" + Character.characters[selectingCharacterIndex]
+			"character__" + Customization.CHARACTERS[selectingCharacterIndex]
 		);
 		selectingCharacterTexture.setTexture(t);
 	}
@@ -332,43 +332,46 @@ public class Menu {
 			else
 				structure = new String[][]{{}, {}, {}, {}};
 			
-			if (cursor == 0) {
-				if (nameInput.keyDown(i)) return true;
-			} else if (cursor == 1) {
-				String[] sss = Character.characters;
-				if (i == Input.Keys.LEFT) {
-					selectingCharacterIndex -= 1;
-					playSoundAdjust();
-				} else if (i == Input.Keys.RIGHT) {
-					selectingCharacterIndex += 1;
-					playSoundAdjust();
-				}
-				selectingCharacterIndex = Math.max(0, Math.min(sss.length - 1, selectingCharacterIndex));
-				resetSelectingCharacter();
-			} else {
-				if (forHost) {
-					if (cursor == 2) {
-						if (i == Input.Keys.ENTER) {
-							playSoundEnter();
-							saveCustomize();
-							CoreGame.instance().getConsole().exec("host");
+			switch (cursor) {
+				case 0:
+					if (nameInput.keyDown(i)) return true;
+					break;
+				case 1:
+					String[] sss = Customization.CHARACTERS;
+					if (i == Input.Keys.LEFT) {
+						selectingCharacterIndex -= 1;
+						playSoundAdjust();
+					} else if (i == Input.Keys.RIGHT) {
+						selectingCharacterIndex += 1;
+						playSoundAdjust();
+					}	selectingCharacterIndex = Math.max(0, Math.min(sss.length - 1, selectingCharacterIndex));
+					resetSelectingCharacter();
+					break;
+				default:
+					if (forHost) {
+						if (cursor == 2) {
+							if (i == Input.Keys.ENTER) {
+								playSoundEnter();
+								saveCustomize();
+								CoreGame.instance().getConsole().exec("host");
+							}
 						}
-					}
-				} else {
-					if (cursor == 2) {
-						if (ipInput.keyDown(i)) return true;
-					} else
-					if (cursor == 3) {
-						if (i == Input.Keys.ENTER) {
-							playSoundEnter();
-							saveCustomize();
-							CoreGame.instance().getConsole().exec("join");
-						}
-					}
-				}
+					} else {
+						if (cursor == 2) {
+							if (ipInput.keyDown(i)) return true;
+						} else
+							if (cursor == 3) {
+								if (i == Input.Keys.ENTER) {
+									playSoundEnter();
+									saveCustomize();
+									CoreGame.instance().getConsole().exec("join");
+								}
+							}
+					}	break;
 			}
 			
 			break;
+
 		case SETTINGS:
 			structure = new String[][]{{}, {}};
 			

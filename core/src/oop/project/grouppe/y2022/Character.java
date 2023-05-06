@@ -96,11 +96,6 @@ public class Character extends Entity {
 		{4, 0, 7}
 	};
 	
-	public final static String[] characters = {
-		"character1",
-		"character2",
-	};
-	
 	// server side
 	private final float POWER_DURATION = 15.0f;
 	private final float POWER_DURATION_END = 3.0f;
@@ -163,7 +158,7 @@ public class Character extends Entity {
 	public void setupPlayer(Player player) {
 		this.player = player;
 		region.setTexture(
-			(Texture) ResourceManager.instance().get("character__" + characters[player.getIdent(0)])
+			(Texture) ResourceManager.instance().get("character__" + Customization.CHARACTERS[player.getIdent(0)])
 		);
 		region.setRegion(0, 32, 32, 32);
 		
@@ -216,8 +211,8 @@ public class Character extends Entity {
 		//velocity = wishdir;
 		//velocity.scl(8.0f);
 		velocity = velocity.lerp(wishdir.scl(speed * delta * fast), delta * 10.0f);
-		if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
-		if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
+		if (Math.abs(velocity.x) < 0.1f) velocity.x = 0.0f;
+		if (Math.abs(velocity.y) < 0.1f) velocity.y = 0.0f;
 		
 		move(velocity);
 	}

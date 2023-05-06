@@ -4,14 +4,12 @@ package oop.project.grouppe.y2022;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 
 // collectible entity
 // all logics are in the serverside
 
 public abstract class Item extends Entity {
-	private TextureRegion texture;
+	private TextureRegion texture = null;
 	
 	public Item() {
 		texture = getTexture();

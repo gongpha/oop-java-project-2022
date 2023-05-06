@@ -4,8 +4,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class Paper extends Item {
-	public final static int healPoint = 10;
-
 	public TextureRegion getTexture() {
 		return new TextureRegion(
 			(Texture) ResourceManager.instance().get("items")

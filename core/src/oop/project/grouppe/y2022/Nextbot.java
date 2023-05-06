@@ -5,6 +5,7 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -14,28 +15,28 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Random;
 
-
-public abstract class Enemy extends Entity {
+public class Nextbot extends Entity {
+	private int ghostIndex;
 	private AStar pathfinding;
 	private float findDelay = 0.033f;
-	private Random random;
 	private Vector2 velocity;
 	
-	private TextureRegion region;
+	private final Texture texture;
 	private AStar.Point walkTo = null;
 	private Character walkingTo = null;
 	private Vector2 lastCheck;
 	
-	private Music music;
+	private final Music music;
 	
-	public Enemy() {
-		random = new Random();
-		region = getTexture();
+	public Nextbot(int index) {
+		ghostIndex = index;
+		final String[] ghostData = Customization.GHOSTS[index];
+		
+		this.texture = ResourceManager.instance().loadTexture("character/" + ghostData[0]);
 		velocity = new Vector2();
 		
-		music = getMusic();
+		this.music = ResourceManager.instance().loadMusic("sound/" + ghostData[1]);
 		if (music != null) {
 			music.setLooping(true);
 			ResourceManager.instance().playMusic(music);
@@ -54,10 +55,6 @@ public abstract class Enemy extends Entity {
 		pathfinding = new AStar(getWorld().getColMapTiles());
 	}
 	
-	public int getDamage() {
-		return (int)(20.0f * (random.nextFloat() * 0.5f));
-	}
-	
 	public Rectangle getRect() {
 		return new Rectangle(getX(), getY(), 32, 32);
 	}
@@ -68,10 +65,10 @@ public abstract class Enemy extends Entity {
 	public void collidedWith(Entity collidee) {}
 	
 	public void draw(Batch batch, float alpha) {
-		if (region.getTexture() == null) return; // no
+		if (texture == null) return; // no
 		
 		//batch.setColor(Color.WHITE);
-		batch.draw(region, getX() - 16, getY() - 16, 64.0f, 64.0f);
+		batch.draw(texture, getX() - 16, getY() - 16, 64.0f, 64.0f);
 		
 		if (getWorld().isDrawPathEnabled()) {
 			batch.end();
@@ -87,7 +84,7 @@ public abstract class Enemy extends Entity {
 		super.draw(batch, alpha);
 	}
 	
-	public void drawNode(ShapeRenderer s, AStar.Point node, int i) {
+	private void drawNode(ShapeRenderer s, AStar.Point node, int i) {
 		if (i > 1000) return;
 		if (node != null) {
 			s.circle(node.x * 32.0f, node.y * 32.0f, 3.0f);
@@ -114,22 +111,18 @@ public abstract class Enemy extends Entity {
 				}
 				Vector2 wishdir = walkPos.sub(myPos).nor();
 
-				//if (walkingTo.hasProtection()) wishdir.scl(-1.0f);
-				//System.out.println("wish : " + wishdir.x + " " + wishdir.y);
-
 				// accel
 				velocity = velocity.lerp(wishdir.scl(500.0f * delta), delta * 20.0f);
 				if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
 				if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
 
 				move(velocity);
-				//System.out.println("vel : " + velocity.x + " " + velocity.y);
 
 				// is it nearby the target (check by distance)
 				if (new Vector2(getX() + 32, getY() + 32).dst(new Vector2(walkingTo.getX() + 16, walkingTo.getY() + 16)) <= 64.0) {
 					// KILL
 					if (!walkingTo.hasProtection()) {
-						//getWorld().killCharacter(walkingTo.getPlayer().getNetID());
+						getWorld().killCharacter(walkingTo.getPlayer().getNetID());
 						walkingTo = null;
 						getWorld().playSound("s_hit");
 					}
@@ -186,17 +179,21 @@ public abstract class Enemy extends Entity {
 		}
 	}
 	
+	public void serializeConstructor(DataOutputStream d) throws IOException {
+		super.serializeConstructor(d);
+		d.writeInt(ghostIndex);
+	}
+	public void deserializeConstructor(DataInputStream d) throws IOException {
+		super.deserializeConstructor(d);
+		ghostIndex = d.readInt();
+	}
+	
 	public boolean serializeRecord(DataOutputStream d) throws IOException {
-		serializeConstructor(d);
+		super.serializeConstructor(d);
 		return true;
 	}
 	
 	public void deserializeRecord(DataInputStream d) throws IOException {
-		deserializeConstructor(d);
+		super.deserializeConstructor(d);
 	}
-	
-	///////////////////////
-	
-	public abstract TextureRegion getTexture();
-	public abstract Music getMusic();
 }

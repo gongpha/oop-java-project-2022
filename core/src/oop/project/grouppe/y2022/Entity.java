@@ -2,9 +2,6 @@ package oop.project.grouppe.y2022;
 
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -112,13 +109,13 @@ public abstract class Entity extends Actor {
 		afterPosChange();
 	}
 	
-	public void reportPos() {
+	protected void reportPos() {
 		if (world.getMyClient().isServer()) { // if server
 			world.getMyClient().updateEntPos(this);
 		}
 	}
 	
-	public void afterPosChange() {
+	private void afterPosChange() {
 		// report to the world
 		world.tellPosChange(this);
 	}
@@ -141,7 +138,7 @@ public abstract class Entity extends Actor {
 		i almost die because of this. help
 	*/
 	
-	public void collide(Vector2 rel) {
+	private void collide(Vector2 rel) {
 		if (noclip) return;
 		
 		float XX = getX() + rel.x;
