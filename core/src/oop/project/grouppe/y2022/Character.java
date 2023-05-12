@@ -32,6 +32,8 @@ public class Character extends Entity {
 	private final TextureRegion region;
 	private final TextureRegion regionIcon;
 	
+	private int health = 100;
+	
 	// CLIENTSIDE
 	private Vector2 velocity;
 	private Vector2 wishdir; // for calculating velocity
@@ -421,7 +423,7 @@ public class Character extends Entity {
 		super.serializeConstructor(d);
 	}
 	public void deserializeConstructor(DataInputStream d) throws IOException {
-		if (world.initializedForDemoPlaying()) {
+		if (world.isDemoReading()) {
 			// ignore putting a player info.
 			// because we already did it
 			d.readInt();
@@ -582,6 +584,26 @@ public class Character extends Entity {
 			faster = false;
 		}
 		//world.feedChat(-1, c, true);
+	}
+	
+	public void setHealth(int health) {
+		this.health = health;
+	}
+	public int getHealth() {
+		return health;
+	}
+	public void heal(int add) {
+		health += add;
+		if (health <= 0) {
+			health = 0;
+			die();
+			return;
+		}
+		
+		if (health > 100) health = 100;
+	}
+	public void hurt(int rem) {
+		heal(-rem);
 	}
 	
 }

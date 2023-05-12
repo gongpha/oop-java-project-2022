@@ -71,6 +71,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		PLAYING,
 		
 		CONNECTING,
+		
+		IDLE, // error occurred. do nothing but showing console
 	}
 	private Status status = Status.PRELOADING;
 	private String connectingIP = "?localhost?";
@@ -223,8 +225,9 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private void playMainmenuDemo() {
 		status = Status.PLAYING_DEMO;
 		world = new World("mainmenu.oopdemo");
-		world.initializeDemo();
-		if (!world.initializeDemoOK()) {
+		world.startPlayDemo();
+		world.playMusic("m_mainmenu1", true);
+		if (!world.isDemoReading()) {
 			// cant play ?
 			world.dispose();
 			world = null;
@@ -265,7 +268,17 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			// loads 8 times per frame
 			
 			for (int i = 0; i < 8; i++) {
-				done = rman.poll();
+				int res = rman.poll();
+				if (res == -1) {
+					// LOADING FAILED !!!
+					console.printerr("Loading Failed !!! T^T : ");
+					console.printerr(rman.getError());
+					console.printerr("Verify the game content and try again !");
+					status = Status.IDLE;
+					batch.end();
+					return;
+				}
+				done = res == 1;
 				if (done) break;
 			}
 			
@@ -417,6 +430,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	////////////////////////////////////////////
 	
 	public boolean keyTyped (char c) {
+		if (blockInput()) return true;
 		if (console.isActivating()) {
 			if (console.keyTyped(c)) return true;
 		}
@@ -437,6 +451,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean keyDown(int i) {
+		if (blockInput()) return true;
 		if (i == 129) ctrlPressed = true;
 			
 		if (console.isActivating()) {
@@ -498,12 +513,17 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean keyUp(int i) {
+		if (blockInput()) return true;
 		if (i == 129) ctrlPressed = false;
 		
 		if (world != null) {
 			if (world.keyUp(i)) return true;
 		}
 		return false;
+	}
+	
+	public boolean blockInput() {
+		return (status == Status.PRELOADING || status == Status.IDLE);
 	}
 
 	@Override

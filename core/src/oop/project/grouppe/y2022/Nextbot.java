@@ -7,7 +7,6 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -22,21 +21,21 @@ public class Nextbot extends Entity {
 	private float findDelay = 0.033f;
 	private Vector2 velocity;
 	
-	private final Texture texture;
+	private Texture texture = null;
 	private AStar.Point walkTo = null;
 	private Character walkingTo = null;
 	private Vector2 lastCheck;
 	
-	private final Music music;
+	private Music music = null;
 	
-	public Nextbot(int index) {
+	public void setGhostIndex(int index) {
 		ghostIndex = index;
 		final String[] ghostData = Customization.GHOSTS[index];
 		
-		this.texture = ResourceManager.instance().loadTexture("character/" + ghostData[0]);
+		texture = ResourceManager.instance().loadTexture("character/" + ghostData[0]);
 		velocity = new Vector2();
 		
-		this.music = ResourceManager.instance().loadMusic("sound/" + ghostData[1]);
+		music = ResourceManager.instance().loadMusic("sound/" + ghostData[1]);
 		if (music != null) {
 			music.setLooping(true);
 			ResourceManager.instance().playMusic(music);
@@ -138,7 +137,7 @@ public class Nextbot extends Entity {
 			float nearestDist = 555555.0f;
 			Vector2 myPos = new Vector2(getX(), getY());
 			for (HashMap.Entry<Integer, Integer> e : getWorld().dumpCharactersEntID().entrySet()) {
-				Character c = (Character) getWorld().getEntities(e.getValue());
+				Character c = (Character) getWorld().getEntity(e.getValue());
 				
 				if (c.isDied() || c.isInvisible()) continue;
 
@@ -185,7 +184,7 @@ public class Nextbot extends Entity {
 	}
 	public void deserializeConstructor(DataInputStream d) throws IOException {
 		super.deserializeConstructor(d);
-		ghostIndex = d.readInt();
+		setGhostIndex(d.readInt());
 	}
 	
 	public boolean serializeRecord(DataOutputStream d) throws IOException {

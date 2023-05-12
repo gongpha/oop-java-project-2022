@@ -31,6 +31,8 @@ public class ResourceManager {
 	private float volume = 1.0f;
 	private float musicVolume = 1.0f;
 	
+	private String errorMsg = "";
+	
 	public void preloads() {
 		// FONTS
 		preloadFont("plat", "font/plat.ttf", 32);
@@ -131,9 +133,24 @@ public class ResourceManager {
 		manager.setLoader(TiledMap.class, new TmxMapLoader(new InternalFileHandleResolver()));
 	}
 	
-	public boolean poll() {
-		return manager.update();
+	/*
+		-1 = ERROR
+		0 = ok
+		1 = done
+	*/
+	public int poll() {
+		try {
+			return manager.update() ? 1 : 0;
+		} catch (GdxRuntimeException e) {
+			errorMsg = e.getMessage();
+			return -1;
+		}
 	}
+	
+	public String getError() {
+		return errorMsg;
+	}
+	
 	public float getProgress() {
 		if (lastProgress < manager.getProgress()) {
 			lastProgress = manager.getProgress();

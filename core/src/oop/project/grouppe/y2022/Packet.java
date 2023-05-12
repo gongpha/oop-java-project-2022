@@ -307,7 +307,7 @@ public abstract class Packet {
 			s.writeInt(ent.getID());
 		}
 		public void read(DataInputStream s) throws IOException {
-			world.deleteEntityInternal(s.readInt());
+			world.deleteEntity(s.readInt());
 		}
 	}
 	
@@ -326,7 +326,7 @@ public abstract class Packet {
 			float X = s.readFloat();
 			float Y = s.readFloat();
 			
-			ent = world.getEntities(entID);
+			ent = world.getEntity(entID);
 			ent.setX(X);
 			ent.setY(Y);
 			//ent.afterPosChange();

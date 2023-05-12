@@ -41,35 +41,12 @@ public abstract class Entity extends Actor {
 		noclip = !noclip;
 	}
 	
-	//private int health = 100;
-	
 	public void setID(int ID) {
 		this.ID = ID;
 	}
 	public int getID() {
 		return ID;
 	}
-	
-	/*
-	public void setHealth(int health) {
-		this.health = health;
-	}
-	public int getHealth() {
-		return health;
-	}
-	public void heal(int add) {
-		health += add;
-		if (health <= 0) {
-			health = 0;
-			die();
-			return;
-		}
-		
-		if (health > 100) health = 100;
-	}
-	public void hurt(int rem) {
-		heal(-rem);
-	}*/
 	
 	// CALL world.killCharacter for killing the character remotely
 	public void die() {
@@ -292,7 +269,7 @@ public abstract class Entity extends Actor {
 			node = null;
 		}
 		deleted = true;
-		world.deleteEntity(this);
+		world.destroyEntity(this);
 	}
 	
 	public void draw(Batch batch, float alpha) {
