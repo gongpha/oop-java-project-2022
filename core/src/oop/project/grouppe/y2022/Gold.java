@@ -3,7 +3,7 @@ package oop.project.grouppe.y2022;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-public class Paper extends Item {
+public class Gold extends Item {
 	public TextureRegion getTexture() {
 		return new TextureRegion(
 			(Texture) ResourceManager.instance().get("items")

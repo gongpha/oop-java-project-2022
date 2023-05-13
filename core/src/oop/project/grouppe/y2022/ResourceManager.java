@@ -49,7 +49,7 @@ public class ResourceManager {
 		preloadTexture("mainmenu", "core/mainmenu.jpg");
 		preloadTexture("connecting", "core/connecting.jpg");
 		preloadTexture("mainmenu_logo", "core/mainmenu_logo.png");
-		preloadTexture("darkness1", "character/darkness1.png");
+		preloadTexture("darkness1", "core/darkness1.png");
 		
 		for (String s : Customization.CHARACTERS) {
 			preloadTexture("character__" + s, "character/" + s + ".png");
@@ -61,7 +61,7 @@ public class ResourceManager {
 			preloadMap("prefab__" + s, "room/" + s + ".tmx");
 		}
 		
-		preloadTexture("items", "character/items.png");
+		preloadTexture("items", "core/items.png");
 		preloadTexture("end", "core/end.jpg");
 		
 		preloadSound("s_cheat", "sound/cheat.wav");
@@ -74,6 +74,7 @@ public class ResourceManager {
 		preloadSound("s_invisible", "sound/invisible.wav");
 		preloadSound("s_revive", "sound/revive.wav");
 		preloadSound("s_revived", "sound/revived.wav");
+		preloadSound("s_heal", "sound/heal.wav");
 		
 		preloadSound("s_menu1", "sound/menu1.wav");
 		preloadSound("s_menu2", "sound/menu2.wav");

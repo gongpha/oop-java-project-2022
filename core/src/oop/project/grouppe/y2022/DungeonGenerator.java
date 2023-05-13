@@ -11,6 +11,7 @@ public interface DungeonGenerator {
 	public TiledMap getMap();
 	
 	public Vector2[] getPaperSpawns();
+	public Vector2[] getMedkitSpawns();
 	public Vector2[] getPowerSpawns();
 	
 	public Vector2[] getSpawnPoints();

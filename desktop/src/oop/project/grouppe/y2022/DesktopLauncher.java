@@ -9,7 +9,7 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setForegroundFPS(60);
-		config.setTitle("OOP Project Grouppe");
+		config.setTitle("OOP Java Project");
 		
 		// edited by gongpha
 		config.setResizable(false);

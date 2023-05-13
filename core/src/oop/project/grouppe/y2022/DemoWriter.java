@@ -68,7 +68,7 @@ public class DemoWriter implements DemoHandler {
 	}
 	
 	private void demoWritePlayerInfos() {
-		// yourself
+		// write all player infos (name, customization)
 		Character c = world.getSpectatingCharacter();
 		try {
 			demoFileWriter.writeInt(world.getCharacterCount());

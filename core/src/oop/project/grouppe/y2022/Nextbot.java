@@ -26,6 +26,8 @@ public class Nextbot extends Entity {
 	private Character walkingTo = null;
 	private Vector2 lastCheck;
 	
+	private float hitDelay = 0.0f;
+	
 	private Music music = null;
 	
 	public void setGhostIndex(int index) {
@@ -43,10 +45,8 @@ public class Nextbot extends Entity {
 	}
 	
 	public void updateCameraPos(float camX, float camY) {
-		//float X = camX - getX();
 		float dst = new Vector2(camX, camY).dst(getX(), getY());
 		dst = Utils.clamp(dst / 1200.0f, 0.0f, 1.0f);
-		//System.out.println(dst);
 		music.setVolume((1.0f - dst) * CoreGame.instance().getVolumef());
 	}
 	
@@ -118,13 +118,18 @@ public class Nextbot extends Entity {
 				move(velocity);
 
 				// is it nearby the target (check by distance)
-				if (new Vector2(getX() + 32, getY() + 32).dst(new Vector2(walkingTo.getX() + 16, walkingTo.getY() + 16)) <= 64.0) {
-					// KILL
-					if (!walkingTo.hasProtection()) {
-						getWorld().killCharacter(walkingTo.getPlayer().getNetID());
-						walkingTo = null;
-						getWorld().playSound("s_hit");
+				if (hitDelay < 0.0f) {
+					if (new Vector2(getX() + 32, getY() + 32).dst(new Vector2(walkingTo.getX() + 16, walkingTo.getY() + 16)) <= 64.0) {
+						// KILL
+						if (!walkingTo.hasProtection()) {
+							getWorld().healCharacter(walkingTo, -25);
+							walkingTo = null;
+							getWorld().playSound("s_hit");
+							hitDelay = 0.1f;
+						}
 					}
+				} else {
+					hitDelay -= delta;
 				}
 			} else {
 				walkingTo = null;

@@ -51,6 +51,7 @@ public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 	private float spawnPointEnemyY;
 	
 	private final ArrayList<Vector2> papers;
+	private final ArrayList<Vector2> medkits;
 	private final ArrayList<Vector2> powers;
 	
 	public final static String[] tilesets = {
@@ -101,6 +102,7 @@ public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 		map.getLayers().add(layerObj);
 		
 		papers = new ArrayList<>();
+		medkits = new ArrayList<>();
 		powers = new ArrayList<>();
 	}
 	
@@ -136,6 +138,7 @@ public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 	}
 	
 	public Vector2[] getPaperSpawns() { return (Vector2[]) papers.toArray(new Vector2[papers.size()]); }
+	public Vector2[] getMedkitSpawns() { return (Vector2[]) medkits.toArray(new Vector2[medkits.size()]); }
 	public Vector2[] getPowerSpawns() { return (Vector2[]) powers.toArray(new Vector2[powers.size()]); }
 	
 	public Vector2[] getSpawnPoints() {
@@ -269,6 +272,14 @@ public class BSPDungeonGenerator extends Thread implements DungeonGenerator {
 				// place power spawn point in the room (chance 30%)
 				if (rand.nextFloat() <= 0.3) {
 					powers.add(new Vector2(
+						randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
+						randomRange(rand, Y, sizeY + Y - 2) * layerRoom.getTileWidth() * scale
+					));
+				}
+				
+				// place medkit spawn point in the room (chance 40%)
+				if (rand.nextFloat() <= 0.4) {
+					medkits.add(new Vector2(
 						randomRange(rand, X, sizeX + X - 2) * layerRoom.getTileWidth() * scale,
 						randomRange(rand, Y, sizeY + Y - 2) * layerRoom.getTileWidth() * scale
 					));

@@ -31,6 +31,10 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 	public Vector2[] getPaperSpawns() {
 		return (Vector2[]) papersSpawnpoints.toArray(new Vector2[papersSpawnpoints.size()]);
 	}
+	
+	public Vector2[] getMedkitSpawns() {
+		return (Vector2[]) medkitsSpawnpoints.toArray(new Vector2[medkitsSpawnpoints.size()]);
+	}
 
 	public Vector2[] getPowerSpawns() {
 		return (Vector2[]) powersSpawnpoints.toArray(new Vector2[powersSpawnpoints.size()]);
@@ -55,11 +59,13 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		boolean special;
 		
 		ArrayList<Vector2> papers;
+		ArrayList<Vector2> medkits;
 		ArrayList<Vector2> powers;
 		ArrayList<Vector2> players;
 		ArrayList<Vector2> enemies;
 		public RoomPrefab() {
 			papers = new ArrayList<>();
+			medkits = new ArrayList<>();
 			powers = new ArrayList<>();
 			players = new ArrayList<>();
 			enemies = new ArrayList<>();
@@ -181,6 +187,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 	private final ArrayList<Vector2> spawnpoints; // players
 	private final ArrayList<Vector2> enemySpawnpoints;
 	private final ArrayList<Vector2> papersSpawnpoints;
+	private final ArrayList<Vector2> medkitsSpawnpoints;
 	private final ArrayList<Vector2> powersSpawnpoints;
 	private RectangleMapObject entranceArea;
 	
@@ -202,6 +209,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		spawnpoints = new ArrayList<>();
 		enemySpawnpoints = new ArrayList<>();
 		papersSpawnpoints = new ArrayList<>();
+		medkitsSpawnpoints = new ArrayList<>();
 		powersSpawnpoints = new ArrayList<>();
 		this.isLobby = isLobby;
 	}
@@ -268,6 +276,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 			// get all points in the layers
 			MapLayers layers = m.getLayers();
 			importPointsFromLayer(layers.get("PAPERS"), pre.papers);
+			importPointsFromLayer(layers.get("MEDKITS"), pre.medkits);
 			importPointsFromLayer(layers.get("POWERS"), pre.powers);
 			importPointsFromLayer(layers.get("PLAYERS"), pre.players);
 			importPointsFromLayer(layers.get("ENEMIES"), pre.enemies);
@@ -388,6 +397,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		Vector2 neg = new Vector2((int)dungeonBound.x, (int)dungeonBound.y);
 		neg.scl(-32.0f);
 		addPositionPoints(papersSpawnpoints, neg);
+		addPositionPoints(medkitsSpawnpoints, neg);
 		addPositionPoints(powersSpawnpoints, neg);
 		addPositionPoints(spawnpoints, neg);
 		addPositionPoints(enemySpawnpoints, neg);
@@ -535,6 +545,7 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		
 		public void importPoints(Random rand) {
 			importPoints(rand, roomPrefab.papers, papersSpawnpoints, 0.5f);
+			importPoints(rand, roomPrefab.medkits, medkitsSpawnpoints, 0.33f);
 			importPoints(rand, roomPrefab.powers, powersSpawnpoints, 0.5f);
 			importPoints(rand, roomPrefab.players, spawnpoints, 1.0f);
 			importPoints(rand, roomPrefab.enemies, enemySpawnpoints, 1.0f);

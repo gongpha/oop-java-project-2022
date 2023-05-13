@@ -61,7 +61,7 @@ public abstract class Packet {
 		regPacket(SInitGame.class);
 		regPacket(CSendChat.class);
 		regPacket(SSendChat.class);
-		//regPacket(SEntUpdateHealth.class);
+		regPacket(SEntUpdateHealth.class);
 		regPacket(SEntCreateMultiple.class);
 		regPacket(SCharacterUpdatePowerup.class);
 		regPacket(SPlayerScoreAdd.class);
@@ -69,6 +69,7 @@ public abstract class Packet {
 		regPacket(SCharacterDiedRevive.class);
 		regPacket(SGameEnd.class);
 		regPacket(SReturnToLobby.class);
+		regPacket(SMedkitCollected.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -442,9 +443,10 @@ public abstract class Packet {
 		// -1 : system messages (yellow)
 		// -2 : cheat notify (red and sound fx)
 		// -3 : paper (green)
-		// -4 : cheerful notify (completed a level, pink)
+		// -4 : cheerful notify (completed a level, magenta)
 		// -5 : death notify (someone dies, red)
 		// -6 : revive notify (someone has been revived, cyan)
+		// -7 : heal notify (someone has collected a medkit, pink)
 		public int netID = -1;
 		public int flashID = -1; // neg : no flashing, 0 : EVERYONE, otherwise : specific
 		// ^^^ TODO : wat about negative-number netIDs ???
@@ -462,22 +464,21 @@ public abstract class Packet {
 		}
 	}
 	
-	/*
 	public static class SEntUpdateHealth extends Packet {
 		public int header() { return 16; }
 		
-		public int entID;
+		public int netID;
 		public int newHealth;
 		
 		public void write(DataOutputStream s) throws IOException {
-			s.writeInt(entID);
+			s.writeInt(netID);
 			s.writeInt(newHealth);
 		}
 		public void read(DataInputStream s) throws IOException {
-			Entity e = world.getEntities(s.readInt());
-			e.setHealth(s.readInt());
+			Character ch = world.getCharacterByNetID(s.readInt());
+			ch.setHealth(s.readInt());
 		}
-	}*/
+	}
 	
 	// tell to clients to create a bunch of entities in one packet
 	// do not let the server invoke this (by calling "broadcastExceptServer")
@@ -620,6 +621,20 @@ public abstract class Packet {
 		public void write(DataOutputStream s) throws IOException {}
 		public void read(DataInputStream s) throws IOException {
 			world.markReturnToLobby();
+		}
+	}
+	
+	public static class SMedkitCollected extends Packet {
+		public int header() { return 24; }
+		
+		int hp = 0;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(hp);
+		}
+		public void read(DataInputStream s) throws IOException {
+			hp = s.readInt();
+			world.feedChat(-7, "You receive " + hp + " health", true);
 		}
 	}
 }

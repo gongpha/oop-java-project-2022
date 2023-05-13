@@ -32,8 +32,6 @@ public class Character extends Entity {
 	private final TextureRegion region;
 	private final TextureRegion regionIcon;
 	
-	private int health = 100;
-	
 	// CLIENTSIDE
 	private Vector2 velocity;
 	private Vector2 wishdir; // for calculating velocity
@@ -99,7 +97,7 @@ public class Character extends Entity {
 	};
 	
 	// server side
-	private final float POWER_DURATION = 15.0f;
+	private final float POWER_DURATION = 30.0f;
 	private final float POWER_DURATION_END = 3.0f;
 	private boolean protection = false;
 	public boolean hasProtection() { return protection; }
@@ -109,6 +107,8 @@ public class Character extends Entity {
 	
 	private boolean reviving = false;
 	public boolean canRevive() { return reviving; }
+	
+	private int health = 100;
 	
 	private class Power {
 		char powerup;
@@ -337,6 +337,8 @@ public class Character extends Entity {
 		if (!isMySelf()) {
 			// draw the username if they're others
 			final String username = player.getUsername();
+			
+			// shaping to the center
 			GlyphLayout layout = new GlyphLayout(labelFont, username);
 			float fontX = getX() + (32.0f - layout.width) / 2;
 			float fontY = getY() + 48.0f;
@@ -382,6 +384,7 @@ public class Character extends Entity {
 	
 	public void revive() {
 		super.revive();
+		health = 100;
 		regionIcon.setRegion(128, 0, 32, 32);
 	}
 	
@@ -592,18 +595,16 @@ public class Character extends Entity {
 	public int getHealth() {
 		return health;
 	}
+	
+	// serverside
 	public void heal(int add) {
 		health += add;
 		if (health <= 0) {
 			health = 0;
-			die();
+			world.killCharacter(getPlayer().getNetID());
 			return;
 		}
 		
 		if (health > 100) health = 100;
 	}
-	public void hurt(int rem) {
-		heal(-rem);
-	}
-	
 }

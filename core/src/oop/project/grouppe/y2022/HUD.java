@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -14,18 +15,17 @@ import java.util.LinkedList;
 public class HUD {
 	private static final float CHAT_DURATION = 8.0f;
 	
-	private World world;
-	private Character spectatingCharacter;
+	private final World world;
 	
 	private boolean scoreboardVisible;
 	private boolean chatMode;
 	private boolean chatModeReady;
 	
-	private BitmapFont hudFont1;
-	private BitmapFont hudFont2;
-	private BitmapFont hudFont3;
+	private final BitmapFont hudFont1;
+	private final BitmapFont hudFont2;
+	private final BitmapFont hudFont3;
 	
-	private LinkedList<ChatText> texts;
+	private final LinkedList<ChatText> texts;
 	private final int CHAT_MAX = 6;
 	private float textTimer = CHAT_DURATION;
 	private float chatCaret = 0.0f;
@@ -50,7 +50,7 @@ public class HUD {
 		
 		bspBackgroundTexture = (Texture) ResourceManager.instance().get("connecting");
 		
-		ipList = new ArrayList<String[]>();
+		ipList = new ArrayList<>();
 	}
 	
 	public void draw(SpriteBatch batch) {
@@ -69,7 +69,7 @@ public class HUD {
 		// draw hud
 		batch.setColor(Color.WHITE);
 		
-		drawPlayerInfo(batch);
+		drawInterface(batch);
 	}
 	
 	private void drawChats(SpriteBatch batch) {
@@ -127,65 +127,92 @@ public class HUD {
 				s = "Wait for the host to start the game !";
 			}
 			drawChatText(batch, col + s, s, 20, 200);
-		} else if (spectatingCharacter != null) {
+		} else if (world.isSpectating()) {
 			s = "Spectating other players . . .\nPress SPACE to cycle targets";
-			drawChatText(batch, s, s, 20, 300);
+			drawChatText(batch, s, 20, 300);
 		} else if (world.isInsideEntranceArea()) {
 			if (world.getCollectedPaperCount() >= world.getPaperCount()) {
 				s = "Waiting for players";
 			} else {
 				s = "Collect all golds to exit";
 			}
-			drawChatText(batch, s, s, 20, 200);
+			drawChatText(batch, s, 20, 200);
+		}
+	}
+	
+	private void drawScoreboard(SpriteBatch batch) {
+		// show everyone's names
+		int cursorY = 0;
+
+		String header = "PLAYERS";
+		if (world.isGameEnded()) {
+			header = (world.getPreviousCollectedPaperCount() + world.getCollectedPaperCount()) + " golds were collected.";
+		}
+
+		drawChatTextCenterX(batch, "[PINK]" + header, header, 600 - cursorY);
+		if (!world.isGameEnded()) {
+			header = world.getCollectedPaperCount() + " golds were collected from " + world.getPaperCount() + " golds";
+			drawChatTextCenterX(batch, header, header, 550 - cursorY);
+		}
+		cursorY = -32;
+
+		for (int i = 0; i < world.getCharacterCount(); i++) {
+			Character ch = world.getCharacterByIndex(i);
+			Player player = ch.getPlayer();
+
+			// Name
+			String c = "";
+			if (player.getNetID() == world.getMyClient().getMyPlayer().getNetID()) {
+				// highlight myself in green
+				c = "[YELLOW]";
+			} else if (ch.isDied() && !world.isGameEnded()) {
+				c = "[RED]"; // ded (while playing)
+			}
+			drawChatText(batch, c + player.getUsername(), player.getUsername(), 200, 500 + cursorY);
+
+			// Score
+			String s = "" + player.getScore();
+			drawChatText(batch, c + s, s, 1000, 500 + cursorY);
+			cursorY -= 32;
 		}
 	}
 	
 	private void drawPlayerInfo(SpriteBatch batch) {
-		Character m = world.getMyClient().getCharacter();
+		Character m = world.getSpectatingCharacter();
 		
+		if (!world.isDemoReading() && !world.isGameEnded() && m != null && !world.isInLobby()) {
+			batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f); // player status
+			
+			String s = "Level " + world.getCurrentLevelNumber();
+			GlyphLayout g = new GlyphLayout(hudFont1, s);
+			hudFont1.draw(batch, s,
+				Gdx.graphics.getWidth() - g.width - 32,
+				Gdx.graphics.getHeight() - g.height
+			); // level number
+			
+			// health point
+			hudFont1.draw(batch, "" + m.getHealth(), 200, 64);
+		}
+	}
+	
+	private void drawLocalAddresses(SpriteBatch batch) {
+		if (world.isInLobby() && !ipList.isEmpty()) {
+			int i = 0;
+			hudFont3.setColor(Color.YELLOW);
+			hudFont3.draw(batch, "My Local Addresses", 1000.0f, 700.0f);
+			for (String[] s : ipList) {
+				hudFont3.setColor(Color.WHITE);
+				hudFont3.draw(batch, s[1], 1000.0f, 670.0f + (20 * -i));
+				i++;
+			}
+		}
+	}
+	
+	private void drawInterface(SpriteBatch batch) {
 		if (!world.isDemoReading() && (scoreboardVisible || world.isGameEnded())) {
-			// show everyone's names
-			int cursorY = 0;
-			
-			String header = "PLAYERS";
-			int headerX = 600;
-			if (world.isGameEnded()) {
-				header = (world.getPreviousCollectedPaperCount() + world.getCollectedPaperCount()) + " golds were collected.";
-				headerX -= 200;
-			}
-			
-			drawChatText(batch, "[PINK]" + header, header, headerX, 600 - cursorY);
-			if (!world.isGameEnded()) {
-				header = world.getCollectedPaperCount() + " golds were collected from " + world.getPaperCount() + " golds";
-				drawChatText(batch, header, header, headerX - 230, 550 - cursorY);
-			}
-			cursorY = -32;
-			
-			for (int i = 0; i < world.getCharacterCount(); i++) {
-				Character ch = world.getCharacterByIndex(i);
-				Player player = ch.getPlayer();
-				
-				// Name
-				String c = "";
-				if (player.getNetID() == world.getMyClient().getMyPlayer().getNetID()) {
-					// highlight myself in green
-					c = "[YELLOW]";
-				} else if (ch.isDied() && !world.isGameEnded()) {
-					c = "[RED]"; // ded (while playing)
-				}
-				drawChatText(batch, c + player.getUsername(), player.getUsername(), 200, 500 + cursorY);
-				
-				// Score
-				String s = "" + player.getScore();
-				drawChatText(batch, c + s, s, 1000, 500 + cursorY);
-				cursorY -= 32;
-			}
+			drawScoreboard(batch);
 		} else {
-			if (spectatingCharacter != null) m = spectatingCharacter; // show the spectatee's info instead
-			if (!world.isDemoReading() && !world.isGameEnded() && m != null && !world.isInLobby()) {
-				batch.draw(m.getIcon(), 96.0f, 12.0f, 96.0f, 96.0f); // player status
-				hudFont1.draw(batch, "Level " + world.getCurrentLevelNumber(), 550.0f, 70.0f); // level number
-			}
+			drawPlayerInfo(batch);
 		}
 		
 		if (world.isGameEnded() && world.getMyClient().isServer()) {
@@ -196,21 +223,25 @@ public class HUD {
 			drawChatText(batch, "[RED]RECORDING . . .", "RECORDING . . .", 1000, 70);
 		}
 		
-		if (world.isInLobby() && !ipList.isEmpty()) {
-			int i = 0;
-			hudFont3.setColor(Color.YELLOW);
-			hudFont3.draw(batch, "My Local Addresses", 1000.0f, 700.0f); // restart notice
-			for (String[] s : ipList) {
-				hudFont3.setColor(Color.WHITE);
-				hudFont3.draw(batch, s[1], 1000.0f, 670.0f + (20 * -i)); // restart notice
-				i++;
-			}
-		}
+		drawLocalAddresses(batch);
 	}
 	
+	// t = text without highlighter
+	// nmt = texte with highlighter ( [RED], [GREEN], [BLUE], . . . )
 	public void drawChatText(SpriteBatch batch, String t, String nmt, int X, int Y) {
 		hudFont2.draw(batch, "[BLACK]" + nmt, X + 2, Y - 2);
 		hudFont2.draw(batch, t, X, Y);
+	}
+	
+	// plain white text
+	public void drawChatText(SpriteBatch batch, String t, int X, int Y) {
+		drawChatText(batch, t, t, X, Y);
+	}
+	
+	public void drawChatTextCenterX(SpriteBatch batch, String t, String nmt, int Y) {
+		GlyphLayout layout = new GlyphLayout(hudFont2, t);
+		int X = Gdx.graphics.getWidth() / 2 - (int)(layout.width / 2);
+		drawChatText(batch, t, nmt, X, Y);
 	}
 	
 	private void textsPop() {

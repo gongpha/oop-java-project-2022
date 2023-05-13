@@ -6,7 +6,6 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.MapObject;
@@ -130,6 +129,8 @@ public class World {
 	private DemoWriter demoW;
 	private DemoReader demoR;
 	
+	private final Color[] quadTreeColors;
+	
 	private boolean isDemoWorking(DemoHandler demhand) {
 		if (demhand == null) return false;
 		if (demhand.isDead()) {
@@ -160,14 +161,10 @@ public class World {
 		}
 	}
 	
-	public class InputMap {
-		public final static int DASH =		1 << 1;
-		public final static int ATTACK1 =	1 << 2;
-		public final static int ATTACK2 =	1 << 3;
-		public final static int ATTACK3 =	1 << 4;
-	}
-	
 	public World() {
+		this.quadTreeColors = new Color[] {
+				Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.CYAN, Color.BLUE, Color.MAGENTA
+		};
 		//this.server = server;
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
@@ -268,6 +265,10 @@ public class World {
 
 		// OK !
 		generateMap(generateSeed, 0, 0); // tileindex 0, level 0. xd
+	}
+	
+	public boolean isSpectating() {
+		return spectatingCharacter != null;
 	}
 	
 	public Character getSpectatingCharacter() {
@@ -513,6 +514,7 @@ public class World {
 	
 	public void instantiateLobby() {
 		removeOldLevelEnts();
+		ensureQuadTreeCleaned();
 		
 		generator = new PrefabDungeonGenerator();
 		generator.startGenerateInstant();
@@ -538,6 +540,8 @@ public class World {
 	
 	public void generateMap(long seed, int tilesetIndex, int level) {
 		atLobby = false;
+		
+		ensureQuadTreeCleaned();
 		removeOldLevelEnts();
 		
 		currentLevel = level;
@@ -635,15 +639,19 @@ public class World {
 		pendingPlayer.remove(Integer.valueOf(netID));
 	}
 	
-	// serverside
-	private void initGame() {
-		// setup a quadtree
+	private void ensureQuadTreeCleaned() {
 		if (mapQuadTree != null) {
 			// delete the old tree
 			mapQuadTree.release();
 			mapQuadTree = null;
 		}
+	}
+	
+	// serverside
+	private void initGame() {
+		// setup a quadtree
 		
+		ensureQuadTreeCleaned();
 		mapQuadTree = new QuadTree(mapColTiles.length, mapColTiles[0].length);
 
 		// create objects
@@ -685,13 +693,23 @@ public class World {
 		else
 			spawns_list_sub = spawns_list.subList(0, PAPERS_LIMIT);
 		for (Vector2 v : spawns_list_sub) {
-			Paper m = new Paper();
+			Gold m = new Gold();
 			m.setPosition(v.x, v.y);
 			currentLevelEntities.add(m);
 			items.add(m);
 		}
 		paperCount = spawns_list_sub.size();
 		collectedPaperCount = 0;
+		
+		// medkits
+		spawns = generator.getMedkitSpawns();
+		
+		for (Vector2 v : spawns) {
+			Medkit m = new Medkit();
+			m.setPosition(v.x, v.y);
+			currentLevelEntities.add(m);
+			items.add(m);
+		}
 
 		// powers
 		spawns = generator.getPowerSpawns();
@@ -758,6 +776,15 @@ public class World {
 	
 	private void InitGamePost() {
 		frameProcessed = 0;
+		
+		// revive all players
+		for (int id : clientCharacters.values()) {
+			Entity e = entities.get(id);
+			e.revive();
+		}
+		
+		// stop spectating
+		spectatingCharacter = null;
 		
 		if (markRecording) {
 			demoW = new DemoWriter(this);
@@ -1015,10 +1042,6 @@ public class World {
 		}
 	}
 	
-	private Color[] quadTreeColors = {
-		Color.RED, Color.ORANGE, Color.YELLOW,
-		Color.GREEN, Color.CYAN, Color.BLUE, Color.MAGENTA
-	};
 	private void drawQuadTree(QuadTree.Node n, ShapeRenderer s, int index) {
 		s.setColor(quadTreeColors[index % quadTreeColors.length]);
 		float margin = index * 24.0f;
@@ -1097,6 +1120,10 @@ public class World {
 			case -6:
 				i.setAuthorColor("CYAN"); // revive notify
 				playSound("s_revived");
+				break;
+			case -7:
+				i.setAuthorColor("PINK"); // heal notify
+				playSound("s_heal");
 				break;
 			default:
 				Character c = getCharacterByNetID(netID);
@@ -1201,6 +1228,30 @@ public class World {
 	/////////////////////////////////
 	
 	// serverside
+	public void healCharacter(Character ch, int heal) {
+		if (getMyClient().getServer() == null) return; // not a server
+		
+		ch.heal(heal);
+		
+		Packet.SEntUpdateHealth p = new Packet.SEntUpdateHealth();
+		p.netID = ch.getPlayer().getNetID();
+		p.newHealth = ch.getHealth();
+		getMyClient().getServer().broadcast(p);
+	}
+	
+	// serverside
+	public void setCharacterHealth(Character ch, int health) {
+		if (getMyClient().getServer() == null) return; // not a server
+		
+		ch.setHealth(health);
+		
+		Packet.SEntUpdateHealth p = new Packet.SEntUpdateHealth();
+		p.netID = ch.getPlayer().getNetID();
+		p.newHealth = ch.getHealth();
+		getMyClient().getServer().broadcast(p);
+	}
+	
+	// serverside
 	public void killCharacter(int netID) {
 		if (getMyClient().getServer() == null) return; // not a server
 		
@@ -1283,6 +1334,7 @@ public class World {
 		gameEnd = true;
 		spectatingDelayStarting = false; // stop the spectating timer
 		spectatingCharacter = null; // stop spectating
+		insideEntranceArea = false;
 		pendingPlayer.clear();
 		hud.clearChat();
 		
