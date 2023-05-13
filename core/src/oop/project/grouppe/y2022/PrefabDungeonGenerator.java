@@ -404,7 +404,8 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		entranceArea.getRectangle().x -= (int)dungeonBound.x * 32;
 		entranceArea.getRectangle().y -= (int)dungeonBound.y * 32;
 		
-		TiledMapTileLayer newLayer = new TiledMapTileLayer(boundX, boundY, 32, 32);
+		// multiple layers for incompatible layers from each prefab
+		ArrayList<TiledMapTileLayer> layerStack = new ArrayList<>();
 		
 		for (Room thatRoom : placedRooms) {
 			RoomPrefab rp = thatRoom.roomPrefab;
@@ -416,7 +417,28 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 							int posY = thatRoom.roomY + y - (int)dungeonBound.y;
 							Cell c = ((TiledMapTileLayer) l).getCell(x, y);
 							if (c == null) continue;
-							newLayer.setCell(posX, posY, c);
+							
+							// place the cell on the layer that has free space on the coordinate
+							boolean placed = false;
+							for (TiledMapTileLayer layer : layerStack) {
+								if (layer.getCell(posX, posY) != null) {
+								// oh no it already placed
+									continue;
+								}
+								layer.setCell(posX, posY, c);
+								placed = true;
+								break;
+							}
+							
+							if (!placed) {
+								// damn. here's a new layer
+								TiledMapTileLayer newLayer = new TiledMapTileLayer(boundX, boundY, 32, 32);
+								layerStack.add(newLayer);
+								map.getLayers().add(newLayer);
+								newLayer.setCell(posX, posY, c);
+							}
+							
+							
 							if (!c.getTile().getProperties().containsKey("free")) {
 								coltiles[posX][posY] = 1;
 							}
@@ -425,8 +447,6 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 				}
 			}
 		}
-		
-		map.getLayers().add(newLayer);
 		
 		if (!toPutBarriers.isEmpty()) {
 			// deadend hallways
