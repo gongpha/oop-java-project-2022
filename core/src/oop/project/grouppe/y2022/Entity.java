@@ -37,8 +37,9 @@ public abstract class Entity extends Actor {
 	}
 	
 	private boolean noclip = false;
-	public void toggleNoclip() {
+	public boolean toggleNoclip() {
 		noclip = !noclip;
+		return noclip;
 	}
 	
 	public void setID(int ID) {

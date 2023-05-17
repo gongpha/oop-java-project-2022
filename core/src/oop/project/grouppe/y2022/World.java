@@ -1222,6 +1222,10 @@ public class World {
 	}
 	
 	public void dForceWin() {
+		if (!getMyClient().isServer()) {
+			CoreGame.instance().getConsole().printerr("This command isn't permitted on clients");
+			return;
+		}
 		setCollectedPaperCount(getMyClient().getCharacter(), 666);
 	}
 	
@@ -1397,6 +1401,12 @@ public class World {
 		} else {
 			c.print("A recording was canceled.");
 		}
+	}
+	
+	public void tellToggleCheat(int cheatNumber) {
+		Packet.CCheatToggle p = new Packet.CCheatToggle();
+		p.cheat = cheatNumber;
+		getMyClient().send(p);
 	}
 	
 	/////////////////////////////////
