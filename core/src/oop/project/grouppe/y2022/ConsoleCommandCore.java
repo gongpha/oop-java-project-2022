@@ -185,14 +185,6 @@ public class ConsoleCommandCore {
 					}
 				}
 			},
-			new ConsoleCommand("forcewin") {
-				public void exec(String[] args) {
-					World w = CoreGame.instance().getWorld();
-					if (w != null) {
-						w.dForceWin();
-					}
-				}
-			},
 			new ConsoleCommand("forcenext") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();

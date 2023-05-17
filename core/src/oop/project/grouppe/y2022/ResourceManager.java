@@ -238,7 +238,7 @@ public class ResourceManager {
 		Sound s = ((Sound)ResourceManager.instance().get(name));
 		long i = s.play(CoreGame.instance().getVolumef());
 		
-		CoreGame.instance().getConsole().print("Playing sound " + name);
+		//CoreGame.instance().getConsole().print("Playing sound " + name);
 		PlayingSoundMusic psm = new PlayingSoundMusic();
 		psm.sm = s;
 		psm.i = i;
@@ -256,7 +256,7 @@ public class ResourceManager {
 			m.stop();
 		}
 		
-		CoreGame.instance().getConsole().print("Playing music " + m.toString());
+		//CoreGame.instance().getConsole().print("Playing music " + m.toString());
 		PlayingSoundMusic psm = new PlayingSoundMusic();
 		psm.sm = m;
 		psm.i = -1L;

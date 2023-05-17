@@ -7,17 +7,21 @@ package oop.project.grouppe.y2022;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Random;
 
 class AStar {
 	private byte[][] mapTiles;
+	private final Random rand;
+	
 	public AStar(byte[][] mapTiles) {
 		this.mapTiles = mapTiles;
+		this.rand = new Random();
 	}
 	
 	public class Point {
-		int x, y;
-		float prio = 0.0f;
-		Point prev = null;
+		public int x, y;
+		public float prio = 0.0f;
+		public Point prev = null;
 		public Point(int x, int y) {
 			this.x = x;
 			this.y = y;
@@ -32,7 +36,7 @@ class AStar {
 	private float estCost(Point a, Point b) {
 		return (float) ( // the euclidean distance of two points
 			Math.sqrt((b.y - a.y) * (b.y - a.y) + (b.x - a.x) * (b.x - a.x))
-		);
+		) + (rand.nextFloat() * 10.0f); // makes them a little foolish
 	}
 	
 	private float heu(Point a, Point b) { // heuristic, "should i walk to this point ?"

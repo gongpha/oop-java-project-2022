@@ -223,7 +223,7 @@ public class Character extends Entity {
 		
 		//velocity = wishdir;
 		//velocity.scl(8.0f);
-		velocity = velocity.lerp(wishdir.scl(speed * delta * fast), delta * 10.0f);
+		velocity = velocity.lerp(wishdir.scl(speed * delta * fast), delta * 15.0f);
 		if (Math.abs(velocity.x) < 0.1f) velocity.x = 0.0f;
 		if (Math.abs(velocity.y) < 0.1f) velocity.y = 0.0f;
 		
