@@ -106,13 +106,13 @@ public class Console {
 		
 		/////////////////////////////
 		
-		float relativeY = -(int)(Gdx.graphics.getHeight() * (-1.0 + location));
+		float relativeY = -(int)(720 * (-1.0 + location));
 		
 		// draw bg
 		batch.draw(
 			bg,
 			0, relativeY,
-			Gdx.graphics.getWidth(), Gdx.graphics.getHeight()
+			1280, 720
 		);
 		
 		// caret
@@ -121,7 +121,7 @@ public class Console {
 		
 		for (int i = 0; i < lines.size(); i++) {
 			float drawY = ((lines.size() - i - 1) * 24) + relativeY;
-			if (drawY > Gdx.graphics.getHeight()) continue; // off screen
+			if (drawY > 720) continue; // off screen
 			
 			Line l = lines.get(i);
 			if (l.content.isEmpty()) {

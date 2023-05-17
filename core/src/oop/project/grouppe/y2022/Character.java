@@ -218,7 +218,7 @@ public class Character extends Entity {
 		
 		float fast = 1.0f;
 		if (faster) {
-			fast *= 2.0f;
+			fast = 1.5f;
 		}
 		
 		//velocity = wishdir;

@@ -17,7 +17,10 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ public class World {
 	
 	private OrthographicCamera camera;
 	public OrthographicCamera getCamera() { return camera; }
+	private Viewport viewport;
 	private Stage stage;
 	
 	private int lastID = 0;
@@ -172,8 +176,8 @@ public class World {
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, w, h);
 		
-		stage = new Stage(new FitViewport(w, h));
-		stage.getViewport().setCamera(camera);
+		viewport = new ExtendViewport(w, h, camera);
+		stage = new Stage(viewport);
 		camera.zoom = 1.0f;
 		
 		entities = new HashMap<>();
@@ -1073,7 +1077,8 @@ public class World {
 	}
 	
 	public void resize(int w, int h) {
-		stage.getViewport().update(w, h, true);
+		viewport.update(w, h, true);
+		camera.update();
 	}
 	
 	public void submitChat(int netID, String text) {

@@ -124,7 +124,7 @@ public class Menu {
 			
 			shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 			shapeRenderer.setColor(new Color(0.0f, 0.0f, 0.0f, alpha));
-			shapeRenderer.rect(0.0f, 0.0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+			shapeRenderer.rect(0.0f, 0.0f, 1280, 720);
 			shapeRenderer.end();
 			
 			Gdx.gl.glDisable(GL20.GL_BLEND);
@@ -241,8 +241,8 @@ public class Menu {
 		batch.draw(oopBoxTexture, oopBox.x, oopBox.y);
 		
 		oopBox = oopBox.add(oopBoxVec);
-		int w = Gdx.graphics.getWidth() - 128;
-		int h = Gdx.graphics.getHeight() - 128;
+		int w = 1280 - 128;
+		int h = 720 - 128;
 		if (oopBox.x > w) {
 			oopBox.x = w;
 			oopBoxVec.x *= -1.0f;

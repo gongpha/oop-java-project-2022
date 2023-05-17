@@ -150,7 +150,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 			shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 			shapeRenderer.setColor(new Color(1.0f, 1.0f, 0.0f, flash));
-			shapeRenderer.rect(0.0f, 0.0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+			shapeRenderer.rect(0.0f, 0.0f, 1280, 720);
 			shapeRenderer.end();
 			
 			Gdx.gl.glDisable(GL20.GL_BLEND);
