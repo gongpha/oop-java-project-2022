@@ -19,10 +19,11 @@ public class Customization {
 		"__lobby",
 		
 		"_entrance",
-		"leftroom", "centerroom", "rightroom",
+		"leftroom", "toproom", "rightroom",
 		"hallwayhorizontal", "hallwayvertical",
 		"corner1", "corner2", "corner3", "corner4",
-		"corner5"
+		"corner5", "hallwayvertical2", "corner1_2",
+		"corner2_2", "corner5_2"
 			
 		/* INSERT YOUR ROOM NAMES HERE */
 	};

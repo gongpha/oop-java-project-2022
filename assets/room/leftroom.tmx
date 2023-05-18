@@ -1,49 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.0" orientation="orthogonal" renderorder="right-down" width="8" height="8" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="9">
+<map version="1.10" tiledversion="1.10.1" orientation="orthogonal" renderorder="right-down" width="14" height="12" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="11">
  <tileset firstgid="1" source="../tileset/prefab1.tsx"/>
- <layer id="1" name="Tile Layer 1" width="8" height="8">
+ <tileset firstgid="33" source="../tileset/cave_tiles.tsx"/>
+ <tileset firstgid="369" source="../tileset/dungeon_tiles.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="14" height="12">
   <data encoding="csv">
-1,2,2,2,2,2,2,11,
-9,10,10,10,10,10,10,2,
-9,10,10,10,10,10,10,10,
-9,10,10,10,10,10,10,10,
-9,10,10,10,10,10,10,10,
-9,10,10,10,10,10,10,10,
-17,18,18,18,18,18,18,18,
-0,0,0,0,0,0,0,0
+119,120,120,120,120,120,120,120,120,120,120,120,120,121,
+135,136,136,136,136,136,136,136,136,136,136,136,50,137,
+135,136,264,164,136,136,136,136,178,136,136,136,164,168,
+135,264,149,150,178,178,136,177,3221225636,177,136,136,136,177,
+135,193,165,166,2684354740,264,264,136,264,264,178,264,136,177,
+135,136,193,193,193,177,148,136,264,179,264,264,148,177,
+135,136,136,161,136,136,264,177,177,149,150,264,136,177,
+135,136,136,136,136,162,264,136,146,165,166,193,136,177,
+135,136,136,162,136,136,264,136,177,178,178,178,178,184,
+135,145,136,136,136,193,136,148,178,3221225652,177,136,184,169,
+135,136,136,136,136,136,136,136,136,184,152,152,200,169,
+151,152,152,152,152,152,152,152,152,200,169,169,169,169
+</data>
+ </layer>
+ <layer id="8" name="Tile Layer 2" width="14" height="12">
+  <data encoding="csv">
+0,93,94,96,0,0,0,0,0,0,0,0,0,0,
+0,109,110,112,0,0,0,0,0,0,0,0,0,0,
+0,125,126,128,0,0,0,0,0,0,0,0,0,0,
+0,141,142,144,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,163,0,0,0,0,
+0,0,0,0,93,96,0,0,0,0,0,0,0,0,
+0,0,0,0,109,112,0,0,0,0,0,0,0,0,
+0,0,0,0,141,144,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
  <objectgroup color="#000000" id="5" name="ENEMIES">
-  <object id="8" x="96" y="128">
+  <object id="8" x="256" y="96">
    <point/>
   </object>
  </objectgroup>
  <objectgroup id="2" name="HINT">
-  <object id="1" x="256" y="64">
+  <object id="1" x="448" y="96">
    <properties>
     <property name="for" value="RIGHT"/>
-    <property name="size" type="int" value="4"/>
+    <property name="size" type="int" value="5"/>
    </properties>
    <point/>
   </object>
  </objectgroup>
  <objectgroup color="#00ff00" id="3" name="PAPERS">
-  <object id="2" x="64" y="96">
+  <object id="3" x="288" y="256">
    <point/>
   </object>
-  <object id="3" x="64" y="160">
+  <object id="4" x="224" y="128">
    <point/>
   </object>
-  <object id="4" x="128" y="160">
-   <point/>
-  </object>
-  <object id="5" x="128" y="96">
-   <point/>
-  </object>
-  <object id="6" x="192" y="160">
-   <point/>
-  </object>
-  <object id="7" x="192" y="96">
+  <object id="6" x="64" y="288">
    <point/>
   </object>
  </objectgroup>
