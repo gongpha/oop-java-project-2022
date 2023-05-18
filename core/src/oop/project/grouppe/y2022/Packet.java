@@ -45,6 +45,12 @@ public abstract class Packet {
 		return server;
 	}
 	
+	/*
+		Class naming :
+			C* : Must be sent from clients
+			S* : Must be sent from the server client
+			F* : Can be sent from anyone
+	*/
 	public static void regPackets() {
 		regPacket(CMyInfo.class);
 		regPacket(CInput.class);
@@ -70,6 +76,7 @@ public abstract class Packet {
 		regPacket(SGameEnd.class);
 		regPacket(SReturnToLobby.class);
 		regPacket(SMedkitCollected.class);
+		regPacket(CCheatToggle.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -635,6 +642,39 @@ public abstract class Packet {
 		public void read(DataInputStream s) throws IOException {
 			hp = s.readInt();
 			world.feedChat(-7, "You receive " + hp + " health", true);
+		}
+	}
+	
+	public static class CCheatToggle extends Packet {
+		public int header() { return 25; }
+		
+		int cheat;
+		
+		public void write(DataOutputStream s) throws IOException {
+			s.writeInt(cheat);
+		}
+		public void read(DataInputStream s) throws IOException {
+			Character ch = getCSenderOrSMySelf().getCharacter();
+			String name = "UNKNOWN CHEAT";
+			boolean enabled = false;
+			switch (s.readInt()) {
+				case 0 :
+					enabled = ch.toggleGod();
+					name = "God mode";
+					break;
+				case 1 :
+					enabled = ch.toggleBuddha();
+					name = "Buddha mode (no death checking)";
+					break;
+				case 2 :
+					enabled = ch.toggleNoTarget();
+					name = "No Target mode (always invisible)";
+					break;
+			}
+			
+			if (enabled)
+				// announce
+				world.submitChat(-2, ch.getPlayer().getUsername() + " has used a cheat ! : " + name);
 		}
 	}
 }

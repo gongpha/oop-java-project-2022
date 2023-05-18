@@ -56,7 +56,7 @@ public class HUD {
 	public void draw(SpriteBatch batch) {
 		if (world.isGenerating()) {
 			// GENERATING !!! DONT DRAW ANYTHING
-			batch.draw(bspBackgroundTexture, 0.0f, 0.0f, 1280.0f, 720.0f);
+			batch.draw(bspBackgroundTexture, 0.0f, 0.0f, 1280, 720);
 			hudFont1.draw(batch, "Generating Dungeon . . .", 10.0f, 60.0f);
 		}
 		
@@ -186,8 +186,8 @@ public class HUD {
 			String s = "Level " + world.getCurrentLevelNumber();
 			GlyphLayout g = new GlyphLayout(hudFont1, s);
 			hudFont1.draw(batch, s,
-				Gdx.graphics.getWidth() - g.width - 32,
-				Gdx.graphics.getHeight() - g.height
+				1280 - g.width - 32,
+				720 - g.height
 			); // level number
 			
 			// health point
@@ -240,7 +240,7 @@ public class HUD {
 	
 	public void drawChatTextCenterX(SpriteBatch batch, String t, String nmt, int Y) {
 		GlyphLayout layout = new GlyphLayout(hudFont2, t);
-		int X = Gdx.graphics.getWidth() / 2 - (int)(layout.width / 2);
+		int X = 1280 / 2 - (int)(layout.width / 2);
 		drawChatText(batch, t, nmt, X, Y);
 	}
 	

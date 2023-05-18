@@ -123,9 +123,8 @@ public class Nextbot extends Entity {
 						// KILL
 						if (!walkingTo.hasProtection()) {
 							getWorld().healCharacter(walkingTo, -25);
-							walkingTo = null;
 							getWorld().playSound("s_hit");
-							hitDelay = 0.1f;
+							hitDelay = 0.25f;
 						}
 					}
 				} else {

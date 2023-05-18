@@ -42,9 +42,16 @@ public class Character extends Entity {
 	
 	private final BitmapFont labelFont;
 	
-	public void toggleNoclip() {
-		super.toggleNoclip();
-		world.submitChat(-2, getPlayer().getUsername() + " has used a cheat ! : Noclip");
+	private boolean god;
+	private boolean buddha;
+	private boolean notarget;
+	
+	// clientside cheat
+	public boolean toggleNoclip() {
+		boolean b = super.toggleNoclip();
+		if (b)
+			world.submitChat(-2, getPlayer().getUsername() + " has used a cheat ! : Noclip");
+		return b;
 	}
 	
 	public class MoveDirection {
@@ -103,7 +110,7 @@ public class Character extends Entity {
 	public boolean hasProtection() { return protection; }
 	
 	private boolean invisible = false;
-	public boolean isInvisible() { return invisible; }
+	public boolean isInvisible() { return invisible || notarget; }
 	
 	private boolean reviving = false;
 	public boolean canRevive() { return reviving; }
@@ -152,6 +159,10 @@ public class Character extends Entity {
 		wishdir = new Vector2();
 		
 		powers = new ArrayList<>();
+		
+		god = false;
+		buddha = false;
+		notarget = false;
 	}
 	
 	public Player getPlayer() {
@@ -207,12 +218,12 @@ public class Character extends Entity {
 		
 		float fast = 1.0f;
 		if (faster) {
-			fast *= 2.0f;
+			fast = 1.5f;
 		}
 		
 		//velocity = wishdir;
 		//velocity.scl(8.0f);
-		velocity = velocity.lerp(wishdir.scl(speed * delta * fast), delta * 10.0f);
+		velocity = velocity.lerp(wishdir.scl(speed * delta * fast), delta * 15.0f);
 		if (Math.abs(velocity.x) < 0.1f) velocity.x = 0.0f;
 		if (Math.abs(velocity.y) < 0.1f) velocity.y = 0.0f;
 		
@@ -598,13 +609,29 @@ public class Character extends Entity {
 	
 	// serverside
 	public void heal(int add) {
+		if (add < 0 && god) return;
+		
 		health += add;
-		if (health <= 0) {
+		if (health <= 0 && !buddha) {
 			health = 0;
 			world.killCharacter(getPlayer().getNetID());
 			return;
 		}
 		
 		if (health > 100) health = 100;
+	}
+	
+	/* serverside cheats */
+	public boolean toggleGod() {
+		god = !god;
+		return god;
+	}
+	public boolean toggleBuddha() {
+		buddha = !buddha;
+		return buddha;
+	}
+	public boolean toggleNoTarget() {
+		notarget = !notarget;
+		return notarget;
 	}
 }

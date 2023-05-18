@@ -153,11 +153,27 @@ public class ConsoleCommandCore {
 					}
 				}
 			},
-			new ConsoleCommand("forcewin") {
+			new ConsoleCommand("god") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
-						w.dForceWin();
+						w.tellToggleCheat(0);
+					}
+				}
+			},
+			new ConsoleCommand("buddha") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.tellToggleCheat(1);
+					}
+				}
+			},
+			new ConsoleCommand("notarget") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.tellToggleCheat(2);
 					}
 				}
 			},

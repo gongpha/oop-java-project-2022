@@ -17,7 +17,10 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ public class World {
 	
 	private OrthographicCamera camera;
 	public OrthographicCamera getCamera() { return camera; }
+	private Viewport viewport;
 	private Stage stage;
 	
 	private int lastID = 0;
@@ -96,8 +100,6 @@ public class World {
 	
 	private HUD hud;
 	public HUD getHUD() { return hud; }
-	
-	private Nextbot ghost = null;
 	
 	private boolean processing = false;
 	
@@ -174,8 +176,8 @@ public class World {
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, w, h);
 		
-		stage = new Stage(new FitViewport(w, h));
-		stage.getViewport().setCamera(camera);
+		viewport = new ExtendViewport(w, h, camera);
+		stage = new Stage(viewport);
 		camera.zoom = 1.0f;
 		
 		entities = new HashMap<>();
@@ -656,29 +658,35 @@ public class World {
 
 		// create objects
 
-		// SPAWN THE ENEMY (ghosts)
-		int ghostIndex = (int)(Math.abs(generator.getSeed()) % Customization.GHOSTS.length);
-		ghost = new Nextbot();
-		ghost.setGhostIndex(ghostIndex);
+		int ghostNumber = (int)(currentLevel / 3) + 1;
+		System.out.println(ghostNumber);
 		
 		Random rand = new Random();
 		rand.setSeed(generator.getSeed());
 		
-		Vector2[] enemySpawnpoints = generator.getEnemySpawnPoints();
 		// choose the furthest enemy spawn point
-		Vector2 p = new Vector2(entranceArea.getRectangle().x, entranceArea.getRectangle().y);
-		float furthest = 0.0f;
-		Vector2 enemySpawnpoint = new Vector2(0, 0);
-		for (int i = 0; i < enemySpawnpoints.length; i++) {
-			Vector2 v = enemySpawnpoints[i];
-			float dst = v.dst(p);
-			if (dst > furthest) {
-				furthest = dst;
-				enemySpawnpoint = v;
+		Vector2[] enemySpawnpoints = generator.getEnemySpawnPoints();
+		final Vector2 p = new Vector2(entranceArea.getRectangle().x, entranceArea.getRectangle().y);
+		Arrays.sort(enemySpawnpoints, new Comparator<Vector2>() {
+			public int compare(Vector2 o1, Vector2 o2) {
+				return p.dst(o1) > p.dst(o2) ? -1 : 1;
 			}
+		});
+		
+		// spawn nextbots
+		Nextbot[] addedGhosts = new Nextbot[ghostNumber];
+		for (int i = 0; i < ghostNumber; i++) {
+			int ghostIndex = (int)(Math.abs(rand.nextInt()) % Customization.GHOSTS.length);
+			Nextbot ghost = new Nextbot();
+			ghost.setGhostIndex(ghostIndex);
+			
+			Vector2 enemySpawnpoint = enemySpawnpoints[
+				i % enemySpawnpoints.length
+			];
+			ghost.setPosition(enemySpawnpoint.x, enemySpawnpoint.y);
+			currentLevelEntities.add(ghost);
+			addedGhosts[i] = ghost;
 		}
-		ghost.setPosition(enemySpawnpoint.x, enemySpawnpoint.y);
-		currentLevelEntities.add(ghost);
 
 		// items
 		LinkedList<Item> items = new LinkedList<>();
@@ -750,7 +758,11 @@ public class World {
 		}
 
 		addEntities((Entity[]) currentLevelEntities.toArray(new Entity[currentLevelEntities.size()]), true);
-		ghost.setupAStar();
+		
+		// setup astar
+		for (int i = 0; i < addedGhosts.length; i++) {
+			addedGhosts[i].setupAStar();
+		}
 		
 		InitGamePost();
 	}
@@ -1065,7 +1077,8 @@ public class World {
 	}
 	
 	public void resize(int w, int h) {
-		stage.getViewport().update(w, h, true);
+		viewport.update(w, h, true);
+		camera.update();
 	}
 	
 	public void submitChat(int netID, String text) {
@@ -1222,6 +1235,10 @@ public class World {
 	}
 	
 	public void dForceWin() {
+		if (!getMyClient().isServer()) {
+			CoreGame.instance().getConsole().printerr("This command isn't permitted on clients");
+			return;
+		}
 		setCollectedPaperCount(getMyClient().getCharacter(), 666);
 	}
 	
@@ -1397,6 +1414,12 @@ public class World {
 		} else {
 			c.print("A recording was canceled.");
 		}
+	}
+	
+	public void tellToggleCheat(int cheatNumber) {
+		Packet.CCheatToggle p = new Packet.CCheatToggle();
+		p.cheat = cheatNumber;
+		getMyClient().send(p);
 	}
 	
 	/////////////////////////////////
