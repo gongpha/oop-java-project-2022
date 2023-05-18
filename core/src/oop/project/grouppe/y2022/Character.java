@@ -557,7 +557,7 @@ public class Character extends Entity {
 				
 				break;
 			case 2 : // invisible
-				c = who + " make ghosts invisible to them !";
+				c = who + " make yourself invisible to them !";
 				getWorld().playSound("s_invisible");
 				
 				break;
