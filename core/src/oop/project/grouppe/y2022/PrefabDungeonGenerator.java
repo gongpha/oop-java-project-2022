@@ -392,6 +392,10 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 		int boundX = (int)dungeonBound.width; 
 		int boundY = (int)dungeonBound.height;
 		coltiles = new byte[boundX][boundY];
+		// start solid
+		for (int x = 0; x < boundX; x++)
+			for (int y = 0; y < boundY; y++)
+				coltiles[x][y] = (byte)1;
 		
 		// add position to points
 		Vector2 neg = new Vector2((int)dungeonBound.x, (int)dungeonBound.y);
@@ -439,9 +443,10 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 							}
 							
 							
-							if (!c.getTile().getProperties().containsKey("free")) {
-								coltiles[posX][posY] = 1;
-							}
+							coltiles[posX][posY] = (byte)(
+								c.getTile().getProperties().containsKey("free") ?
+									0 : 1
+							);
 						}
 					}
 				}

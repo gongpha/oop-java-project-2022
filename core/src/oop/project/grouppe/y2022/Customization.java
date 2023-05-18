@@ -23,8 +23,9 @@ public class Customization {
 		"hallwayhorizontal", "hallwayvertical",
 		"corner1", "corner2", "corner3", "corner4",
 		"corner5", "hallwayvertical2", "corner1_2",
-		"corner2_2", "corner5_2"
-			
+		"corner2_2", "corner5_2",
+		
+		"bigroom1", "grid1"
 		/* INSERT YOUR ROOM NAMES HERE */
 	};
 }

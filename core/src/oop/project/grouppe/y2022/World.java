@@ -659,7 +659,6 @@ public class World {
 		// create objects
 
 		int ghostNumber = (int)(currentLevel / 3) + 1;
-		System.out.println(ghostNumber);
 		
 		Random rand = new Random();
 		rand.setSeed(generator.getSeed());
