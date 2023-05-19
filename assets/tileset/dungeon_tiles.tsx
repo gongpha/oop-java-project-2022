@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.10.0" name="dungeon_tiles" tilewidth="32" tileheight="32" tilecount="552" columns="23">
+<tileset version="1.10" tiledversion="1.10.1" name="dungeon_tiles" tilewidth="32" tileheight="32" tilecount="552" columns="23">
  <image source="dungeon_tiles.png" width="736" height="768"/>
  <tile id="0">
   <properties>
@@ -146,6 +146,21 @@
    <property name="free" type="bool" value="true"/>
   </properties>
  </tile>
+ <tile id="81">
+  <properties>
+   <property name="free" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="82">
+  <properties>
+   <property name="free" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="83">
+  <properties>
+   <property name="free" type="bool" value="true"/>
+  </properties>
+ </tile>
  <tile id="92">
   <properties>
    <property name="free" type="bool" value="true"/>
@@ -186,7 +201,27 @@
    <property name="free" type="bool" value="true"/>
   </properties>
  </tile>
- <tile id="124">
+ <tile id="104">
+  <properties>
+   <property name="free" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="106">
+  <properties>
+   <property name="free" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="127">
+  <properties>
+   <property name="free" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="128">
+  <properties>
+   <property name="free" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="129">
   <properties>
    <property name="free" type="bool" value="true"/>
   </properties>

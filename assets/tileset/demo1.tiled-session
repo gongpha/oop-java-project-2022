@@ -3,12 +3,12 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "D:/oop-java-project-2022/assets/room/__lobby.tmx",
+    "activeFile": "D:/oop-java-project-2022/assets/room/corner4.tmx",
     "expandedProjectPaths": [
-        "D:/oop-java-project-2022/assets/room",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room",
         "D:/Repos/oop-java-project-2022/assets/room",
-        ".",
-        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room"
+        "D:/oop-java-project-2022/assets/room",
+        "."
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -297,26 +297,43 @@
             }
         },
         "D:/oop-java-project-2022/assets/room/__lobby.tmx": {
-            "scale": 1,
-            "selectedLayer": 0,
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 0.75,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 191.5,
-                "y": 207.5
+                "x": 784,
+                "y": 367.99999999999994
             }
         },
         "D:/oop-java-project-2022/assets/room/_entrance.tmx": {
             "expandedObjectLayers": [
                 3,
-                6,
                 7,
                 4,
+                2,
+                6
+            ],
+            "scale": 0.33,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 219.69696969696975,
+                "y": 1965.151515151515
+            }
+        },
+        "D:/oop-java-project-2022/assets/room/bigroom1.tmx": {
+            "expandedObjectLayers": [
+                7,
+                4,
+                5,
                 2
             ],
             "scale": 0.5,
-            "selectedLayer": 1,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 495,
-                "y": 889
+                "x": 593,
+                "y": 525
             }
         },
         "D:/oop-java-project-2022/assets/room/centerroom.tmx": {
@@ -351,16 +368,16 @@
             "scale": 0.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 381,
-                "y": 269
+                "x": 383,
+                "y": 271
             }
         },
         "D:/oop-java-project-2022/assets/room/corner1_2.tmx": {
             "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 445.99999999999994,
-                "y": 285.99999999999994
+                "x": 447.33333333333326,
+                "y": 287.33333333333326
             }
         },
         "D:/oop-java-project-2022/assets/room/corner2 - Copy.tmx": {
@@ -384,16 +401,16 @@
             "scale": 0.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 329,
-                "y": 441
+                "x": 335,
+                "y": 447
             }
         },
         "D:/oop-java-project-2022/assets/room/corner2_2.tmx": {
             "scale": 0.5,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 441,
-                "y": 313
+                "x": 663,
+                "y": 373
             }
         },
         "D:/oop-java-project-2022/assets/room/corner3 - Copy.tmx": {
@@ -409,11 +426,11 @@
                 3,
                 2
             ],
-            "scale": 0.5,
-            "selectedLayer": 0,
+            "scale": 0.75,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 399,
-                "y": 399
+                "x": 292.66666666666674,
+                "y": 355.33333333333326
             }
         },
         "D:/oop-java-project-2022/assets/room/corner4 - Copy.tmx": {
@@ -455,11 +472,11 @@
                 4,
                 2
             ],
-            "scale": 0.75,
-            "selectedLayer": 0,
+            "scale": 0.5,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 367.33333333333326,
-                "y": 271.33333333333326
+                "x": 591,
+                "y": 271
             }
         },
         "D:/oop-java-project-2022/assets/room/corner5_2.tmx": {
@@ -467,11 +484,26 @@
                 3,
                 2
             ],
-            "scale": 0.75,
-            "selectedLayer": 0,
+            "scale": 0.5,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 367.33333333333326,
-                "y": 271.33333333333326
+                "x": 589,
+                "y": 269
+            }
+        },
+        "D:/oop-java-project-2022/assets/room/grid1.tmx": {
+            "expandedObjectLayers": [
+                7,
+                5,
+                2,
+                6,
+                8
+            ],
+            "scale": 0.5,
+            "selectedLayer": 5,
+            "viewCenter": {
+                "x": 643,
+                "y": 231
             }
         },
         "D:/oop-java-project-2022/assets/room/hallwayX.tmx": {
@@ -494,8 +526,8 @@
             "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 464,
-                "y": 207.99999999999994
+                "x": 461.99999999999994,
+                "y": 205.99999999999994
             }
         },
         "D:/oop-java-project-2022/assets/room/hallwayhorizontal2.tmx": {
@@ -508,14 +540,14 @@
         },
         "D:/oop-java-project-2022/assets/room/hallwayvertical.tmx": {
             "expandedObjectLayers": [
-                6,
-                2
+                2,
+                6
             ],
             "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 155.33333333333326,
-                "y": 444.66666666666674
+                "x": 157.99999999999994,
+                "y": 445.99999999999994
             }
         },
         "D:/oop-java-project-2022/assets/room/hallwayvertical2.tmx": {
@@ -526,19 +558,20 @@
             "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 221.99999999999994,
-                "y": 509.99999999999994
+                "x": 220.66666666666663,
+                "y": 508.6666666666667
             }
         },
         "D:/oop-java-project-2022/assets/room/leftroom.tmx": {
             "expandedObjectLayers": [
+                3,
                 2
             ],
             "scale": 1,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 222.5,
-                "y": 190.5
+                "x": 255.5,
+                "y": 90.5
             }
         },
         "D:/oop-java-project-2022/assets/room/rightroom.tmx": {
@@ -548,10 +581,10 @@
                 2
             ],
             "scale": 1,
-            "selectedLayer": 0,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 222.5,
-                "y": 190.5
+                "x": 220.5,
+                "y": 188.5
             }
         },
         "D:/oop-java-project-2022/assets/room/room1.tmx": {
@@ -583,15 +616,15 @@
             "expandedObjectLayers": [
                 3,
                 7,
-                8,
                 4,
-                2
+                2,
+                8
             ],
             "scale": 0.75,
-            "selectedLayer": 4,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 313.99999999999994,
-                "y": 424.66666666666674
+                "x": 433.99999999999994,
+                "y": 241.99999999999994
             }
         },
         "cave_tiles.tsx": {
@@ -603,7 +636,7 @@
             "scaleInEditor": 1
         },
         "dungeon_tiles.tsx": {
-            "scaleInDock": 0.75,
+            "scaleInDock": 1,
             "scaleInEditor": 1
         },
         "prefab1.tsx": {
@@ -611,7 +644,7 @@
             "scaleInEditor": 0.75
         },
         "sewer_tiles.tsx": {
-            "scaleInDock": 0.75,
+            "scaleInDock": 1,
             "scaleInEditor": 1
         }
     },
@@ -643,10 +676,12 @@
         "D:/oop-java-project-2022/assets/room/__lobby.tmx",
         "D:/oop-java-project-2022/assets/room/corner1_2.tmx",
         "D:/oop-java-project-2022/assets/room/corner2_2.tmx",
-        "D:/oop-java-project-2022/assets/room/corner5_2.tmx"
+        "D:/oop-java-project-2022/assets/room/corner5_2.tmx",
+        "D:/oop-java-project-2022/assets/room/grid1.tmx",
+        "D:/oop-java-project-2022/assets/room/bigroom1.tmx"
     ],
     "project": "demo1.tiled-project",
-    "property.type": "bool",
+    "property.type": "int",
     "recentFiles": [
         "cave_tiles.tsx",
         "dungeon_tiles.tsx",
@@ -657,9 +692,9 @@
         "D:/oop-java-project-2022/assets/room/rightroom.tmx",
         "D:/oop-java-project-2022/assets/room/toproom.tmx",
         "D:/oop-java-project-2022/assets/room/corner5.tmx",
-        "D:/oop-java-project-2022/assets/room/corner4.tmx",
-        "D:/oop-java-project-2022/assets/room/hallwayvertical.tmx",
-        "D:/oop-java-project-2022/assets/room/hallwayhorizontal.tmx"
+        "D:/oop-java-project-2022/assets/room/bigroom1.tmx",
+        "D:/oop-java-project-2022/assets/room/grid1.tmx",
+        "D:/oop-java-project-2022/assets/room/corner5_2.tmx"
     ],
     "resizeMap.removeObjects": true,
     "tileset.lastUsedFormat": "tsx",
