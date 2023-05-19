@@ -146,6 +146,9 @@ public class HUD {
 
 		String header = "PLAYERS";
 		if (world.isGameEnded()) {
+			drawChatTextCenterX(batch, "[RED]GAME OVER", "GAME OVER", 660 - cursorY);
+			header = "Level " + world.getCurrentLevelNumber();
+			drawChatTextCenterX(batch, header, header, 630 - cursorY);
 			header = (world.getPreviousCollectedPaperCount() + world.getCollectedPaperCount()) + " golds were collected.";
 		}
 

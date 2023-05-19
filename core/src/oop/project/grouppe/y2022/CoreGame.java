@@ -64,6 +64,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private int volume = 0;
 	private int musicVolume = 0;
 	
+	private boolean disconnecting = false;
+	
 	private enum Status {
 		PRELOADING,
 		
@@ -217,7 +219,11 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		
 		if (!menu.isShowing()) menu.toggle(); // show the menu
 		
+		if (!disconnecting) {
+			showMsgToast(disconnectedReason);
+		}
 		console.print("Exited the world (" + disconnectedReason + ")");
+		disconnecting = false;
 		
 		playMainmenuDemo();
 	}
@@ -239,6 +245,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	}
 	
 	public void disconnect() {
+		disconnecting = true;
 		if (client == null) return;
 		client.disconnectMe();
 	}
@@ -407,6 +414,10 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			world.dispose();
 			world = null;
 		}
+	}
+	
+	public void showMsgToast(String msg) {
+		menu.showMsgToast(msg);
 	}
 	
 	////////////////////////////////////////////

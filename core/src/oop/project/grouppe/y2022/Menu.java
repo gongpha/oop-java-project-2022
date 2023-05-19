@@ -10,12 +10,14 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
 public class Menu {
+	private final BitmapFont fontToast;
 	private final BitmapFont fontDef;
 	private final BitmapFont font;
 	private final BitmapFont fontBig;
@@ -75,11 +77,19 @@ public class Menu {
 	
 	//private Music bgm;
 	
+	// toast
+	private String toastMsg;
+	private float toastTimer;
+	private TextureRegion toastBG;
+	private Texture toastBGBlack;
+	
 	public Menu() {
-		fontDef = (BitmapFont) ResourceManager.instance().get("default_font");
-		font = (BitmapFont) ResourceManager.instance().get("menu_font");
-		fontBig = (BitmapFont) ResourceManager.instance().get("title_font");
-		logo = (Texture) ResourceManager.instance().get("mainmenu_logo");
+		ResourceManager rm = ResourceManager.instance();
+		fontToast = (BitmapFont) rm.get("character_name_font");
+		fontDef = (BitmapFont) rm.get("default_font");
+		font = (BitmapFont) rm.get("menu_font");
+		fontBig = (BitmapFont) rm.get("title_font");
+		logo = (Texture) rm.get("mainmenu_logo");
 		batch = CoreGame.instance().getBatch();
 		
 		//bgm = (Music) ResourceManager.instance().get("m_mainmenu1");
@@ -87,7 +97,7 @@ public class Menu {
 		pref = CoreGame.instance().getPref();
 		oopBox = new Vector2();
 		oopBoxVec = new Vector2(16, 16);
-		oopBoxTexture = (Texture) ResourceManager.instance().get("oop");
+		oopBoxTexture = (Texture) rm.get("oop");
 		
 		shapeRenderer = new ShapeRenderer();
 		
@@ -101,6 +111,11 @@ public class Menu {
 		selectingCharacterTexture.setRegionWidth(128);
 		selectingCharacterTexture.setRegionHeight(32);
 		
+		toastMsg = "";
+		toastTimer = -1.0f;
+		toastBG = new TextureRegion((Texture) rm.get("toastbg"), 0, 0, 900, 64);
+		toastBGBlack = (Texture) rm.get("toastbgblack");
+		
 		showAsMainMenu();
 	}
 	
@@ -113,7 +128,8 @@ public class Menu {
 	
 	public void renderMenu() {
 		// animate
-		alpha += Gdx.graphics.getDeltaTime() * 3.0f * (showing ? 1.0f : -1.0f);
+		float delta = Gdx.graphics.getDeltaTime();
+		alpha += delta * 3.0f * (showing ? 1.0f : -1.0f);
 		alpha = Math.max(0.0f, Math.min(0.5f, alpha)); // clamp [0, 1]
 		
 		if (alpha > 0.0) {
@@ -160,6 +176,20 @@ public class Menu {
 					"Press any key"
 				), 20, 50);
 			}
+		}
+		
+		// render the toast
+		// only draws the progressbar background if lesser than 3 secs
+		if (toastTimer > 0) {
+			final float toastY = 600;
+			toastBG.setRegionWidth((int)(900.0f * (Math.min(toastTimer, 3.0f) / 3.0f)));
+			if (toastTimer <= 3.0f)
+				batch.draw(toastBGBlack, (1280 / 2) - (900 / 2), toastY);
+			batch.draw(toastBG, (1280 / 2) - (900 / 2), toastY);
+			GlyphLayout g = new GlyphLayout(fontToast, toastMsg);
+			fontToast.setColor(Color.WHITE);
+			fontToast.draw(batch, toastMsg, (1280 / 2) - (g.width / 2), toastY + 32 + g.height / 2);
+			toastTimer -= delta;
 		}
 	}
 	
@@ -440,5 +470,13 @@ public class Menu {
 	
 	public boolean isOnRoot() {
 		return mode == Mode.MAINMENU;
+	}
+	
+	//////////////////
+	
+	public void showMsgToast(String msg) {
+		toastMsg = msg;
+		toastTimer = 8.0f;
+		toastBG.setRegion(0, 0, 900, 64);
 	}
 }

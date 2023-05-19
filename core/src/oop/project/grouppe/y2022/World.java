@@ -521,11 +521,9 @@ public class World {
 		generator = new PrefabDungeonGenerator();
 		generator.startGenerateInstant();
 		
-		if (myClient.isServer()) {
-			currentMapspawnPoint[0] = generator.getSpawnPoints()[0].x;
-			currentMapspawnPoint[1] = generator.getSpawnPoints()[0].y;
-			serverReadyArea = generator.getEntranceRect();
-		}
+		currentMapspawnPoint[0] = generator.getSpawnPoints()[0].x;
+		currentMapspawnPoint[1] = generator.getSpawnPoints()[0].y;
+		serverReadyArea = generator.getEntranceRect();
 		mapColTiles = generator.getColTiles2DArray();
 		
 		// reteleport players to the spawn point (server) and revive them (both)
@@ -787,6 +785,7 @@ public class World {
 	
 	private void InitGamePost() {
 		frameProcessed = 0;
+		insideReadyArea = false;
 		
 		// revive all players
 		for (int id : clientCharacters.values()) {
@@ -1311,6 +1310,10 @@ public class World {
 		}
 		
 		feedChat(-5, c.getPlayer().getUsername() + " was killed !", false);
+		
+		if (isDemoWriting()) {
+			demoW.processRecordCharacterDied(frameProcessed, c.getID());
+		}
 	}
 	
 	public void tellCharacterRevive(int netID, int reviverNetID) {
@@ -1331,6 +1334,9 @@ public class World {
 		}
 		
 		feedChat(-6, c.getPlayer().getUsername() + " has been revived by " + r.getPlayer().getUsername() + " !", false);
+		if (isDemoWriting()) {
+			demoW.processRecordCharacterRevived(frameProcessed, c.getID());
+		}
 	}
 	
 	private boolean checkAllDied() {

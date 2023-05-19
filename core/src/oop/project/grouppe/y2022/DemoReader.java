@@ -106,6 +106,22 @@ public class DemoReader implements DemoHandler {
 		world.deleteEntity(entID);
 	}
 	
+	private void readProcessRecordCharacterDied() throws IOException {
+		int entID = demoFileReader.readInt();
+		Entity ent = world.getEntity(entID);
+		if (ent instanceof Character) {
+			ent.die();
+		}
+	}
+	
+	private void readProcessRecordCharacterRevived() throws IOException {
+		int entID = demoFileReader.readInt();
+		Entity ent = world.getEntity(entID);
+		if (ent instanceof Character) {
+			ent.revive();
+		}
+	}
+	
 	public boolean initializedForDemoPlaying() {
 		return demoFileName != null;
 	}
@@ -143,6 +159,12 @@ public class DemoReader implements DemoHandler {
 					break;
 				case 4:
 					readProcessRecordEntityDelete();
+					break;
+				case 5:
+					readProcessRecordCharacterDied();
+					break;
+				case 6:
+					readProcessRecordCharacterRevived();
 					break;
 				default:
 					// what ?

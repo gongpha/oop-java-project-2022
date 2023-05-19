@@ -3,12 +3,12 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "D:/oop-java-project-2022/assets/room/corner4.tmx",
+    "activeFile": "prefab1.tsx",
     "expandedProjectPaths": [
-        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room",
-        "D:/Repos/oop-java-project-2022/assets/room",
         "D:/oop-java-project-2022/assets/room",
-        "."
+        ".",
+        "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room",
+        "D:/Repos/oop-java-project-2022/assets/room"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -246,6 +246,14 @@
             "viewCenter": {
                 "x": 126,
                 "y": 126.5
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/grid1.tmx": {
+            "scale": 0.6660657051282051,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 625.3136842105263,
+                "y": 513.4628571428573
             }
         },
         "D:/Repos/oop-java-project-2022/assets/room/hallwayhorizontal.tmx": {
@@ -659,26 +667,8 @@
         "cave_tiles.tsx",
         "dungeon_tiles.tsx",
         "sewer_tiles.tsx",
-        "D:/oop-java-project-2022/assets/room/hallwayvertical2.tmx",
         "demo1.tsx",
-        "D:/oop-java-project-2022/assets/room/leftroom.tmx",
-        "D:/oop-java-project-2022/assets/room/rightroom.tmx",
-        "D:/oop-java-project-2022/assets/room/toproom.tmx",
-        "D:/oop-java-project-2022/assets/room/corner5.tmx",
-        "D:/oop-java-project-2022/assets/room/corner4.tmx",
-        "D:/oop-java-project-2022/assets/room/hallwayvertical.tmx",
-        "D:/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
-        "D:/oop-java-project-2022/assets/room/corner3.tmx",
-        "D:/oop-java-project-2022/assets/room/corner2.tmx",
-        "D:/oop-java-project-2022/assets/room/corner1.tmx",
-        "D:/oop-java-project-2022/assets/room/_entrance.tmx",
-        "prefab1.tsx",
-        "D:/oop-java-project-2022/assets/room/__lobby.tmx",
-        "D:/oop-java-project-2022/assets/room/corner1_2.tmx",
-        "D:/oop-java-project-2022/assets/room/corner2_2.tmx",
-        "D:/oop-java-project-2022/assets/room/corner5_2.tmx",
-        "D:/oop-java-project-2022/assets/room/grid1.tmx",
-        "D:/oop-java-project-2022/assets/room/bigroom1.tmx"
+        "prefab1.tsx"
     ],
     "project": "demo1.tiled-project",
     "property.type": "int",
@@ -686,15 +676,15 @@
         "cave_tiles.tsx",
         "dungeon_tiles.tsx",
         "sewer_tiles.tsx",
-        "D:/oop-java-project-2022/assets/room/hallwayvertical2.tmx",
         "demo1.tsx",
+        "prefab1.tsx",
+        "D:/oop-java-project-2022/assets/room/hallwayvertical2.tmx",
         "D:/oop-java-project-2022/assets/room/leftroom.tmx",
         "D:/oop-java-project-2022/assets/room/rightroom.tmx",
         "D:/oop-java-project-2022/assets/room/toproom.tmx",
         "D:/oop-java-project-2022/assets/room/corner5.tmx",
         "D:/oop-java-project-2022/assets/room/bigroom1.tmx",
-        "D:/oop-java-project-2022/assets/room/grid1.tmx",
-        "D:/oop-java-project-2022/assets/room/corner5_2.tmx"
+        "D:/oop-java-project-2022/assets/room/grid1.tmx"
     ],
     "resizeMap.removeObjects": true,
     "tileset.lastUsedFormat": "tsx",

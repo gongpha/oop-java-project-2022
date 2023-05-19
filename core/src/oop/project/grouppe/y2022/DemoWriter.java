@@ -139,6 +139,28 @@ public class DemoWriter implements DemoHandler {
 			demoWritingFailure(e);
 		}
 	}
+	
+	public void processRecordCharacterDied(int frameProcessed, int entID) {
+		try {
+			demoFileWriter.writeInt(frameProcessed);
+			demoFileWriter.writeByte(0x05);
+			
+			demoFileWriter.writeInt(entID);
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+	}
+	
+	public void processRecordCharacterRevived(int frameProcessed, int entID) {
+		try {
+			demoFileWriter.writeInt(frameProcessed);
+			demoFileWriter.writeByte(0x06);
+			
+			demoFileWriter.writeInt(entID);
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+	}
 
 	public void finishWriting() {
 		try {

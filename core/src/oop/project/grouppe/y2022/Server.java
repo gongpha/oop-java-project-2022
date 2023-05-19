@@ -41,12 +41,12 @@ public class Server extends Thread {
 		
 		if (world != null && !world.isInLobby()) {
 			// NAH
-			kickClient(client, "the game is starting");
+			kickClient(client, "The game is starting");
 			return;
 		}
 		if (clients.size() == MAX_PLAYER) {
 			// SERVER IS FULL LMAO
-			kickClient(client, "the server is full");
+			kickClient(client, "The server is full");
 			return;
 		}
 		

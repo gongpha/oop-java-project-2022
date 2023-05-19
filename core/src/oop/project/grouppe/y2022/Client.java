@@ -177,6 +177,7 @@ public class Client extends Thread {
 					retries += 1;
 					//console.print("Connecting failed (" + retries + ") : " + e.getMessage());
 					console.print("Connecting failed : " + e.getMessage());
+					disconnectReason = e.getMessage();
 					break;
 					/*
 					if (retries >= 4) {
@@ -278,6 +279,8 @@ public class Client extends Thread {
 				p.setCSenderOrSMySelf(this);
 				if (puppet) p.setCServer(server);
 				p.invoke();
+			} catch (NullPointerException e) {
+				CoreGame.instance().getConsole().printerr("The packet is null");
 			} catch (IOException e) {
 				CoreGame.instance().getConsole().printerr("Cannot invoke packet (" + p.header() + ")" + e.getMessage());
 			}

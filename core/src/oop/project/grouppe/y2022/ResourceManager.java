@@ -51,6 +51,9 @@ public class ResourceManager {
 		preloadTexture("mainmenu_logo", "core/mainmenu_logo.png");
 		preloadTexture("darkness1", "core/darkness1.png");
 		
+		preloadTexture("toastbg", "core/toastbg.png");
+		preloadTexture("toastbgblack", "core/toastbgblack.png");
+		
 		for (String s : Customization.CHARACTERS) {
 			preloadTexture("character__" + s, "character/" + s + ".png");
 		}
@@ -318,7 +321,9 @@ public class ResourceManager {
 	
 	public void dispose() {
 		for (String s : loadedLater) {
-			((Disposable) loaded.get(s)).dispose();
+			Object o = loaded.get(s);
+			if (o == null) continue;
+			((Disposable) o).dispose();
 		}
 		loadedLater.clear();
 		manager.dispose();

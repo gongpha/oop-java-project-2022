@@ -208,6 +208,14 @@ public class ConsoleCommandCore {
 						w.markRecord();
 					}
 				}
+			},
+			new ConsoleCommand("toast") {
+				public void exec(String[] args) {
+					String t = "TEST TEST OOP 123";
+					if (args.length > 1)
+						t = args[1];
+					CoreGame.instance().showMsgToast(t);
+				}
 			}
 			///////////////////////////////////////
 			// ADD YOUR COMMANDS HERE
