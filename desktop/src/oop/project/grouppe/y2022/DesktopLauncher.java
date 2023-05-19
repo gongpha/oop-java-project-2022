@@ -12,7 +12,7 @@ public class DesktopLauncher {
 		config.setTitle("OOP Java Project");
 		
 		// edited by gongpha
-		//config.setResizable(false);
+		config.setResizable(false);
 		config.setWindowedMode(1280, 720);
 		
 		new Lwjgl3Application(new CoreGame(), config);

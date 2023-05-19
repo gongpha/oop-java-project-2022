@@ -70,7 +70,6 @@ public class World {
 	private String currentLevelName = "The Nameless City"; // TODO : remove soon
 	private byte[][] mapColTiles;
 	private final LinkedList<Entity> currentLevelEntities;
-	private static final int PAPERS_LIMIT = 100;
 	
 	private int paperCount;
 	private int collectedPaperCount;
@@ -539,6 +538,7 @@ public class World {
 	}
 	
 	public void generateMap(long seed, int tilesetIndex, int level) {
+		CoreGame.instance().getConsole().print(">> " + seed + " : " + level);
 		atLobby = false;
 		
 		ensureQuadTreeCleaned();
@@ -629,7 +629,6 @@ public class World {
 		
 		int tilesetIndex = new Random().nextInt();
 		p.tilesetIndex = Math.abs(tilesetIndex) % BSPDungeonGenerator.tilesets.length;
-		CoreGame.instance().getConsole().print(">> " + p.seed + " : " + p.tilesetIndex);
 		
 		
 		getMyClient().getServer().broadcast(p);	
@@ -696,7 +695,7 @@ public class World {
 		if (spawns_list.size() < 100)
 			spawns_list_sub = spawns_list;
 		else
-			spawns_list_sub = spawns_list.subList(0, PAPERS_LIMIT);
+			spawns_list_sub = spawns_list.subList(0, 10 + (20 * currentLevel));
 		for (Vector2 v : spawns_list_sub) {
 			Gold m = new Gold();
 			m.setPosition(v.x, v.y);
