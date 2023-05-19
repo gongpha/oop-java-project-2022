@@ -549,7 +549,7 @@ public class World {
 		//Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
 		
 		//generator = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
-		generator = new PrefabDungeonGenerator(seed, 200);
+		generator = new PrefabDungeonGenerator(seed, 10 + level * 20);
 		generator.startGenerate();
 		generateSeed = seed;
 	}

@@ -104,7 +104,7 @@ public class Character extends Entity {
 	};
 	
 	// server side
-	private final float POWER_DURATION = 30.0f;
+	private final float POWER_DURATION = 15.0f;
 	private final float POWER_DURATION_END = 3.0f;
 	private boolean protection = false;
 	public boolean hasProtection() { return protection; }
