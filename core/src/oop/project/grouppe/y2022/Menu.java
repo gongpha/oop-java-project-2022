@@ -228,7 +228,7 @@ public class Menu {
 			((cursor == 0) ? ">> " : " ") + nameInput.getString() + ((caret > 1.0f && cursor == 0) ? "_" : "")
 		), 200, 600);
 		
-		font.draw(batch, "Your character :" + ((cursor == 1) ? " <<" : ""), 200, 500);
+		font.draw(batch, "Your character (" + (selectingCharacterIndex + 1) + "/" + Customization.CHARACTERS.length + ") :" + ((cursor == 1) ? " <<" : ""), 200, 500);
 		batch.draw(selectingCharacterTexture, 200, 300, 512, 128);
 		
 		int Yrela = 0;

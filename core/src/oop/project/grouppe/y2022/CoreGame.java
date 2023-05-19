@@ -98,8 +98,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		infoGraph = new ArrayList<>();
 		
 		pref = Gdx.app.getPreferences("oop.proj.2022.settings");
-		volume = pref.getInteger("volume");
-		musicVolume = pref.getInteger("musicVolume");
+		setVolume(pref.getInteger("volume"));
+		setMusicVolume(pref.getInteger("musicVolume"));
 		
 		Gdx.input.setInputProcessor(this);
 		////////////////////////////////

@@ -161,6 +161,17 @@ public class DemoWriter implements DemoHandler {
 			demoWritingFailure(e);
 		}
 	}
+	
+	public void processRecordSpectateChange(int frameProcessed, int entID) {
+		try {
+			demoFileWriter.writeInt(frameProcessed);
+			demoFileWriter.writeByte(0x07);
+			
+			demoFileWriter.writeInt(entID);
+		} catch (IOException e) {
+			demoWritingFailure(e);
+		}
+	}
 
 	public void finishWriting() {
 		try {

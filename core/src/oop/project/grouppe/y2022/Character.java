@@ -118,12 +118,12 @@ public class Character extends Entity {
 	private int health = 100;
 	
 	private class Power {
-		char powerup;
+		byte powerup;
 		float timer = POWER_DURATION;
 		int regionX;
 		int regionY;
 		boolean aboutToEnd = false;
-		public Power(char powerup) {
+		public Power(byte powerup) {
 			this.powerup = powerup;
 		}
 	}
@@ -352,7 +352,7 @@ public class Character extends Entity {
 			// shaping to the center
 			GlyphLayout layout = new GlyphLayout(labelFont, username);
 			float fontX = getX() + (32.0f - layout.width) / 2;
-			float fontY = getY() + 48.0f;
+			float fontY = getY() + 52.0f;
 			labelFont.setColor(Color.BLACK);
 			labelFont.draw(batch, username, fontX + 1, fontY - 1);
 			labelFont.setColor(isDied() ? Color.RED : Color.GREEN);
@@ -477,7 +477,7 @@ public class Character extends Entity {
 			if (reviving && collideeCharacter.isDied()) {
 				// REVIVES THAT DUDE
 				world.reviveCharacter(collideeCharacter.getPlayer().getNetID(), getPlayer().getNetID());
-				world.addRevingBonus(this);
+				world.addRevivingBonus(this);
 			}
 		}
 	}
@@ -485,7 +485,7 @@ public class Character extends Entity {
 	//////////////////////
 	
 	// server only
-	public void givePower(char powerup) {
+	public void givePower(byte powerup) {
 		Power po = new Power(powerup);
 		powers.add(po);
 		
@@ -524,7 +524,7 @@ public class Character extends Entity {
 	}
 	
 	// called from the server
-	public void updatePowerup(char powerup, char tell, int x, int y) {
+	public void updatePowerup(byte powerup, char tell, int x, int y) {
 		if (!isSpectatee()) return; // not a guy i follow
 		
 		//CoreGame.instance().getConsole().print("!P " + (int)powerup + " " + (int)tell + " " + x + " " + y);
@@ -538,7 +538,7 @@ public class Character extends Entity {
 			regionIcon.setRegion(x, y, 32, 32);
 	}
 	
-	private void powerBegin(char powerup) {
+	private void powerBegin(byte powerup) {
 		String who = "You";
 		if (!isMySelf())
 			who = "They";
@@ -570,7 +570,7 @@ public class Character extends Entity {
 		world.feedChat(-1, c, true);
 	}
 	
-	private void powerAboutToEnd(char powerup) {
+	private void powerAboutToEnd(byte powerup) {
 		//if (!isSpectatee()) return; // not a guy i follow
 		
 		String c = "??? expire ???";
@@ -591,7 +591,7 @@ public class Character extends Entity {
 		world.feedChat(-1, c, true);
 	}
 	
-	private void powerEnd(char powerup) {
+	private void powerEnd(byte powerup) {
 		if (!isMySelf()) return; // not my self. dont care
 		
 		if (powerup == 1) {

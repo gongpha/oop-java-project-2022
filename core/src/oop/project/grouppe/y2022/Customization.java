@@ -4,6 +4,10 @@ public class Customization {
 	public final static String[] CHARACTERS = {
 		"character1",
 		"character2",
+		"character3",
+		"character4",
+		"character5",
+		"character6",
 	};
 	
 	public static final String[][] GHOSTS = {

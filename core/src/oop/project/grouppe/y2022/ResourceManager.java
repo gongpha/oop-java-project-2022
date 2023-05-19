@@ -239,7 +239,7 @@ public class ResourceManager {
 	
 	public synchronized void playSound(String name) {
 		Sound s = ((Sound)ResourceManager.instance().get(name));
-		long i = s.play(CoreGame.instance().getVolumef());
+		long i = s.play(volume);
 		
 		//CoreGame.instance().getConsole().print("Playing sound " + name);
 		PlayingSoundMusic psm = new PlayingSoundMusic();
@@ -251,7 +251,7 @@ public class ResourceManager {
 	public synchronized void playMusic(Music m) {
 		if (!playMusic) return;
 		
-		m.setVolume(CoreGame.instance().getVolumef());
+		m.setVolume(musicVolume);
 		try {
 			m.play();
 		} catch (Exception e) {

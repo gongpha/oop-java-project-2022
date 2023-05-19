@@ -15,7 +15,7 @@ public class Protection extends Item {
 	public boolean playerObtained(Character ch) {
 		// give an effect
 		if (ch.hasProtection()) return false;
-		ch.givePower((char)0);
+		ch.givePower((byte)0);
 
 		return true;
 		//return false;

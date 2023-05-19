@@ -14,7 +14,7 @@ public class Faster extends Item {
 
 	public boolean playerObtained(Character ch) {
 		if (ch.hasFaster()) return false;
-		ch.givePower((char)1);
+		ch.givePower((byte)1);
 		return true;
 	}
 }

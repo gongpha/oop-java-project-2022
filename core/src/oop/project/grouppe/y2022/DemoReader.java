@@ -122,6 +122,11 @@ public class DemoReader implements DemoHandler {
 		}
 	}
 	
+	private void readProcessRecordSpectateChange() throws IOException {
+		int entID = demoFileReader.readInt();
+		world.setSpectatingCharacterByID(entID);
+	}
+	
 	public boolean initializedForDemoPlaying() {
 		return demoFileName != null;
 	}
@@ -165,6 +170,9 @@ public class DemoReader implements DemoHandler {
 					break;
 				case 6:
 					readProcessRecordCharacterRevived();
+					break;
+				case 7:
+					readProcessRecordSpectateChange();
 					break;
 				default:
 					// what ?
