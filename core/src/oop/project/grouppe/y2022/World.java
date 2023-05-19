@@ -18,8 +18,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.FillViewport;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -265,6 +263,7 @@ public class World {
 		frameProcessed = 0;
 
 		// OK !
+		cameraUpdatePos(0.0f, true); // MOVE the camera to align at the center of the screen IMMEDIATELY
 		generateMap(generateSeed, 0, 0); // tileindex 0, level 0. xd
 	}
 	
@@ -899,7 +898,7 @@ public class World {
 			stage.act(delta);
 			stage.draw();
 			
-			cameraUpdatePos(delta);
+			cameraUpdatePos(delta, false);
 
 			batch.begin();
 			batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
@@ -1031,7 +1030,7 @@ public class World {
 		}
 	}
 	
-	private void cameraUpdatePos(float delta) {
+	private void cameraUpdatePos(float delta, boolean noSmooth) {
 		if (generator != null) return; // generating. do not update
 		Character m = myClient.getCharacter();
 		
@@ -1043,7 +1042,7 @@ public class World {
 		}
 		
 		if (followCharacter != null) {
-			if (cameraSmooth) {
+			if (cameraSmooth && !noSmooth) {
 				camera.position.set(
 					new Vector3(camera.position.x, camera.position.y, 0.0f).lerp(
 						new Vector3(followCharacter.getX() + 16.0f, followCharacter.getY() + 16.0f, 0.0f)

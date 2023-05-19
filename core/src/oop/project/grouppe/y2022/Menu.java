@@ -6,6 +6,7 @@ package oop.project.grouppe.y2022;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
@@ -28,6 +29,7 @@ public class Menu {
 	private enum Mode {
 		MAINMENU,
 		CUSTOMIZE,
+		NEXTBOTS,
 		SETTINGS,
 		CREDITS
 	}
@@ -37,6 +39,7 @@ public class Menu {
 	private final static String[][] mainMenuStructure = {
 		{"Host Game",	"mmnu_customize_host"},
 		{"Join Game",	"mmnu_customize_join"},
+		{"Nextbots",	"menu_nextbots"},
 		{"Settings",	"menu_settings"},
 		{"Credits",		"mmnu_credits"},
 		{"Quit",		"quit"},
@@ -65,6 +68,9 @@ public class Menu {
 	private int selectingCharacterIndex = 0;
 	public int getIdent1() { return selectingCharacterIndex; }
 	
+	private Texture nextbotTexture;
+	private int nextbotIndex = 0;
+	
 	private final Preferences pref;
 	
 	// funni box
@@ -74,8 +80,6 @@ public class Menu {
 	
 	boolean showing = false;
 	float alpha = 0.0f; // [0, 1]
-	
-	//private Music bgm;
 	
 	// toast
 	private String toastMsg;
@@ -116,6 +120,8 @@ public class Menu {
 		toastBG = new TextureRegion((Texture) rm.get("toastbg"), 0, 0, 900, 64);
 		toastBGBlack = (Texture) rm.get("toastbgblack");
 		
+		nextbotTexture = null;
+		
 		showAsMainMenu();
 	}
 	
@@ -124,6 +130,19 @@ public class Menu {
 			"character__" + Customization.CHARACTERS[selectingCharacterIndex]
 		);
 		selectingCharacterTexture.setTexture(t);
+		
+	}
+	private void resetSelectingCharacterNextbots() {
+		final String[] ghostData = Customization.GHOSTS[nextbotIndex];
+		Texture t = ResourceManager.instance().loadTexture("character/" + ghostData[0]);
+		
+		ResourceManager.instance().stopAllSoundMusic();
+		Music nextbotMusic = ResourceManager.instance().loadMusic("sound/" + ghostData[1]);
+		if (nextbotMusic != null) {
+			nextbotMusic.setLooping(true);
+			ResourceManager.instance().playMusic(nextbotMusic);
+		}
+		nextbotTexture = t;
 	}
 	
 	public void renderMenu() {
@@ -153,6 +172,9 @@ public class Menu {
 					break;
 				case CUSTOMIZE:
 					renderCustomize();
+					break;
+				case NEXTBOTS:
+					renderNextbots();
 					break;
 				case SETTINGS:
 					renderSettings();
@@ -249,6 +271,13 @@ public class Menu {
 		) + (selecting ? " <<" : ""), 200, 200 + Yrela);
 	}
 	
+	public void renderNextbots() {
+		fontBig.draw(batch, (
+			"<< Nextbot " + (nextbotIndex + 1) + " >>"
+		), 200, 600);
+		batch.draw(nextbotTexture, 400, 150, 256, 256);
+	}
+	
 	public void renderSettings() {		
 		font.draw(batch, (
 			"Master Volume : " + CoreGame.instance().getVolume() + "%" + (cursor == 0 ? " <<" : "")
@@ -268,7 +297,15 @@ public class Menu {
 			font.draw(batch, name[1], 600, 500 + y);
 		}
 		
+		m = Developers.assets;
+		for (int i = 0; i < m.length; i++) {
+			int y = -i * 30;
+			fontDef.draw(batch, m[i][0], 200, 200 + y);
+		}
+		
+		/* OOP BOX */
 		batch.draw(oopBoxTexture, oopBox.x, oopBox.y);
+		
 		
 		oopBox = oopBox.add(oopBoxVec);
 		int w = 1280 - 128;
@@ -308,6 +345,8 @@ public class Menu {
 	public void showMain() {
 		if (mode == Mode.CUSTOMIZE) {
 			saveCustomize();
+		} else if (mode == Mode.NEXTBOTS) {
+			playMainmenuMusic();
 		}
 		mode = Mode.MAINMENU;
 		cursor = prevCursor;
@@ -321,6 +360,12 @@ public class Menu {
 		nameInput.setString(pref.getString("username"));
 		selectingCharacterIndex = pref.getInteger("custom1");
 		resetSelectingCharacter();
+	}
+	public void showNextbotList() {
+		mode = Mode.NEXTBOTS;
+		prevCursor = cursor;
+		cursor = 0;
+		resetSelectingCharacterNextbots();
 	}
 	public void showSettings() {
 		mode = Mode.SETTINGS;
@@ -401,6 +446,18 @@ public class Menu {
 			}
 			
 			break;
+		case NEXTBOTS:
+			structure = new String[][]{{}};
+			int old = nextbotIndex;
+			if (i == Input.Keys.LEFT) {
+				nextbotIndex -= 1;
+			} else if (i == Input.Keys.RIGHT) {
+				nextbotIndex += 1;
+			}
+			nextbotIndex = Math.max(0, Math.min(Customization.GHOSTS.length - 1, nextbotIndex));
+			if (nextbotIndex != old)
+				resetSelectingCharacterNextbots();
+			break;
 
 		case SETTINGS:
 			structure = new String[][]{{}, {}};
@@ -466,6 +523,11 @@ public class Menu {
 	}
 	public void playSoundAdjust() {
 		ResourceManager.instance().playSound("s_menu3");
+	}
+	
+	public void playMainmenuMusic() {
+		ResourceManager.instance().stopAllSoundMusic();
+		ResourceManager.instance().playMusic((Music) ResourceManager.instance().get("m_mainmenu1"));
 	}
 	
 	public boolean isOnRoot() {

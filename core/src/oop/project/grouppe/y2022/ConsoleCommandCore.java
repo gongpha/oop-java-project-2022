@@ -62,6 +62,11 @@ public class ConsoleCommandCore {
 					CoreGame.instance().getMenu().showCustomize(false);
 				}
 			},
+			new ConsoleCommand("menu_nextbots") {
+				public void exec(String[] args) {
+					CoreGame.instance().getMenu().showNextbotList();
+				}
+			},
 			new ConsoleCommand("menu_settings") {
 				public void exec(String[] args) {
 					CoreGame.instance().getMenu().showSettings();
@@ -185,14 +190,18 @@ public class ConsoleCommandCore {
 					}
 				}
 			},
-			/*new ConsoleCommand("forcenext") {
+			new ConsoleCommand("forcenext") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
+						if (!w.getMyClient().isServer()) {
+							getConsole().printerr("This command isn't permitted on clients");
+							return;
+						}
 						w.newLevel();
 					}
 				}
-			},*/
+			},
 			new ConsoleCommand("kill") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();

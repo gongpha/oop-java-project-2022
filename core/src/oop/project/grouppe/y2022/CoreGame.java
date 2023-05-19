@@ -232,7 +232,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		status = Status.PLAYING_DEMO;
 		world = new World("mainmenu.oopdemo");
 		world.startPlayDemo();
-		world.playMusic("m_mainmenu1", true);
+		menu.playMainmenuMusic();
 		if (!world.isDemoReading()) {
 			// cant play ?
 			world.dispose();

@@ -83,13 +83,6 @@ public class ResourceManager {
 		preloadSound("s_menu2", "sound/menu2.wav");
 		preloadSound("s_menu3", "sound/menu3.wav");
 		
-		preloadTexture("ghost1", "character/ghost1.png");
-		preloadTexture("ghost2", "character/ghost2.png");
-		preloadTexture("ghost3", "character/ghost3.png");
-		
-		preloadMusic("m_ghost1", "sound/ghost_idle1.mp3");
-		preloadMusic("m_ghost2", "sound/ghost_idle2.mp3");
-		preloadMusic("m_ghost3", "sound/ghost_idle3.mp3");
 		preloadMusic("m_game_end", "sound/game_end.mp3");
 		preloadMusic("m_lobby", "sound/lobby.mp3");
 		
