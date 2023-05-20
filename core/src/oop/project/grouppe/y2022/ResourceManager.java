@@ -83,13 +83,6 @@ public class ResourceManager {
 		preloadSound("s_menu2", "sound/menu2.wav");
 		preloadSound("s_menu3", "sound/menu3.wav");
 		
-		preloadTexture("ghost1", "character/ghost1.png");
-		preloadTexture("ghost2", "character/ghost2.png");
-		preloadTexture("ghost3", "character/ghost3.png");
-		
-		preloadMusic("m_ghost1", "sound/ghost_idle1.mp3");
-		preloadMusic("m_ghost2", "sound/ghost_idle2.mp3");
-		preloadMusic("m_ghost3", "sound/ghost_idle3.mp3");
 		preloadMusic("m_game_end", "sound/game_end.mp3");
 		preloadMusic("m_lobby", "sound/lobby.mp3");
 		
@@ -239,7 +232,7 @@ public class ResourceManager {
 	
 	public synchronized void playSound(String name) {
 		Sound s = ((Sound)ResourceManager.instance().get(name));
-		long i = s.play(CoreGame.instance().getVolumef());
+		long i = s.play(volume);
 		
 		//CoreGame.instance().getConsole().print("Playing sound " + name);
 		PlayingSoundMusic psm = new PlayingSoundMusic();
@@ -251,7 +244,7 @@ public class ResourceManager {
 	public synchronized void playMusic(Music m) {
 		if (!playMusic) return;
 		
-		m.setVolume(CoreGame.instance().getVolumef());
+		m.setVolume(musicVolume);
 		try {
 			m.play();
 		} catch (Exception e) {

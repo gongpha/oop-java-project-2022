@@ -98,8 +98,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		infoGraph = new ArrayList<>();
 		
 		pref = Gdx.app.getPreferences("oop.proj.2022.settings");
-		volume = pref.getInteger("volume");
-		musicVolume = pref.getInteger("musicVolume");
+		setVolume(pref.getInteger("volume"));
+		setMusicVolume(pref.getInteger("musicVolume"));
 		
 		Gdx.input.setInputProcessor(this);
 		////////////////////////////////
@@ -232,7 +232,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		status = Status.PLAYING_DEMO;
 		world = new World("mainmenu.oopdemo");
 		world.startPlayDemo();
-		world.playMusic("m_mainmenu1", true);
+		menu.playMainmenuMusic();
 		if (!world.isDemoReading()) {
 			// cant play ?
 			world.dispose();

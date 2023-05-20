@@ -528,7 +528,7 @@ public abstract class Packet {
 		// 0 = protecc
 		// 1 = faster
 		// . = MORE SOON !
-		char powerup;
+		byte powerup;
 		
 		// 0 = begin
 		// 1 = about to end
@@ -541,14 +541,14 @@ public abstract class Packet {
 		
 		public void write(DataOutputStream s) throws IOException {
 			s.writeInt(target.getPlayer().getNetID());
-			s.writeChar(powerup);
+			s.writeByte(powerup);
 			s.writeChar(tell);
 			s.writeInt(x);
 			s.writeInt(y);
 		}
 		public void read(DataInputStream s) throws IOException {
 			int netID = s.readInt();
-			powerup = s.readChar();
+			powerup = s.readByte();
 			tell = s.readChar();
 			x = s.readInt();
 			y = s.readInt();
@@ -669,6 +669,35 @@ public abstract class Packet {
 				case 2 :
 					enabled = ch.toggleNoTarget();
 					name = "No Target mode (always invisible)";
+					break;
+				case 3 :
+					world.setCollectedPaperCount(ch, 666);
+					name = "Force win (666 golds)";
+					break;
+				case 4 :
+					world.killCharacter(ch.getPlayer().getNetID());
+					name = "KYS";
+					break;
+				case 5 :
+					world.reviveCharacter(ch.getPlayer().getNetID(), ch.getPlayer().getNetID());
+					name = "REVIVE";
+					break;
+				/////////////////////
+				case 100 :
+					ch.givePower((byte)0);
+					name = "Power (Protection)";
+					break;
+				case 101 :
+					ch.givePower((byte)1);
+					name = "Power (Faster)";
+					break;
+				case 102 :
+					ch.givePower((byte)2);
+					name = "Power (Invisible)";
+					break;
+				case 103 :
+					ch.givePower((byte)3);
+					name = "Power (Angel)";
 					break;
 			}
 			

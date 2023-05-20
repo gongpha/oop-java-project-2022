@@ -62,6 +62,11 @@ public class ConsoleCommandCore {
 					CoreGame.instance().getMenu().showCustomize(false);
 				}
 			},
+			new ConsoleCommand("menu_nextbots") {
+				public void exec(String[] args) {
+					CoreGame.instance().getMenu().showNextbotList();
+				}
+			},
 			new ConsoleCommand("menu_settings") {
 				public void exec(String[] args) {
 					CoreGame.instance().getMenu().showSettings();
@@ -181,7 +186,7 @@ public class ConsoleCommandCore {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
-						w.dForceWin();
+						w.tellToggleCheat(3);
 					}
 				}
 			},
@@ -189,6 +194,10 @@ public class ConsoleCommandCore {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
+						if (!w.getMyClient().isServer()) {
+							getConsole().printerr("This command isn't permitted on clients");
+							return;
+						}
 						w.newLevel();
 					}
 				}
@@ -197,7 +206,47 @@ public class ConsoleCommandCore {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
-						w.killCharacter(w.getMyClient().getMyPlayer().getNetID());
+						w.tellToggleCheat(4);
+					}
+				}
+			},
+			new ConsoleCommand("revive") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.tellToggleCheat(5);
+					}
+				}
+			},
+			new ConsoleCommand("power_protect") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.tellToggleCheat(100);
+					}
+				}
+			},
+			new ConsoleCommand("power_faster") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.tellToggleCheat(101);
+					}
+				}
+			},
+			new ConsoleCommand("power_invisible") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.tellToggleCheat(102);
+					}
+				}
+			},
+			new ConsoleCommand("power_angel") {
+				public void exec(String[] args) {
+					World w = CoreGame.instance().getWorld();
+					if (w != null) {
+						w.tellToggleCheat(103);
 					}
 				}
 			},

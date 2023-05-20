@@ -18,8 +18,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.FillViewport;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -70,7 +68,6 @@ public class World {
 	private String currentLevelName = "The Nameless City"; // TODO : remove soon
 	private byte[][] mapColTiles;
 	private final LinkedList<Entity> currentLevelEntities;
-	private static final int PAPERS_LIMIT = 100;
 	
 	private int paperCount;
 	private int collectedPaperCount;
@@ -266,6 +263,7 @@ public class World {
 		frameProcessed = 0;
 
 		// OK !
+		cameraUpdatePos(0.0f, true); // MOVE the camera to align at the center of the screen IMMEDIATELY
 		generateMap(generateSeed, 0, 0); // tileindex 0, level 0. xd
 	}
 	
@@ -277,6 +275,15 @@ public class World {
 		// returns the character that the camera is currently following
 		// it never returns null !
 		return spectatingCharacter == null ? myClient.getCharacter() : spectatingCharacter;
+	}
+	
+	public void setSpectatingCharacterByID(int entID) {
+		if (entID < 0) {
+			spectatingCharacter = null;
+			return;
+		}
+		Entity ent = getEntity(entID);
+		spectatingCharacter = (Character) ent;
 	}
 	
 	public void setLevelName(String name) {
@@ -320,7 +327,7 @@ public class World {
 	}
 	
 	// serverside, PUNYA of Workpoint's BONUS (reviving)
-	public void addRevingBonus(Character ch) {
+	public void addRevivingBonus(Character ch) {
 		Server s = getMyClient().getServer();
 		Player p = ch.getPlayer();
 		
@@ -348,11 +355,14 @@ public class World {
 			}
 		});
 		
-		feedChat(-3,
-			p.getUsername() + " collected a gold. (" + collectedPaperCount + "/" + paperCount + ")"
-		, netID == getMyClient().getMyPlayer().getNetID());
+		// do not send the message if nothing changes
+		if (currentPaperCount != -1) {
+			feedChat(-3,
+				p.getUsername() + " collected a gold. (" + collectedPaperCount + "/" + paperCount + ")"
+			, netID == getMyClient().getMyPlayer().getNetID());
 		
-		checkPaperCount();
+			checkPaperCount();
+		}
 	}
 	
 	public void checkPaperCount() {
@@ -539,6 +549,7 @@ public class World {
 	}
 	
 	public void generateMap(long seed, int tilesetIndex, int level) {
+		CoreGame.instance().getConsole().print(">> " + seed + " : " + level);
 		atLobby = false;
 		
 		ensureQuadTreeCleaned();
@@ -549,7 +560,7 @@ public class World {
 		//Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
 		
 		//generator = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
-		generator = new PrefabDungeonGenerator(seed, 200);
+		generator = new PrefabDungeonGenerator(seed, 10 + level * 20);
 		generator.startGenerate();
 		generateSeed = seed;
 	}
@@ -629,7 +640,6 @@ public class World {
 		
 		int tilesetIndex = new Random().nextInt();
 		p.tilesetIndex = Math.abs(tilesetIndex) % BSPDungeonGenerator.tilesets.length;
-		CoreGame.instance().getConsole().print(">> " + p.seed + " : " + p.tilesetIndex);
 		
 		
 		getMyClient().getServer().broadcast(p);	
@@ -689,14 +699,15 @@ public class World {
 		LinkedList<Item> items = new LinkedList<>();
 
 		// papers (golds)
+		int paperMaxCount = 10 + (20 * currentLevel);
 		Vector2[] spawns = generator.getPaperSpawns();
 		ArrayList<Vector2> spawns_list = new ArrayList<Vector2>(Arrays.asList(spawns));
 		Collections.shuffle(spawns_list, rand);
 		List<Vector2> spawns_list_sub;
-		if (spawns_list.size() < 100)
+		if (spawns_list.size() < paperMaxCount)
 			spawns_list_sub = spawns_list;
 		else
-			spawns_list_sub = spawns_list.subList(0, PAPERS_LIMIT);
+			spawns_list_sub = spawns_list.subList(0, paperMaxCount);
 		for (Vector2 v : spawns_list_sub) {
 			Gold m = new Gold();
 			m.setPosition(v.x, v.y);
@@ -887,7 +898,7 @@ public class World {
 			stage.act(delta);
 			stage.draw();
 			
-			cameraUpdatePos(delta);
+			cameraUpdatePos(delta, false);
 
 			batch.begin();
 			batch.draw(overlay, 0.0f, 0.0f); // draw the darkness 0_0
@@ -1019,7 +1030,7 @@ public class World {
 		}
 	}
 	
-	private void cameraUpdatePos(float delta) {
+	private void cameraUpdatePos(float delta, boolean noSmooth) {
 		if (generator != null) return; // generating. do not update
 		Character m = myClient.getCharacter();
 		
@@ -1031,7 +1042,7 @@ public class World {
 		}
 		
 		if (followCharacter != null) {
-			if (cameraSmooth) {
+			if (cameraSmooth && !noSmooth) {
 				camera.position.set(
 					new Vector3(camera.position.x, camera.position.y, 0.0f).lerp(
 						new Vector3(followCharacter.getX() + 16.0f, followCharacter.getY() + 16.0f, 0.0f)
@@ -1194,7 +1205,8 @@ public class World {
 	
 	public void tellCharacterLeave(Player player) {
 		feedChat(-1, player.getUsername() + " left the game", false);
-		checkPlayersEntrance();
+		if (getMyClient().isServer())
+			checkAllPlayerDied();
 	}
 	
 	// server only
@@ -1230,14 +1242,6 @@ public class World {
 		if (paperCount < collectedPaperCount) return false; // nah
 		
 		return false;
-	}
-	
-	public void dForceWin() {
-		if (!getMyClient().isServer()) {
-			CoreGame.instance().getConsole().printerr("This command isn't permitted on clients");
-			return;
-		}
-		setCollectedPaperCount(getMyClient().getCharacter(), 666);
 	}
 	
 	/////////////////////////////////
@@ -1287,18 +1291,24 @@ public class World {
 		getMyClient().getServer().broadcast(p);
 	}
 	
+	private boolean checkAllPlayerDied() {
+		if (!checkPlayersEntrance() && checkAllDied()) {
+			// end game
+			Packet.SGameEnd p = new Packet.SGameEnd();
+			myClient.getServer().broadcast(p);
+			return true;
+		}
+		return false;
+	}
+	
 	public void tellCharacterDied(int netID) {
 		Character c = getCharacterByNetID(netID);
+		if (c.isDied()) return; // already ded
 		c.die();
 		
 		Server s = myClient.getServer();
 		if (s != null) {
-			if (!checkPlayersEntrance() && checkAllDied()) {
-				// end game
-				Packet.SGameEnd p = new Packet.SGameEnd();
-				s.broadcast(p);
-				return;
-			}
+			if (checkAllPlayerDied()) return;
 			pendingPlayer.add(netID); // pretending the dead players are already standing at the entrance
 		}
 		
@@ -1320,6 +1330,7 @@ public class World {
 		if (gameEnd) return; // TOO LATE LMAO
 		Character c = getCharacterByNetID(netID);
 		Character r = getCharacterByNetID(reviverNetID);
+		if (!c.isDied()) return; // still alive (not that Portal song)
 		c.revive();
 		
 		Server s = myClient.getServer();
@@ -1331,6 +1342,10 @@ public class World {
 			// OH MY GOODNESS U ALIVE
 			CoreGame.instance().getConsole().print("I'M ALIVE.");
 			spectatingCharacter = null; // stop spectating
+			spectatingDelayStarting = false; // stop delaying if it was started
+			if (isDemoWriting()) {
+				demoW.processRecordSpectateChange(frameProcessed, -1);
+			}
 		}
 		
 		feedChat(-6, c.getPlayer().getUsername() + " has been revived by " + r.getPlayer().getUsername() + " !", false);
@@ -1390,6 +1405,11 @@ public class World {
 			}
 			break;
 		}
+		
+		if (isDemoWriting()) {
+			demoW.processRecordSpectateChange(frameProcessed, spectatingCharacter.getID());
+		}
+		
 	}
 	
 	public void toggleSpectate() {
@@ -1397,6 +1417,9 @@ public class World {
 			spectate(0);
 		} else {
 			spectatingCharacter = null;
+			if (isDemoWriting()) {
+				demoW.processRecordSpectateChange(frameProcessed, -1);
+			}
 		}
 	}
 	

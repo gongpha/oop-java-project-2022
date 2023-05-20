@@ -453,6 +453,11 @@ public class PrefabDungeonGenerator extends Thread implements DungeonGenerator {
 			}
 		}
 		
+		// put barriers to all pending doors
+		if (!pendingDoors.isEmpty()) {
+			toPutBarriers.addAll(pendingDoors);
+		}
+		
 		if (!toPutBarriers.isEmpty()) {
 			// deadend hallways
 			TiledMapTileLayer barrierLayer = new TiledMapTileLayer(boundX, boundY, 32, 32);

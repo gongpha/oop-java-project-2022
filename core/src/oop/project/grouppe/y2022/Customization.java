@@ -4,6 +4,10 @@ public class Customization {
 	public final static String[] CHARACTERS = {
 		"character1",
 		"character2",
+		"character3",
+		"character4",
+		"character5",
+		"character6",
 	};
 	
 	public static final String[][] GHOSTS = {
@@ -12,7 +16,10 @@ public class Customization {
 		{"ghost3.png", "ghost_idle3.mp3"},
 		{"ghost4.png", "ghost_idle4.mp3"},
 		{"ghost5.png", "ghost_idle5.mp3"},
-		{"ghost6.png", "ghost_idle6.mp3"}
+		{"ghost6.png", "ghost_idle6.mp3"},
+		
+		{"ghost7.png", "ghost_idle7.mp3"},
+		{"ghost8.png", "ghost_idle8.mp3"}
 	};
 	
 	public static final String[] ROOMS = new String[] {
