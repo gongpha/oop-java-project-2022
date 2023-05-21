@@ -317,6 +317,7 @@ public class HUD {
 		if (chatMode) {
 			chatMode = false;
 			chatModeReady = false;
+			chatText.setString("");
 			return true; // editing the chat text. then close
 		}
 		return false;

@@ -877,6 +877,7 @@ public class World {
 		if (!isDemoReading()) {
 			if (markInit) {
 				returnToLobby();
+				feedChat(-1, "Press T to enter the chat mode !", false);
 				markInit = false;
 				ready = true;
 			}
@@ -1223,7 +1224,7 @@ public class World {
 	public void updateAtTheEntrance(int netID, boolean yes) {
 		if (generator != null) return; // generating
 		
-		Integer i = Integer.valueOf(netID);
+		Integer i = netID;
 		if (yes) {
 			pendingPlayer.add(i);
 		} else {
