@@ -3,12 +3,12 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "D:/oop-java-project-2022/assets/room/corner2_2.tmx",
+    "activeFile": "D:/Repos/oop-java-project-2022/assets/room/bigroom1.tmx",
     "expandedProjectPaths": [
-        "D:/oop-java-project-2022/assets/room",
         "D:/Repos/oop-java-project-2022/assets/room",
         "C:/Users/gunku/OneDrive/Documents/Codings/Java/oop-java-project-2022/assets/room",
-        "."
+        ".",
+        "D:/oop-java-project-2022/assets/room"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -175,6 +175,14 @@
                 "y": 594
             }
         },
+        "D:/Repos/oop-java-project-2022/assets/room/bigroom1.tmx": {
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 675.75,
+                "y": 416
+            }
+        },
         "D:/Repos/oop-java-project-2022/assets/room/centerroom.tmx": {
             "expandedObjectLayers": [
                 4,
@@ -252,7 +260,7 @@
             "scale": 0.6660657051282051,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 625.3136842105263,
+                "x": 623.8123308270677,
                 "y": 513.4628571428573
             }
         },
@@ -280,16 +288,24 @@
                 "y": 128.09063016285108
             }
         },
+        "D:/Repos/oop-java-project-2022/assets/room/hallwayvertical2.tmx": {
+            "scale": 0.8275390625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 224.1586027849894,
+                "y": 512.3625206514043
+            }
+        },
         "D:/Repos/oop-java-project-2022/assets/room/leftroom.tmx": {
             "expandedObjectLayers": [
-                3,
-                2
+                2,
+                3
             ],
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 125,
-                "y": 125
+                "x": 124.75,
+                "y": 124.5
             }
         },
         "D:/Repos/oop-java-project-2022/assets/room/rightroom.tmx": {
@@ -302,6 +318,14 @@
             "viewCenter": {
                 "x": 272,
                 "y": 291
+            }
+        },
+        "D:/Repos/oop-java-project-2022/assets/room/toproom.tmx": {
+            "scale": 0.9620949074074073,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 432.9094736842105,
+                "y": 352.3560902255639
             }
         },
         "D:/oop-java-project-2022/assets/room/__lobby.tmx": {
@@ -672,24 +696,11 @@
         "sewer_tiles.tsx",
         "demo1.tsx",
         "prefab1.tsx",
-        "D:/oop-java-project-2022/assets/room/hallwayvertical2.tmx",
-        "D:/oop-java-project-2022/assets/room/rightroom.tmx",
-        "D:/oop-java-project-2022/assets/room/hallwayvertical.tmx",
-        "D:/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
-        "D:/oop-java-project-2022/assets/room/grid1.tmx",
-        "D:/oop-java-project-2022/assets/room/bigroom1.tmx",
-        "D:/oop-java-project-2022/assets/room/_entrance.tmx",
-        "D:/oop-java-project-2022/assets/room/corner1.tmx",
-        "D:/oop-java-project-2022/assets/room/corner1_2.tmx",
-        "D:/oop-java-project-2022/assets/room/corner2.tmx",
-        "D:/oop-java-project-2022/assets/room/corner2_2.tmx",
-        "D:/oop-java-project-2022/assets/room/corner3.tmx",
-        "D:/oop-java-project-2022/assets/room/corner5_2.tmx",
-        "D:/oop-java-project-2022/assets/room/leftroom.tmx",
-        "D:/oop-java-project-2022/assets/room/corner5.tmx",
-        "D:/oop-java-project-2022/assets/room/corner4.tmx",
-        "D:/oop-java-project-2022/assets/room/toproom.tmx",
-        "D:/oop-java-project-2022/assets/room/__lobby.tmx"
+        "D:/Repos/oop-java-project-2022/assets/room/grid1.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/toproom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/leftroom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/hallwayvertical2.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/bigroom1.tmx"
     ],
     "project": "demo1.tiled-project",
     "property.type": "int",
@@ -699,13 +710,13 @@
         "sewer_tiles.tsx",
         "demo1.tsx",
         "prefab1.tsx",
+        "D:/Repos/oop-java-project-2022/assets/room/grid1.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/toproom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/leftroom.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/hallwayvertical2.tmx",
+        "D:/Repos/oop-java-project-2022/assets/room/bigroom1.tmx",
         "D:/oop-java-project-2022/assets/room/hallwayvertical2.tmx",
-        "D:/oop-java-project-2022/assets/room/rightroom.tmx",
-        "D:/oop-java-project-2022/assets/room/hallwayvertical.tmx",
-        "D:/oop-java-project-2022/assets/room/hallwayhorizontal.tmx",
-        "D:/oop-java-project-2022/assets/room/grid1.tmx",
-        "D:/oop-java-project-2022/assets/room/bigroom1.tmx",
-        "D:/oop-java-project-2022/assets/room/_entrance.tmx"
+        "D:/oop-java-project-2022/assets/room/rightroom.tmx"
     ],
     "resizeMap.removeObjects": true,
     "tileset.lastUsedFormat": "tsx",
