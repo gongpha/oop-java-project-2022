@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.1" orientation="orthogonal" renderorder="right-down" width="24" height="17" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="9">
+<map version="1.10" tiledversion="1.10.1" orientation="orthogonal" renderorder="right-down" width="24" height="17" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="12">
  <tileset firstgid="1" source="../tileset/prefab1.tsx"/>
  <tileset firstgid="33" source="../tileset/dungeon_tiles.tsx"/>
  <tileset firstgid="585" source="../tileset/sewer_tiles.tsx"/>
@@ -80,7 +80,16 @@
   </object>
  </objectgroup>
  <objectgroup color="#000000" id="4" name="ENEMIES">
-  <object id="5" x="96" y="128">
+  <object id="5" x="160" y="192">
+   <point/>
+  </object>
+  <object id="9" x="384" y="160">
+   <point/>
+  </object>
+  <object id="10" x="128" y="320">
+   <point/>
+  </object>
+  <object id="11" x="576" y="160">
    <point/>
   </object>
  </objectgroup>

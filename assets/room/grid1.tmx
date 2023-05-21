@@ -191,22 +191,22 @@
   </object>
  </objectgroup>
  <objectgroup color="#000000" id="8" name="ENEMIES">
-  <object id="30" x="992" y="672">
+  <object id="30" x="1216" y="864">
    <point/>
   </object>
-  <object id="31" x="704" y="640">
+  <object id="31" x="704" y="608">
    <point/>
   </object>
-  <object id="32" x="448" y="448">
+  <object id="32" x="416" y="416">
    <point/>
   </object>
-  <object id="33" x="1280" y="320">
+  <object id="33" x="1248" y="544">
    <point/>
   </object>
   <object id="34" x="1248" y="1088">
    <point/>
   </object>
-  <object id="35" x="896" y="1184">
+  <object id="35" x="896" y="1120">
    <point/>
   </object>
   <object id="36" x="448" y="992">
