@@ -57,6 +57,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	private boolean drawShowinfo = false;
 	private BitmapFont infoFont;
+	private BitmapFont fontDef;
 	private ArrayList<Integer> infoGraph;
 	private int graphFrame = 0;
 	private ShapeRenderer graphShapeRenderer;
@@ -130,6 +131,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	private void startGame() {
 		connectingTexture = (Texture) rman.get("connecting");
 		mainmenuTexture = (Texture) rman.get("mainmenu");
+		fontDef = (BitmapFont) rman.get("menu_font");
 		
 		menu = new Menu();
 		
@@ -333,8 +335,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 				connectOK = false;
 			}
 			batch.draw(connectingTexture, 0, 0);
-			console.getFont().setColor(Color.BLACK);
-			console.getFont().draw(batch, "Connecting to " + connectingIP, 60, 600);
+			fontDef.setColor(Color.WHITE);
+			fontDef.draw(batch, "Connecting to " + connectingIP, 60, 600);
 			break;
 		}
 		
