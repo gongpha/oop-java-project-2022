@@ -11,6 +11,8 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,11 +53,11 @@ public class Console {
 			this.color = color;
 		}
 	}
-	ArrayList<Line> lines;
+	private LinkedList<Line> lines;
 	
 	public Console() {
 		game = CoreGame.instance();
-		lines = new ArrayList<>();
+		lines = new LinkedList<>();
 		history = new ArrayList<>();
 		textInput = new TextInput();
 		sep = new Texture("core/sep.png");
@@ -118,7 +120,11 @@ public class Console {
 		// caret
 		drawCaret += delta;
 		if (drawCaret >= 2.0f) drawCaret = 0.0f;
-		
+
+		while (lines.size() > 30) {
+			lines.pollFirst();
+		}
+
 		for (int i = 0; i < lines.size(); i++) {
 			float drawY = ((lines.size() - i - 1) * 24) + relativeY;
 			if (drawY > 720) continue; // off screen
