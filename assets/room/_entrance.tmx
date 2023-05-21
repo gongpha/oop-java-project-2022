@@ -257,16 +257,10 @@
   </object>
  </objectgroup>
  <objectgroup color="#ff55ff" id="7" name="MEDKITS">
-  <object id="31" x="416" y="1376">
+  <object id="31" x="416" y="320">
    <point/>
   </object>
-  <object id="46" x="416" y="1600">
-   <point/>
-  </object>
-  <object id="47" x="384" y="736">
-   <point/>
-  </object>
-  <object id="48" x="416" y="928">
+  <object id="46" x="416" y="1984">
    <point/>
   </object>
  </objectgroup>

@@ -63,19 +63,19 @@
   </object>
  </objectgroup>
  <objectgroup color="#00ff00" id="3" name="PAPERS">
-  <object id="3" x="320" y="128">
+  <object id="3" x="320" y="160">
    <point/>
   </object>
-  <object id="4" x="160" y="160">
+  <object id="4" x="160" y="224">
    <point/>
   </object>
   <object id="6" x="128" y="384">
    <point/>
   </object>
-  <object id="7" x="608" y="128">
+  <object id="7" x="608" y="160">
    <point/>
   </object>
-  <object id="8" x="448" y="160">
+  <object id="8" x="448" y="192">
    <point/>
   </object>
  </objectgroup>
