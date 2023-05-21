@@ -123,7 +123,9 @@ public class Nextbot extends Entity {
 						// KILL
 						if (!walkingTo.hasProtection()) {
 							getWorld().healCharacter(walkingTo, -25);
-							getWorld().playSound("s_hit");
+							Packet.SPlayHitSound p = new Packet.SPlayHitSound();
+							// play the sound remotely
+							getWorld().getMyClient().getServer().getClient(walkingTo.getPlayer().getNetID()).send(p);
 							hitDelay = 0.25f;
 						}
 					}

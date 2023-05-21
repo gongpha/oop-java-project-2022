@@ -22,6 +22,11 @@ public class Medkit extends Item {
 		Packet.SMedkitCollected p = new Packet.SMedkitCollected();
 		p.hp = 15;
 		getWorld().getMyClient().getServer().getClient(ch.getPlayer().getNetID()).send(p);
+		
+		// tell new health
+		Packet.SEntUpdateHealth pp = new Packet.SEntUpdateHealth();
+		pp.netID = ch.getPlayer().getNetID();
+		pp.newHealth = ch.getHealth();
 
 		return true;
 	}

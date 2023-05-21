@@ -77,6 +77,7 @@ public abstract class Packet {
 		regPacket(SReturnToLobby.class);
 		regPacket(SMedkitCollected.class);
 		regPacket(CCheatToggle.class);
+		regPacket(SPlayHitSound.class);
 	}
 	
 	public static Class getPacketFromHeader(int header) {
@@ -704,6 +705,15 @@ public abstract class Packet {
 			if (enabled)
 				// announce
 				world.submitChat(-2, ch.getPlayer().getUsername() + " has used a cheat ! : " + name);
+		}
+	}
+	
+	public static class SPlayHitSound extends Packet {
+		public int header() { return 25; }
+		
+		public void write(DataOutputStream s) throws IOException {}
+		public void read(DataInputStream s) throws IOException {
+			world.playSound("s_hit");
 		}
 	}
 }
