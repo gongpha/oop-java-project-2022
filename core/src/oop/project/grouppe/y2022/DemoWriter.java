@@ -31,6 +31,7 @@ public class DemoWriter implements DemoHandler {
 
 			// seed
 			demoFileWriter.writeLong(world.getGameSeed());
+			demoFileWriter.writeInt(world.getCurrentLevelNumber());
 
 			demoWriteAllEntityInfos();
 			demoWritePlayerInfos();

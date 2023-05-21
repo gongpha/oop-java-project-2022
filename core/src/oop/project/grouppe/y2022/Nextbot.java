@@ -134,7 +134,7 @@ public class Nextbot extends Entity {
 				walkingTo = null;
 			}
 		}
-		if (findDelay > 0.125f) {
+		if (findDelay > 0.2f) {
 			// looking for characters (player entities)
 			
 			Character nearest = null;

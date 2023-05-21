@@ -19,7 +19,8 @@ public class Customization {
 		{"ghost6.png", "ghost_idle6.mp3"},
 		
 		{"ghost7.png", "ghost_idle7.mp3"},
-		{"ghost8.png", "ghost_idle8.mp3"}
+		{"ghost8.png", "ghost_idle8.mp3"},
+		{"ghost9.png", "ghost_idle9.mp3"}
 	};
 	
 	public static final String[] ROOMS = new String[] {

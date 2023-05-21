@@ -213,6 +213,7 @@ public class World {
 	
 	public void initWorldFromDemoFile(DataInputStream dis) throws IOException {
 		generateSeed = dis.readLong();
+		currentLevel = dis.readInt();
 		
 		// read all entities
 		int count = dis.readInt();
@@ -264,7 +265,7 @@ public class World {
 
 		// OK !
 		cameraUpdatePos(0.0f, true); // MOVE the camera to align at the center of the screen IMMEDIATELY
-		generateMap(generateSeed, 0, 0); // tileindex 0, level 0. xd
+		generateMap(generateSeed, 0, currentLevel); // tileindex 0, xd
 	}
 	
 	public boolean isSpectating() {
@@ -560,7 +561,7 @@ public class World {
 		//Texture texture = (Texture) ResourceManager.instance().get("tileset__" + BSPDungeonGenerator.tilesets[tilesetIndex]);
 		
 		//generator = new BSPDungeonGenerator(seed, DUNX, DUNY, DUNS, texture);
-		generator = new PrefabDungeonGenerator(seed, 10 + level * 20);
+		generator = new PrefabDungeonGenerator(seed, Math.min(10 + level * 20, 150)); // max 150
 		generator.startGenerate();
 		generateSeed = seed;
 	}
@@ -638,8 +639,8 @@ public class World {
 			pendingPlayer.add(e.getKey());
 		}
 		
-		int tilesetIndex = new Random().nextInt();
-		p.tilesetIndex = Math.abs(tilesetIndex) % BSPDungeonGenerator.tilesets.length;
+		//int tilesetIndex = new Random().nextInt();
+		//p.tilesetIndex = Math.abs(tilesetIndex) % BSPDungeonGenerator.tilesets.length;
 		
 		
 		getMyClient().getServer().broadcast(p);	
@@ -667,6 +668,7 @@ public class World {
 		// create objects
 
 		int ghostNumber = (int)(currentLevel / 3) + 1;
+		ghostNumber = Math.min(Customization.GHOSTS.length, ghostNumber); // limit the count
 		
 		Random rand = new Random();
 		rand.setSeed(generator.getSeed());
@@ -682,8 +684,16 @@ public class World {
 		
 		// spawn nextbots
 		Nextbot[] addedGhosts = new Nextbot[ghostNumber];
+		LinkedList<Integer> usedIndex = new LinkedList<>();
+		
 		for (int i = 0; i < ghostNumber; i++) {
-			int ghostIndex = (int)(Math.abs(rand.nextInt()) % Customization.GHOSTS.length);
+			int ghostIndex = 0;
+			while (true) {
+				ghostIndex = (int)(Math.abs(rand.nextInt()) % Customization.GHOSTS.length);
+				if (usedIndex.contains(ghostIndex)) continue;
+				usedIndex.add(ghostIndex);
+				break;
+			}
 			Nextbot ghost = new Nextbot();
 			ghost.setGhostIndex(ghostIndex);
 			
@@ -699,7 +709,7 @@ public class World {
 		LinkedList<Item> items = new LinkedList<>();
 
 		// papers (golds)
-		int paperMaxCount = 10 + (20 * currentLevel);
+		int paperMaxCount = 20 + (10 * currentLevel);
 		Vector2[] spawns = generator.getPaperSpawns();
 		ArrayList<Vector2> spawns_list = new ArrayList<Vector2>(Arrays.asList(spawns));
 		Collections.shuffle(spawns_list, rand);
@@ -887,7 +897,7 @@ public class World {
 		SpriteBatch batch = CoreGame.instance().getBatch();
 		
 		if (!gameEnd) {
-			pollDungeonGenerator(batch);
+			pollDungeonGenerator();
 			if (!isDemoReading()) {
 				tickTimers(delta);
 				processEntities(delta);
@@ -912,7 +922,7 @@ public class World {
 		batch.end();
 	}
 	
-	private void pollDungeonGenerator(SpriteBatch batch) {
+	private void pollDungeonGenerator() {
 		if (generator != null) {
 			// do not render anything when generating
 			
@@ -1427,6 +1437,10 @@ public class World {
 	
 	public void markRecord() {
 		Console c = CoreGame.instance().getConsole();
+		if (!getMyClient().isServer()) {
+			c.printerr("This command isn't permitted on clients");
+			return;
+		}
 		if (isDemoReading()) {
 			c.print("Cannot record during playback.");
 			return;
