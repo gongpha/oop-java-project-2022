@@ -526,7 +526,7 @@ public class Menu {
 	}
 	
 	public void playMainmenuMusic() {
-		ResourceManager.instance().stopAllSoundMusic();
+		ResourceManager.instance().stopAllMusics();
 		ResourceManager.instance().playMusic((Music) ResourceManager.instance().get("m_mainmenu1"));
 	}
 	

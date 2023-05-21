@@ -510,6 +510,7 @@ public class Character extends Entity {
 			p.x = 96;
 			p.y = 224;
 			reviving = true;
+			po.timer = 40.0f; // 40 secs
 			break;
 		}
 		

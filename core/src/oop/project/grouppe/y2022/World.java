@@ -1208,7 +1208,7 @@ public class World {
 					Packet.CUpdateAtTheEntrance p = new Packet.CUpdateAtTheEntrance();
 					p.yes = insideEntranceArea;
 					getMyClient().send(p);
-					CoreGame.instance().getConsole().print("entr : " + insideEntranceArea);
+					//CoreGame.instance().getConsole().print("entr : " + insideEntranceArea);
 				}
 
 			}

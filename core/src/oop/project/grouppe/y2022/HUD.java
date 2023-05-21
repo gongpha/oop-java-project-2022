@@ -31,7 +31,7 @@ public class HUD {
 	private float chatCaret = 0.0f;
 	private final TextInput chatText;
 	
-	private Texture bspBackgroundTexture = null;
+	//private Texture bspBackgroundTexture = null;
 	
 	private final ArrayList<String[]> ipList;
 	
@@ -48,7 +48,7 @@ public class HUD {
 		hudFont3 = (BitmapFont) ResourceManager.instance().get("character_name_font");
 		hudFont2.getData().markupEnabled = true;
 		
-		bspBackgroundTexture = (Texture) ResourceManager.instance().get("connecting");
+		//bspBackgroundTexture = (Texture) ResourceManager.instance().get("connecting");
 		
 		ipList = new ArrayList<>();
 	}
@@ -56,7 +56,7 @@ public class HUD {
 	public void draw(SpriteBatch batch) {
 		if (world.isGenerating()) {
 			// GENERATING !!! DONT DRAW ANYTHING
-			batch.draw(bspBackgroundTexture, 0.0f, 0.0f, 1280, 720);
+			//batch.draw(bspBackgroundTexture, 0.0f, 0.0f, 1280, 720);
 			hudFont1.draw(batch, "Generating Dungeon . . .", 10.0f, 60.0f);
 		}
 		

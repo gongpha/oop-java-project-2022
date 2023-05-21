@@ -336,6 +336,7 @@ public abstract class Packet {
 			float Y = s.readFloat();
 			
 			ent = world.getEntity(entID);
+			if (ent == null) return;
 			ent.setX(X);
 			ent.setY(Y);
 			//ent.afterPosChange();
@@ -658,7 +659,8 @@ public abstract class Packet {
 			Character ch = getCSenderOrSMySelf().getCharacter();
 			String name = "UNKNOWN CHEAT";
 			boolean enabled = false;
-			switch (s.readInt()) {
+			int type = s.readInt();
+			switch (type) {
 				case 0 :
 					enabled = ch.toggleGod();
 					name = "God mode";
@@ -672,31 +674,38 @@ public abstract class Packet {
 					name = "No Target mode (always invisible)";
 					break;
 				case 3 :
+					enabled = true;
 					world.setCollectedPaperCount(ch, 666);
 					name = "Force win (666 golds)";
 					break;
 				case 4 :
+					enabled = true;
 					world.killCharacter(ch.getPlayer().getNetID());
 					name = "KYS";
 					break;
 				case 5 :
+					enabled = true;
 					world.reviveCharacter(ch.getPlayer().getNetID(), ch.getPlayer().getNetID());
 					name = "REVIVE";
 					break;
 				/////////////////////
 				case 100 :
+					enabled = true;
 					ch.givePower((byte)0);
 					name = "Power (Protection)";
 					break;
 				case 101 :
+					enabled = true;
 					ch.givePower((byte)1);
 					name = "Power (Faster)";
 					break;
 				case 102 :
+					enabled = true;
 					ch.givePower((byte)2);
 					name = "Power (Invisible)";
 					break;
 				case 103 :
+					enabled = true;
 					ch.givePower((byte)3);
 					name = "Power (Angel)";
 					break;

@@ -77,7 +77,7 @@ public class Console {
 		batch = game.getBatch();
 		
 		// register commands
-		commands = new HashMap<String, ConsoleCommand>();
+		commands = new HashMap<>();
 		ConsoleCommand[] cmds = ConsoleCommandCore.regCommands();
 		for (int i = 0; i < cmds.length; i++) {
 			ConsoleCommand cmd = cmds[i];

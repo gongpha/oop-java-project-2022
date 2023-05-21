@@ -279,9 +279,7 @@ public class Client extends Thread {
 				p.setCSenderOrSMySelf(this);
 				if (puppet) p.setCServer(server);
 				p.invoke();
-			} catch (NullPointerException e) {
-				CoreGame.instance().getConsole().printerr("The packet is null");
-			} catch (IOException e) {
+			} catch (Exception e) {
 				CoreGame.instance().getConsole().printerr("Cannot invoke packet (" + p.header() + ")" + e.getMessage());
 			}
 		}

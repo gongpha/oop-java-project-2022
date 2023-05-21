@@ -255,6 +255,7 @@ public class ResourceManager {
 		//CoreGame.instance().getConsole().print("Playing music " + m.toString());
 		PlayingSoundMusic psm = new PlayingSoundMusic();
 		psm.sm = m;
+		m.setVolume(volume * musicVolume);
 		psm.i = -1L;
 		psms.add(psm);
 	}
@@ -295,6 +296,16 @@ public class ResourceManager {
 		}
 		if (remove != null)
 			psms.remove(remove);
+	}
+	
+	public synchronized void stopAllMusics() {
+		for (PlayingSoundMusic psm : psms) {
+			Object o = psm.sm;
+			if (o instanceof Music) {
+				((Music) o).stop();
+			}
+		}
+		psms.clear();
 	}
 	
 	public synchronized void stopAllSoundMusic() {
