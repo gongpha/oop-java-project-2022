@@ -709,7 +709,7 @@ public abstract class Packet {
 	}
 	
 	public static class SPlayHitSound extends Packet {
-		public int header() { return 25; }
+		public int header() { return 26; }
 		
 		public void write(DataOutputStream s) throws IOException {}
 		public void read(DataInputStream s) throws IOException {
