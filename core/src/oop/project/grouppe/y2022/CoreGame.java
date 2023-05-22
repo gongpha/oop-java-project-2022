@@ -8,6 +8,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
@@ -82,9 +83,13 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	
 	private Texture connectingTexture;
 	private Texture mainmenuTexture;
+	private Texture outOfMemTexture;
+	private boolean outOfMem;
 	
 	@Override
 	public void create() {
+		outOfMem = false;
+		outOfMemTexture = new Texture("core/outofmem.jpg");
 		
 		singleton = this;
 		rman = ResourceManager.instance();
@@ -112,13 +117,15 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		
 	}
 	
-	public void killNet() {
+	private void killNet() {
 		if (client != null) {
 			client.kill("Exited the game");
 		}
 		if (server != null) {
 			server.kill();
 		}
+		client = null;
+		server = null;
 	}
 	
 	public void quit() {
@@ -260,9 +267,8 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 	}
 	
 	////////////////////////////////////////////
-
-	@Override
-	public void render () {
+	
+	private void process() {
 		ScreenUtils.clear(0, 0, 0, 1);
 		batch.begin();
 		//batch.draw(img, 0, 0);
@@ -381,6 +387,29 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 		//
 		batch.end();
 	}
+
+	@Override
+	public void render () {
+		if (outOfMem) {
+			if (batch.isDrawing()) batch.end();
+			batch.begin();
+			batch.draw(outOfMemTexture, 0, 0, 1280, 720);
+			batch.end();
+			return;
+		}
+		try {
+			process();
+		} catch (OutOfMemoryError e) {
+			// of course that the out of memory errors cannot always be handled. but IT WORKS EVENTUALLY
+			// yaa haa tham
+			exitWorld();
+			
+			// wtf the memory is dying but you gonna let it play the music ???
+			ResourceManager.instance().stopAllSoundMusic();
+			ResourceManager.instance().playMusic((Music)ResourceManager.instance().get("nokoctave100"), false);
+			outOfMem = true;
+		}
+	}
 	
 	@Override
 	public void dispose () {
@@ -392,6 +421,7 @@ public class CoreGame extends ApplicationAdapter implements InputProcessor {
 			world.dispose();
 			world = null;
 		}
+		outOfMemTexture.dispose();
 	}
 	
 	////////////////////////////////////////////

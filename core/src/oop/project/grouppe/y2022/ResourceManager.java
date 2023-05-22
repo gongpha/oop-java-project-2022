@@ -87,6 +87,7 @@ public class ResourceManager {
 		preloadMusic("m_lobby", "sound/lobby.mp3");
 		
 		preloadMusic("m_mainmenu1", "sound/mainmenu1.mp3");
+		preloadMusic("nokoctave100", "sound/nokoctave100.mp3");
 	}
 	
 	//////////////////////////////////////////////////////////////////
