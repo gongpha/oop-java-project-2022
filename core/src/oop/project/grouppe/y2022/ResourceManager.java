@@ -305,8 +305,8 @@ public class ResourceManager {
 				removeList.add(i);
 			}
 		}
-		for (int i = removeList.size() - 1; i >= 0; i++) {
-			removeList.remove(removeList.get(i));
+		for (int i = removeList.size() - 1; i >= 0; i--) {
+			psms.remove(removeList.get(i).intValue());
 		}
 		removeList.clear(); // gc hater
 	}
