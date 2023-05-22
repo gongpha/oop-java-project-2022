@@ -29,7 +29,9 @@ public class ResourceManager {
 	public static boolean playMusic = true;
 	
 	private float volume = 1.0f;
+	public float getVolume() { return volume; }
 	private float musicVolume = 1.0f;
+	public float getMusicVolume() { return musicVolume; }
 	
 	private String errorMsg = "";
 	
@@ -105,11 +107,7 @@ public class ResourceManager {
 	private HashMap<String, String> map; // < Name : Path >
 	private final HashMap<String, Object> loaded; // < Name : Object >
 	private final ArrayList<String> loadedLater; // via load* methods
-	
-	private class PlayingSoundMusic {
-		Disposable sm;
-		long i;
-	}
+
 	private final ArrayList<PlayingSoundMusic> psms;
 	
 	private float lastProgress = -1.0f;
@@ -236,14 +234,12 @@ public class ResourceManager {
 		long i = s.play(volume);
 		
 		//CoreGame.instance().getConsole().print("Playing sound " + name);
-		PlayingSoundMusic psm = new PlayingSoundMusic();
-		psm.sm = s;
-		psm.i = i;
+		PlayingSoundMusic psm = new PlayingSoundMusic(s, i);
 		psms.add(psm);
 	}
 	
-	public synchronized void playMusic(Music m, boolean loop) {
-		if (!playMusic) return;
+	public synchronized PlayingSoundMusic playMusic(Music m, boolean loop) {
+		if (!playMusic) return new PlayingSoundMusic(null, -1L);
 		
 		m.setVolume(musicVolume);
 		m.setLooping(loop);
@@ -255,49 +251,45 @@ public class ResourceManager {
 		}
 		
 		//CoreGame.instance().getConsole().print("Playing music " + m.toString());
-		PlayingSoundMusic psm = new PlayingSoundMusic();
-		psm.sm = m;
 		m.setVolume(volume * musicVolume);
-		psm.i = -1L;
+		PlayingSoundMusic psm = new PlayingSoundMusic(m, -1L);
 		psms.add(psm);
+		return psm;
 	}
 	
-	public synchronized void playMusicLoop(Music m) {
-		playMusic(m, true);
+	public synchronized PlayingSoundMusic playMusicLoop(Music m) {
+		return playMusic(m, true);
+	}
+	
+	private synchronized void resetAllPSMsVolume() {
+		for (PlayingSoundMusic psm : psms) {
+			psm.resetGlobalVolume();
+		}
 	}
 	
 	public synchronized void setVolume(int percent) {
 		volume = percent / 100.0f;
-		for (PlayingSoundMusic psm : psms) {
-			Object o = psm.sm;
-			if (o instanceof Music) {
-				((Music) o).setVolume(volume * musicVolume);
-			}
-			if (o instanceof Sound) {
-				((Sound) o).setVolume(psm.i, volume);
-			}
-		}
+		resetAllPSMsVolume();
 	}
 	
 	public synchronized void setMusicVolume(int percent) {
 		musicVolume = percent / 100.0f;
-		for (PlayingSoundMusic psm : psms) {
-			Object o = psm.sm;
-			if (o instanceof Music) {
-				((Music) o).setVolume(volume * musicVolume);
-			}
-		}
+		resetAllPSMsVolume();
+	}
+	
+	public synchronized void setMusicVolumeObject(int percent) {
+		musicVolume = percent / 100.0f;
+		resetAllPSMsVolume();
 	}
 	
 	public synchronized void stopMusic(Music music) {
 		PlayingSoundMusic remove = null;
 		for (PlayingSoundMusic psm : psms) {
-			Object o = psm.sm;
+			Disposable o = psm.getSM();
 			if (o instanceof Music && music == o) {
 				((Music) o).stop();
 				remove = psm;
-				
-				return;
+				break;
 			}
 		}
 		if (remove != null)
@@ -305,24 +297,23 @@ public class ResourceManager {
 	}
 	
 	public synchronized void stopAllMusics() {
-		for (PlayingSoundMusic psm : psms) {
-			Object o = psm.sm;
-			if (o instanceof Music) {
-				((Music) o).stop();
+		ArrayList<Integer> removeList = new ArrayList<>();
+		for (int i = 0; i < psms.size(); i++) {
+			PlayingSoundMusic psm = psms.get(i);
+			if (psm.isMusic()) {
+				psm.stop();
+				removeList.add(i);
 			}
 		}
-		psms.clear();
+		for (int i = removeList.size() - 1; i >= 0; i++) {
+			removeList.remove(removeList.get(i));
+		}
+		removeList.clear(); // gc hater
 	}
 	
 	public synchronized void stopAllSoundMusic() {
 		for (PlayingSoundMusic psm : psms) {
-			Object o = psm.sm;
-			if (o instanceof Music) {
-				((Music) o).stop();
-			}
-			if (o instanceof Sound) {
-				((Sound) o).stop();
-			}
+			psm.stop();
 		}
 		psms.clear();
 	}

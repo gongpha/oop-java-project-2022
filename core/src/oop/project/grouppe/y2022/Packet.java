@@ -711,9 +711,11 @@ public abstract class Packet {
 					break;
 			}
 			
+			// announce
 			if (enabled)
-				// announce
 				world.submitChat(-2, ch.getPlayer().getUsername() + " has used a cheat ! : " + name);
+			else
+				world.submitChat(-1, ch.getPlayer().getUsername() + " has disabled their cheat : " + name);
 		}
 	}
 	

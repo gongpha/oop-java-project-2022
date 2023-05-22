@@ -28,7 +28,7 @@ public class Nextbot extends Entity {
 	
 	private float hitDelay = 0.0f;
 	
-	private Music music = null;
+	private PlayingSoundMusic music = null;
 	
 	public void setGhostIndex(int index) {
 		ghostIndex = index;
@@ -37,16 +37,16 @@ public class Nextbot extends Entity {
 		texture = ResourceManager.instance().loadTexture("character/" + ghostData[0]);
 		velocity = new Vector2();
 		
-		music = ResourceManager.instance().loadMusic("sound/" + ghostData[1]);
-		if (music != null) {
-			ResourceManager.instance().playMusicLoop(music);
+		Music musicObj = ResourceManager.instance().loadMusic("sound/" + ghostData[1]);
+		if (musicObj != null) {
+			music = ResourceManager.instance().playMusicLoop(musicObj);
 		}
 	}
 	
 	public void updateCameraPos(float camX, float camY) {
 		float dst = new Vector2(camX, camY).dst(getX(), getY());
 		dst = Utils.clamp(dst / 1200.0f, 0.0f, 1.0f);
-		music.setVolume((1.0f - dst) * CoreGame.instance().getVolumef());
+		music.setSelfVolume((1.0f - dst) * CoreGame.instance().getVolumef());
 	}
 	
 	public void setupAStar() {
@@ -98,34 +98,34 @@ public class Nextbot extends Entity {
 	//public void collide(Vector2 rel) {}
 
 	public void process(float delta) {
-		if (walkTo != null && walkingTo != null) {
-			
+		if (walkingTo != null) {	
 			if (!walkingTo.isInvisible()) {
-				
-				Vector2 myPos = new Vector2(getX(), getY());
-				Vector2 walkPos = new Vector2(walkTo.x, walkTo.y).scl(32.0f);
-				if (myPos.dst(walkPos) < 48.0f) {
-					walkTo = walkTo.prev;
+				if (walkTo != null) {
+					Vector2 myPos = new Vector2(getX(), getY());
+					Vector2 walkPos = new Vector2(walkTo.x, walkTo.y).scl(32.0f);
+					if (myPos.dst(walkPos) < 48.0f) {
+						walkTo = walkTo.prev;
+					}
+					Vector2 wishdir = walkPos.sub(myPos).nor();
+
+					// accel
+					velocity = velocity.lerp(wishdir.scl(500.0f * delta), delta * 20.0f);
+					if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
+					if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
+
+					move(velocity);
 				}
-				Vector2 wishdir = walkPos.sub(myPos).nor();
-
-				// accel
-				velocity = velocity.lerp(wishdir.scl(500.0f * delta), delta * 20.0f);
-				if (Math.abs(velocity.x) < 0.01f) velocity.x = 0.0f;
-				if (Math.abs(velocity.y) < 0.01f) velocity.y = 0.0f;
-
-				move(velocity);
-
 				// is it nearby the target (check by distance)
 				if (hitDelay < 0.0f) {
 					if (new Vector2(getX() + 32, getY() + 32).dst(new Vector2(walkingTo.getX() + 16, walkingTo.getY() + 16)) <= 64.0) {
 						// KILL
 						if (!walkingTo.hasProtection()) {
 							getWorld().healCharacter(walkingTo, -25);
-							Packet.SPlayHitSound p = new Packet.SPlayHitSound();
+							
 							// play the sound remotely
+							Packet.SPlayHitSound p = new Packet.SPlayHitSound();
 							getWorld().getMyClient().getServer().getClient(walkingTo.getPlayer().getNetID()).send(p);
-							hitDelay = 0.25f;
+							hitDelay = 1.0f;
 						}
 					}
 				} else {

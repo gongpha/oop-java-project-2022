@@ -97,29 +97,39 @@ public class ConsoleCommandCore {
 					CoreGame.instance().toggleShowinfo();
 				}
 			},
+			// zoom out
 			new ConsoleCommand("zoomout") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
 						w.getCamera().zoom = 5.0f;
+						w.submitChat(-2,
+							w.getMyClient().getCharacter().getPlayer().getUsername() + " has used a cheat ! : ZOOM OUT"
+						);
 					}
 				}
 			},
-			// zoom further
+			// zoom out further
 			new ConsoleCommand("zoomoutt") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
 						w.getCamera().zoom = 10.0f;
+						w.submitChat(-2,
+							w.getMyClient().getCharacter().getPlayer().getUsername() + " has used a cheat ! : ZOOM OUTT"
+						);
 					}
 				}
 			},
-			// zoom furtherrrr
+			// zoom out furtherrrr
 			new ConsoleCommand("zoomouttt") {
 				public void exec(String[] args) {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
 						w.getCamera().zoom = 30.0f;
+						w.submitChat(-2,
+							w.getMyClient().getCharacter().getPlayer().getUsername() + " has used a cheat ! : ZOOM OUTTT"
+						);
 					}
 				}
 			},
@@ -129,6 +139,9 @@ public class ConsoleCommandCore {
 					World w = CoreGame.instance().getWorld();
 					if (w != null) {
 						w.getCamera().zoom = 1.0f;
+						w.submitChat(-1,
+							w.getMyClient().getCharacter().getPlayer().getUsername() + " has disabled their cheat : ZOOM OUT"
+						);
 					}
 				}
 			},
@@ -146,17 +159,6 @@ public class ConsoleCommandCore {
 					if (w != null) {
 						w.setDrawPathEnabled(!w.isDrawPathEnabled());
 					}
-				}
-			},
-			new ConsoleCommand("d_zoom") {
-				public void exec(String[] args) {
-					World w = CoreGame.instance().getWorld();
-					if (w != null) {
-						w.getCamera().zoom = 10.0f;
-						w.setDrawPathEnabled(true);
-						w.setDrawQuadTree(true);
-					}
-					CoreGame.instance().setShowinfo(true);
 				}
 			},
 			new ConsoleCommand("noclip") {

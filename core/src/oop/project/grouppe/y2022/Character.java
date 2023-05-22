@@ -34,7 +34,7 @@ public class Character extends Entity {
 	
 	// CLIENTSIDE
 	private Vector2 velocity;
-	private Vector2 wishdir; // for calculating velocity
+	private final Vector2 wishdir; // for calculating velocity
 	private int input = 0;
 	
 	private Player player = null;
@@ -51,6 +51,8 @@ public class Character extends Entity {
 		boolean b = super.toggleNoclip();
 		if (b)
 			world.submitChat(-2, getPlayer().getUsername() + " has used a cheat ! : Noclip");
+		else
+			world.submitChat(-1, getPlayer().getUsername() + " has disabled their cheat : Noclip");
 		return b;
 	}
 	
