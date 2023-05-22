@@ -39,8 +39,7 @@ public class Nextbot extends Entity {
 		
 		music = ResourceManager.instance().loadMusic("sound/" + ghostData[1]);
 		if (music != null) {
-			music.setLooping(true);
-			ResourceManager.instance().playMusic(music);
+			ResourceManager.instance().playMusicLoop(music);
 		}
 	}
 	

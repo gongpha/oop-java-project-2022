@@ -241,10 +241,11 @@ public class ResourceManager {
 		psms.add(psm);
 	}
 	
-	public synchronized void playMusic(Music m) {
+	public synchronized void playMusic(Music m, boolean loop) {
 		if (!playMusic) return;
 		
 		m.setVolume(musicVolume);
+		m.setLooping(loop);
 		try {
 			m.play();
 		} catch (Exception e) {
@@ -258,6 +259,10 @@ public class ResourceManager {
 		m.setVolume(volume * musicVolume);
 		psm.i = -1L;
 		psms.add(psm);
+	}
+	
+	public synchronized void playMusicLoop(Music m) {
+		playMusic(m, true);
 	}
 	
 	public synchronized void setVolume(int percent) {

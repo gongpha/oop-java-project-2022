@@ -271,25 +271,35 @@ public class Client extends Thread {
 		}
 	}
 	
+	private void invokePacket(Packet p) {
+		try {
+			p.setCSenderOrSMySelf(this);
+			if (puppet) p.setCServer(server);
+			p.invoke();
+		} catch (Exception e) {
+			CoreGame.instance().getConsole().printerr("Cannot invoke packet (" + p.header() + ")" + e.getMessage());
+		}
+	}
+	
 	// called by the main thread's frame
 	public void pumpPackets() {
 		while (!pump.isEmpty()) {
-			Packet p = pump.pollFirst();
-			try {
-				p.setCSenderOrSMySelf(this);
-				if (puppet) p.setCServer(server);
-				p.invoke();
-			} catch (Exception e) {
-				CoreGame.instance().getConsole().printerr("Cannot invoke packet (" + p.header() + ")" + e.getMessage());
-			}
+			invokePacket(pump.pollFirst());
 		}
 	}
 	
 	public void kill(String reason) {
-		//pumpPackets(); // pump all packets before it closes (must be in the main thread)
 		disconnectReason = reason;
 		running = false;
-		if (socket != null) socket.dispose();
+		
+		// pump all packets before it closes (must be in the main thread)
+		// it may include critical packets (i.e. disconnect message)
+		pumpPackets();
+		
+		if (socket != null) {
+			socket.dispose();
+			socket = null;
+		}
 	}
 	
 	public void disconnectMe() {

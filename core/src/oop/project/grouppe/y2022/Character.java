@@ -258,6 +258,48 @@ public class Character extends Entity {
 		return player.getNetID() == world.getSpectatingCharacter().getPlayer().getNetID();
 	}
 	
+	public void removePower(Power p) {
+		Packet.SCharacterUpdatePowerup packet = new Packet.SCharacterUpdatePowerup();
+		packet.target = this;
+		packet.powerup = p.powerup;
+		packet.tell = 2;
+
+		// reset to default face
+		packet.x = 128;
+		packet.y = 0;
+
+		powers.remove(p);
+		switch (p.powerup) {
+		case 0:
+			protection = false;
+			break;
+		case 2:
+			invisible = false;
+			break;
+		case 3:
+			reviving = false;
+			break;
+		}
+
+		// set the status to the latest power
+		if (!powers.isEmpty()) {
+			Power po = powers.get(powers.size() - 1);
+			packet.x = po.regionX;
+			packet.y = po.regionY;
+		}
+
+		world.getMyClient().getServer().broadcast(packet);
+	}
+	
+	public void removeRevivePower() {
+		for (Power p : new ArrayList<>(powers)) {
+			if (p.powerup == (byte)3) {
+				removePower(p);
+				return;
+			}
+		}
+	}
+	
 	@Override
 	public void draw(Batch batch, float alpha) {
 		if (region.getTexture() == null) return; // no
@@ -279,36 +321,7 @@ public class Character extends Entity {
 						world.getMyClient().getServer().broadcast(packet);
 					}
 					if (p.timer <= 0.0f) {
-						Packet.SCharacterUpdatePowerup packet = new Packet.SCharacterUpdatePowerup();
-						packet.target = this;
-						packet.powerup = p.powerup;
-						packet.tell = 2;
-
-						// reset to default face
-						packet.x = 128;
-						packet.y = 0;
-
-						powers.remove(p);
-						switch (p.powerup) {
-						case 0:
-							protection = false;
-							break;
-						case 2:
-							invisible = false;
-							break;
-						case 3:
-							reviving = false;
-							break;
-						}
-
-						// set the status to the latest power
-						if (!powers.isEmpty()) {
-							Power po = powers.get(powers.size() - 1);
-							packet.x = po.regionX;
-							packet.y = po.regionY;
-						}
-
-						world.getMyClient().getServer().broadcast(packet);
+						removePower(p);
 					}
 				}
 			}
@@ -476,8 +489,13 @@ public class Character extends Entity {
 			Character collideeCharacter = (Character) collidee;
 			if (reviving && collideeCharacter.isDied()) {
 				// REVIVES THAT DUDE
-				world.reviveCharacter(collideeCharacter.getPlayer().getNetID(), getPlayer().getNetID());
+				int dudeNetID = collideeCharacter.getPlayer().getNetID();
+				world.reviveCharacter(dudeNetID, getPlayer().getNetID());
 				world.addRevivingBonus(this);
+				
+				// remove the revive power NOW
+				removeRevivePower();
+				getWorld().getMyClient().getServer().sendChatToClient(dudeNetID, "You have used the power !", true);
 			}
 		}
 	}
@@ -510,7 +528,7 @@ public class Character extends Entity {
 			p.x = 96;
 			p.y = 224;
 			reviving = true;
-			po.timer = 40.0f; // 40 secs
+			po.timer = 60.0f; // 60 secs
 			break;
 		}
 		

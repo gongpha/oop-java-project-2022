@@ -139,8 +139,7 @@ public class Menu {
 		ResourceManager.instance().stopAllSoundMusic();
 		Music nextbotMusic = ResourceManager.instance().loadMusic("sound/" + ghostData[1]);
 		if (nextbotMusic != null) {
-			nextbotMusic.setLooping(true);
-			ResourceManager.instance().playMusic(nextbotMusic);
+			ResourceManager.instance().playMusicLoop(nextbotMusic);
 		}
 		nextbotTexture = t;
 	}
@@ -527,7 +526,7 @@ public class Menu {
 	
 	public void playMainmenuMusic() {
 		ResourceManager.instance().stopAllMusics();
-		ResourceManager.instance().playMusic((Music) ResourceManager.instance().get("m_mainmenu1"));
+		ResourceManager.instance().playMusicLoop((Music) ResourceManager.instance().get("m_mainmenu1"));
 	}
 	
 	public boolean isOnRoot() {

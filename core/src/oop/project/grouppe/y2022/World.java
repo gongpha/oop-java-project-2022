@@ -851,8 +851,7 @@ public class World {
 		}
 		
 		worldMusic = (Music) ResourceManager.instance().get(musicName);
-		worldMusic.setLooping(true);
-		ResourceManager.instance().playMusic(worldMusic);
+		ResourceManager.instance().playMusicLoop(worldMusic);
 	}
 	
 	// used to call "returnToLobby" in the different threads
