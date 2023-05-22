@@ -233,12 +233,19 @@ public class Console {
 		if (l.isEmpty()) return;
 		
 		
-		// unused.
 		Matcher m = execPattern.matcher(l);
 		ArrayList<String> args = new ArrayList<>();
 		while (m.find()) {
-			if (m.group().isEmpty()) continue;
-			args.add(m.group());
+			int i = m.groupCount() - 1;
+			
+			for (; i >= 0; i--) {
+				String s = m.group(i);
+				if (s == null) continue;
+ 				if (!s.isEmpty()) break;
+			}
+				
+			
+			args.add(m.group(i));
 		}
 		
 		ConsoleCommand found = commands.get(args.get(0));
