@@ -357,6 +357,7 @@ public class Menu {
 		forHost = host;
 		
 		nameInput.setString(pref.getString("username"));
+		ipInput.setString(pref.getString("ip"));
 		selectingCharacterIndex = pref.getInteger("custom1");
 		resetSelectingCharacter();
 	}

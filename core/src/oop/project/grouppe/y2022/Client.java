@@ -272,6 +272,10 @@ public class Client extends Thread {
 	}
 	
 	private void invokePacket(Packet p) {
+		if (p == null) {
+			CoreGame.instance().getConsole().printerr("Invoked a null packet");
+			return;
+		}
 		try {
 			p.setCSenderOrSMySelf(this);
 			if (puppet) p.setCServer(server);
