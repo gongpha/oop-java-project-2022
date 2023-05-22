@@ -257,7 +257,7 @@ public class Console {
 		
 	}
 	public synchronized void exec(String s) {
-		exec(s, false);
+		exec(s, true);
 	}
 	
 	////////////////////////////
