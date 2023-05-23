@@ -27,7 +27,6 @@ import java.util.ArrayList;
 */
 
 public class Character extends Entity {
-	private CoreGame game;
 	private World world;
 	private final TextureRegion region;
 	private final TextureRegion regionIcon;
@@ -150,8 +149,7 @@ public class Character extends Entity {
 	/* end */
 	
 	public Character() {
-		game = CoreGame.instance();
-		world = game.getWorld();
+		world = CoreGame.instance().getWorld();
 		labelFont = (BitmapFont) ResourceManager.instance().get("character_name_font");
 		
 		region = new TextureRegion();
